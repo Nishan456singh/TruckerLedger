@@ -1,14 +1,13 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const SESSION_KEY = '@truckerledger/user_session';
+export const SESSION_KEY = "@truckerledger/user_session";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ─────────────────────────────────────────
 
-export type AuthProvider = 'google' | 'apple';
+export type AuthProvider = "google" | "apple";
 
 /**
  * Unified user profile returned by all providers.
- * Google and Apple are normalised to this shape.
  */
 export interface UserProfile {
   id: string;
@@ -18,23 +17,48 @@ export interface UserProfile {
   provider: AuthProvider;
 }
 
-// ─── Storage helpers ─────────────────────────────────────────────────────────
-// We store only the profile — never OAuth tokens.
+// ─── Save session ──────────────────────────────────
 
 export async function saveUserSession(user: UserProfile): Promise<void> {
-  await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(user));
+  try {
+    const value = JSON.stringify(user);
+    await AsyncStorage.setItem(SESSION_KEY, value);
+  } catch (error) {
+    console.error("Failed to save user session:", error);
+  }
 }
 
+// ─── Get session ───────────────────────────────────
+
 export async function getUserSession(): Promise<UserProfile | null> {
-  const raw = await AsyncStorage.getItem(SESSION_KEY);
-  if (!raw) return null;
   try {
-    return JSON.parse(raw) as UserProfile;
-  } catch {
+    const raw = await AsyncStorage.getItem(SESSION_KEY);
+
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+
+    // basic validation
+    if (
+      typeof parsed.id === "string" &&
+      typeof parsed.email === "string"
+    ) {
+      return parsed as UserProfile;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Failed to read user session:", error);
     return null;
   }
 }
 
+// ─── Clear session ─────────────────────────────────
+
 export async function clearUserSession(): Promise<void> {
-  await AsyncStorage.removeItem(SESSION_KEY);
+  try {
+    await AsyncStorage.removeItem(SESSION_KEY);
+  } catch (error) {
+    console.error("Failed to clear user session:", error);
+  }
 }

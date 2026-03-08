@@ -1,16 +1,19 @@
-import { router } from 'expo-router';
-import { useEffect } from 'react';
-import { View } from 'react-native';
+import { router } from "expo-router";
+import { useEffect } from "react";
 
 /**
  * Handles the OAuth failure redirect on web.
- * Appwrite redirects here when the provider is not configured or the user
- * denies access. Just bounces back to the login screen.
+ * Appwrite redirects here when the provider is not configured
+ * or the user denies access.
  */
 export default function OAuthFailure() {
   useEffect(() => {
-    router.replace('/login');
+    const timeout = setTimeout(() => {
+      router.replace("/login");
+    }, 10);
+
+    return () => clearTimeout(timeout);
   }, []);
 
-  return <View style={{ flex: 1 }} />;
+  return null;
 }

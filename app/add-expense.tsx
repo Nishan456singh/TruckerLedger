@@ -1,20 +1,25 @@
-import CategorySelector from '@/components/CategorySelector';
-import PrimaryButton from '@/components/PrimaryButton';
-import ReceiptPreview from '@/components/ReceiptPreview';
+import CategorySelector from "@/components/CategorySelector";
+import PrimaryButton from "@/components/PrimaryButton";
+import ReceiptPreview from "@/components/ReceiptPreview";
+
 import {
     BorderRadius,
     Colors,
     FontSize,
     FontWeight,
-    Shadow,
-    Spacing,
-    type Category,
-} from '@/constants/theme';
-import { addExpense } from '@/lib/expenseService';
-import * as Haptics from 'expo-haptics';
-import * as ImagePicker from 'expo-image-picker';
-import { router, useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+    Spacing
+} from "@/constants/theme";
+
+import { addExpense } from "@/lib/expenseService";
+import type { Category } from "@/lib/types";
+
+import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
+
+import { router, useLocalSearchParams } from "expo-router";
+
+import React, { useEffect, useRef, useState } from "react";
+
 import {
     Alert,
     KeyboardAvoidingView,
@@ -25,79 +30,110 @@ import {
     TextInput,
     TouchableOpacity,
     View,
-} from 'react-native';
+} from "react-native";
+
 import Animated, {
     FadeIn,
     FadeInDown,
-    FadeInUp
-} from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+    FadeInUp,
+} from "react-native-reanimated";
 
-type ScreenMode = 'pick' | 'manual';
+import { SafeAreaView } from "react-native-safe-area-context";
 
-function formatDateDisplay(isoDate: string): string {
-  return new Date(isoDate + 'T00:00:00').toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
+type ScreenMode = "pick" | "manual";
 
 function todayISO(): string {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
+}
+
+function yesterdayISO(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split("T")[0];
+}
+
+function formatDateDisplay(isoDate: string): string {
+  return new Date(isoDate + "T00:00:00").toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default function AddExpenseScreen() {
   const params = useLocalSearchParams<{ mode?: string; category?: string }>();
 
+  const initialCategory: Category =
+    params.category === "fuel" ||
+      params.category === "toll" ||
+      params.category === "parking" ||
+      params.category === "food" ||
+      params.category === "repair" ||
+      params.category === "other"
+      ? (params.category as Category)
+      : "fuel";
+
   const [mode, setMode] = useState<ScreenMode>(
-    params.mode === 'manual' ? 'manual' : 'pick'
+    params.mode === "manual" ? "manual" : "pick"
   );
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<Category>(
-    (params.category as Category) ?? 'fuel'
-  );
+
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState<Category>(initialCategory);
   const [date, setDate] = useState(todayISO());
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const amountRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    if (mode === 'manual') {
+    if (mode === "manual") {
       setTimeout(() => amountRef.current?.focus(), 300);
     }
   }, [mode]);
 
-  // ── Pick receipt from library ───────────────────────────────────────────────
+  // ─── Pick image ─────────────────────────
+
   async function handlePickImage() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission needed', 'Photo library access is required to attach receipts.');
+    const { status } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission needed",
+        "Photo library access is required to attach receipts."
+      );
       return;
     }
+
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       allowsEditing: false,
       quality: 0.85,
     });
-    if (!result.canceled && result.assets[0]) {
+
+    if (!result.canceled && result.assets?.[0]) {
       setReceiptUri(result.assets[0].uri);
     }
   }
 
-  // ── Save ────────────────────────────────────────────────────────────────────
+  // ─── Save expense ───────────────────────
+
   async function handleSave() {
-    const parsedAmount = parseFloat(amount.replace(/[^0-9.]/g, ''));
+    const parsedAmount = Number(amount.replace(/[^\d.]/g, ""));
+
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Invalid amount', 'Please enter a valid expense amount.');
+      await Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Error
+      );
+
+      Alert.alert("Invalid amount", "Please enter a valid expense amount.");
       return;
     }
 
     setSaving(true);
+
     try {
       await addExpense({
         amount: parsedAmount,
@@ -106,76 +142,63 @@ export default function AddExpenseScreen() {
         date,
         receipt_uri: receiptUri,
       });
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+      await Haptics.notificationAsync(
+        Haptics.NotificationFeedbackType.Success
+      );
+
       router.back();
     } catch (err) {
       console.error(err);
-      const msg = err instanceof Error ? err.message : 'Failed to save expense. Please try again.';
-      Alert.alert('Error', msg);
+
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Failed to save expense. Please try again.";
+
+      Alert.alert("Error", msg);
     } finally {
       setSaving(false);
     }
   }
 
-  // ── Render pick mode ────────────────────────────────────────────────────────
-  if (mode === 'pick') {
+  // ─── Pick mode screen ───────────────────
+
+  if (mode === "pick") {
     return (
-      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <Animated.View entering={FadeIn.duration(220)} style={styles.pickContainer}>
-          {/* Header */}
+      <SafeAreaView style={styles.safe}>
+        <Animated.View entering={FadeIn.duration(200)} style={styles.pickContainer}>
           <View style={styles.pickHeader}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+            <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.closeBtnText}>✕</Text>
             </TouchableOpacity>
+
             <Text style={styles.pickTitle}>Add Expense</Text>
-            <View style={{ width: 36 }} />
+
+            <View style={{ width: 20 }} />
           </View>
 
-          <Text style={styles.pickSubtitle}>How would you like to add this expense?</Text>
+          <Text style={styles.pickSubtitle}>
+            How would you like to add this expense?
+          </Text>
 
-          {/* Scan Receipt */}
-          <Animated.View entering={FadeInDown.delay(100).springify()}>
+          <Animated.View entering={FadeInDown.delay(100)}>
             <TouchableOpacity
               style={styles.pickCard}
-              activeOpacity={0.8}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                router.push('/scan-receipt');
-              }}
+              onPress={() => router.push("/scan-receipt")}
             >
-              <View style={[styles.pickIconCircle, { backgroundColor: Colors.accent + '20' }]}>
-                <Text style={styles.pickIcon}>📷</Text>
-              </View>
-              <View style={styles.pickCardText}>
-                <Text style={styles.pickCardTitle}>Scan Receipt</Text>
-                <Text style={styles.pickCardDesc}>
-                  Take a photo of your receipt — we'll log it instantly
-                </Text>
-              </View>
-              <Text style={styles.pickArrow}>›</Text>
+              <Text style={styles.pickIcon}>📷</Text>
+              <Text style={styles.pickCardTitle}>Scan Receipt</Text>
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Add Manually */}
-          <Animated.View entering={FadeInDown.delay(200).springify()}>
+          <Animated.View entering={FadeInDown.delay(200)}>
             <TouchableOpacity
               style={styles.pickCard}
-              activeOpacity={0.8}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setMode('manual');
-              }}
+              onPress={() => setMode("manual")}
             >
-              <View style={[styles.pickIconCircle, { backgroundColor: Colors.primary + '20' }]}>
-                <Text style={styles.pickIcon}>✏️</Text>
-              </View>
-              <View style={styles.pickCardText}>
-                <Text style={styles.pickCardTitle}>Add Manually</Text>
-                <Text style={styles.pickCardDesc}>
-                  Enter amount, category, and notes by hand
-                </Text>
-              </View>
-              <Text style={styles.pickArrow}>›</Text>
+              <Text style={styles.pickIcon}>✏️</Text>
+              <Text style={styles.pickCardTitle}>Add Manually</Text>
             </TouchableOpacity>
           </Animated.View>
         </Animated.View>
@@ -183,67 +206,45 @@ export default function AddExpenseScreen() {
     );
   }
 
-  // ── Manual form mode ────────────────────────────────────────────────────────
+  // ─── Manual form ────────────────────────
+
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={0}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          style={styles.scroll}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: Spacing.xl, gap: Spacing.lg }}
         >
-          {/* Header */}
-          <Animated.View
-            entering={FadeInDown.delay(0).springify()}
-            style={styles.formHeader}
-          >
-            <TouchableOpacity onPress={() => setMode('pick')} style={styles.backBtn}>
-              <Text style={styles.backBtnText}>‹ Back</Text>
-            </TouchableOpacity>
+          <Animated.View entering={FadeInDown}>
             <Text style={styles.formTitle}>New Expense</Text>
-            <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
-              <Text style={styles.closeBtnText}>✕</Text>
-            </TouchableOpacity>
           </Animated.View>
 
-          {/* Amount input */}
-          <Animated.View
-            entering={FadeInDown.delay(80).springify()}
-            style={styles.amountContainer}
-          >
-            <Text style={styles.currencySign}>$</Text>
-            <TextInput
-              ref={amountRef}
-              style={styles.amountInput}
-              value={amount}
-              onChangeText={setAmount}
-              placeholder="0.00"
-              placeholderTextColor={Colors.textMuted}
-              keyboardType="decimal-pad"
-              returnKeyType="done"
-              maxLength={10}
-            />
+          <Animated.View entering={FadeInDown.delay(100)}>
+            <View style={styles.amountContainer}>
+              <Text style={styles.currencySign}>$</Text>
+
+              <TextInput
+                ref={amountRef}
+                style={styles.amountInput}
+                value={amount}
+                onChangeText={setAmount}
+                placeholder="0.00"
+                keyboardType="decimal-pad"
+                placeholderTextColor={Colors.textMuted}
+              />
+            </View>
           </Animated.View>
 
-          {/* Category */}
-          <Animated.View
-            entering={FadeInDown.delay(160).springify()}
-            style={styles.fieldGroup}
-          >
+          <Animated.View entering={FadeInDown.delay(200)}>
             <CategorySelector selected={category} onChange={setCategory} />
           </Animated.View>
 
-          {/* Date */}
-          <Animated.View
-            entering={FadeInDown.delay(220).springify()}
-            style={styles.fieldGroup}
-          >
+          <Animated.View entering={FadeInDown.delay(260)}>
             <Text style={styles.fieldLabel}>Date</Text>
+
             <View style={styles.dateRow}>
               <TouchableOpacity
                 style={[styles.datePill, date === todayISO() && styles.datePillActive]}
@@ -253,76 +254,50 @@ export default function AddExpenseScreen() {
                   Today
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={[styles.datePill, date === yesterdayISO() && styles.datePillActive]}
                 onPress={() => setDate(yesterdayISO())}
               >
-                <Text
-                  style={[
-                    styles.datePillText,
-                    date === yesterdayISO() && styles.datePillTextActive,
-                  ]}
-                >
+                <Text style={[styles.datePillText, date === yesterdayISO() && styles.datePillTextActive]}>
                   Yesterday
                 </Text>
               </TouchableOpacity>
+
               <View style={styles.dateDisplayPill}>
-                <Text style={styles.dateDisplayText}>{formatDateDisplay(date)}</Text>
+                <Text style={styles.datePillText}>{formatDateDisplay(date)}</Text>
               </View>
             </View>
           </Animated.View>
 
-          {/* Notes */}
-          <Animated.View
-            entering={FadeInDown.delay(280).springify()}
-            style={styles.fieldGroup}
-          >
-            <Text style={styles.fieldLabel}>Notes (optional)</Text>
+          <Animated.View entering={FadeInDown.delay(320)}>
+            <Text style={styles.fieldLabel}>Notes</Text>
+
             <TextInput
               style={styles.notesInput}
               value={note}
               onChangeText={setNote}
-              placeholder="e.g. Diesel fill-up on I-80"
+              placeholder="Optional note"
               placeholderTextColor={Colors.textMuted}
               multiline
-              numberOfLines={3}
-              maxLength={200}
-              textAlignVertical="top"
             />
           </Animated.View>
 
-          {/* Receipt */}
-          <Animated.View
-            entering={FadeInDown.delay(340).springify()}
-            style={styles.fieldGroup}
-          >
+          <Animated.View entering={FadeInDown.delay(380)}>
             {receiptUri ? (
-              <ReceiptPreview
-                uri={receiptUri}
-                onRemove={() => setReceiptUri(null)}
-              />
+              <ReceiptPreview uri={receiptUri} onRemove={() => setReceiptUri(null)} />
             ) : (
-              <TouchableOpacity
-                style={styles.attachReceiptBtn}
-                onPress={handlePickImage}
-                activeOpacity={0.75}
-              >
-                <Text style={styles.attachIcon}>📎</Text>
-                <Text style={styles.attachLabel}>Attach Receipt Photo</Text>
+              <TouchableOpacity style={styles.attachReceiptBtn} onPress={handlePickImage}>
+                <Text>📎 Attach Receipt</Text>
               </TouchableOpacity>
             )}
           </Animated.View>
-
-          <View style={{ height: 20 }} />
         </ScrollView>
 
-        {/* Save Button */}
-        <Animated.View entering={FadeInUp.delay(200).springify()} style={styles.footer}>
+        <Animated.View entering={FadeInUp} style={styles.footer}>
           <PrimaryButton
             label="Save Expense"
             onPress={handleSave}
-            variant="primary"
-            size="lg"
             loading={saving}
             disabled={!amount || saving}
           />
@@ -332,241 +307,145 @@ export default function AddExpenseScreen() {
   );
 }
 
-function yesterdayISO(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split('T')[0];
-}
-
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: Colors.background,
   },
-  scroll: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: Spacing.xl,
-    gap: Spacing.lg,
-  },
 
-  // ── Pick mode ──────────────────────────────────────────────────────────────
   pickContainer: {
     flex: 1,
     padding: Spacing.xl,
     gap: Spacing.lg,
   },
+
   pickHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
+
   pickTitle: {
     fontSize: FontSize.section,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
+
   pickSubtitle: {
     fontSize: FontSize.body,
     color: Colors.textSecondary,
-    lineHeight: 22,
-    marginBottom: Spacing.md,
-  },
-  pickCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadow.card,
-  },
-  pickIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: BorderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  pickIcon: {
-    fontSize: 26,
-  },
-  pickCardText: {
-    flex: 1,
-    gap: 4,
-  },
-  pickCardTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-  },
-  pickCardDesc: {
-    fontSize: FontSize.caption,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-  },
-  pickArrow: {
-    fontSize: 24,
-    color: Colors.textMuted,
-    flexShrink: 0,
   },
 
-  // ── Manual form ────────────────────────────────────────────────────────────
-  formHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.sm,
+  pickCard: {
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    flexDirection: "row",
+    gap: Spacing.md,
+    alignItems: "center",
   },
+
+  pickIcon: {
+    fontSize: 24,
+  },
+
+  pickCardTitle: {
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+  },
+
   formTitle: {
     fontSize: FontSize.section,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
-  backBtn: {
-    padding: Spacing.xs,
-  },
-  backBtnText: {
-    fontSize: FontSize.body,
-    color: Colors.primary,
-    fontWeight: FontWeight.medium,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.full,
+
+  amountContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeBtnText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    gap: Spacing.sm,
   },
 
-  // Amount
-  amountContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.primary + '50',
-    gap: Spacing.sm,
-    ...Shadow.card,
-  },
   currencySign: {
-    fontSize: FontSize.title + 4,
-    fontWeight: FontWeight.bold,
+    fontSize: FontSize.title,
     color: Colors.primary,
   },
+
   amountInput: {
     flex: 1,
-    fontSize: FontSize.title + 4,
-    fontWeight: FontWeight.extrabold,
+    fontSize: FontSize.title,
     color: Colors.textPrimary,
-    padding: 0,
   },
 
-  // Fields
-  fieldGroup: {
-    gap: Spacing.sm,
-  },
   fieldLabel: {
     fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
     color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
   },
 
-  // Date
   dateRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.sm,
-    flexWrap: 'wrap',
   },
+
   datePill: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.full,
     backgroundColor: Colors.card,
-    borderWidth: 1.5,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
     borderColor: Colors.border,
   },
+
   datePillActive: {
+    backgroundColor: Colors.primary,
     borderColor: Colors.primary,
-    backgroundColor: Colors.primary + '20',
   },
+
   datePillText: {
     fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
     color: Colors.textSecondary,
   },
+
   datePillTextActive: {
-    color: Colors.primary,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
   },
+
   dateDisplayPill: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.full,
     backgroundColor: Colors.cardAlt,
+    borderRadius: BorderRadius.full,
     borderWidth: 1,
     borderColor: Colors.border,
-  },
-  dateDisplayText: {
-    fontSize: FontSize.caption,
-    color: Colors.textMuted,
+    flex: 1,
   },
 
-  // Notes
   notesInput: {
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    fontSize: FontSize.body,
-    color: Colors.textPrimary,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: BorderRadius.lg,
     minHeight: 80,
   },
 
-  // Attach receipt
   attachReceiptBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    borderWidth: 1.5,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
     borderColor: Colors.border,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-  },
-  attachIcon: {
-    fontSize: 18,
-  },
-  attachLabel: {
-    fontSize: FontSize.body,
-    color: Colors.textSecondary,
-    fontWeight: FontWeight.medium,
+    alignItems: "center",
   },
 
-  // Footer
   footer: {
     padding: Spacing.xl,
-    paddingBottom: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    backgroundColor: Colors.background,
+  },
+
+  closeBtnText: {
+    fontSize: 16,
+    color: Colors.textSecondary,
   },
 });

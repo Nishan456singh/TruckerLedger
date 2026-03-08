@@ -7,12 +7,14 @@ import {
     Spacing,
 } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { exportExpenses } from '@/lib/expenseService';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
     Alert,
+    Share,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -54,8 +56,26 @@ const avatarStyles = StyleSheet.create({
 });
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const [photoError, setPhotoError] = useState(false);
+
+  async function handleExport() {
+    try {
+      const csv = await exportExpenses();
+      if (!csv || csv.trim() === 'Date,Category,Amount,Note') {
+        Alert.alert('No Data', 'You have no expenses to export yet.');
+        return;
+      }
+      await Share.share({
+        message: csv,
+        title: 'TruckLedger — Expense Report',
+      });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'Export failed. Please try again.';
+      Alert.alert('Export Failed', msg);
+    }
+  }
 
   async function handleSignOut() {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -65,7 +85,7 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-          await signOut();
+          await logout();
           router.replace('/login');
         },
       },
@@ -127,9 +147,24 @@ export default function ProfileScreen() {
         />
       </Animated.View>
 
+      {/* Export */}
+      <Animated.View
+        entering={FadeInDown.delay(220).springify()}
+        style={styles.exportSection}
+      >
+        <TouchableOpacity
+          style={styles.exportBtn}
+          onPress={handleExport}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.exportIcon}>📤</Text>
+          <Text style={styles.exportText}>Export Expenses (CSV)</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
       {/* Sign out */}
       <Animated.View
-        entering={FadeInDown.delay(240).springify()}
+        entering={FadeInDown.delay(300).springify()}
         style={styles.signOutSection}
       >
         <TouchableOpacity
@@ -274,6 +309,32 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.border,
     marginHorizontal: Spacing.lg,
+  },
+
+  // Export
+  exportSection: {
+    marginHorizontal: Spacing.xl,
+    marginTop: Spacing.lg,
+  },
+  exportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+  },
+  exportIcon: {
+    fontSize: 18,
+  },
+  exportText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+    letterSpacing: 0.3,
   },
 
   // Sign out

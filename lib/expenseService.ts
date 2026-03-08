@@ -1,12 +1,10 @@
-import { Platform } from 'react-native';
-import { getDatabase } from './db';
-import type { DashboardStats, Expense, ExpenseInput } from './types';
+import { Platform } from "react-native";
+import { getDatabase } from "./db";
+import type { DashboardStats, Expense, ExpenseInput } from "./types";
 
-// expo-sqlite is not available on web.
-// Reads return empty defaults so the UI renders without crashing.
-// Writes throw so the caller can surface a clear error to the user.
-const WEB = Platform.OS === 'web';
-const WEB_ERR = 'Expenses require the mobile app — SQLite is not available in the web preview.';
+const WEB = Platform.OS === "web";
+const WEB_ERR =
+  "Expenses require the mobile app — SQLite is not available in the web preview.";
 
 const EMPTY_STATS: DashboardStats = {
   todayTotal: 0,
@@ -17,43 +15,53 @@ const EMPTY_STATS: DashboardStats = {
   monthCount: 0,
 };
 
-// ─── Create ────────────────────────────────────────────────────────────────────
+// ─── Create ─────────────────────────────────────────
 
 export async function addExpense(input: ExpenseInput): Promise<number> {
   if (WEB) throw new Error(WEB_ERR);
+
   const db = await getDatabase();
+
   const result = await db.runAsync(
     `INSERT INTO expenses (amount, category, note, date, receipt_uri)
      VALUES (?, ?, ?, ?, ?)`,
     [
       input.amount,
       input.category,
-      input.note,
+      input.note ?? "",
       input.date,
       input.receipt_uri ?? null,
     ]
   );
-  return result.lastInsertRowId;
+
+  return Number(result.lastInsertRowId);
 }
 
-// ─── Read ──────────────────────────────────────────────────────────────────────
+// ─── Read ───────────────────────────────────────────
 
 export async function getAllExpenses(): Promise<Expense[]> {
   if (WEB) return [];
+
   const db = await getDatabase();
+
   const rows = await db.getAllAsync<Expense>(
-    `SELECT * FROM expenses ORDER BY date DESC, created_at DESC`
+    `SELECT * FROM expenses
+     ORDER BY date DESC, created_at DESC`
   );
-  return rows;
+
+  return rows ?? [];
 }
 
 export async function getExpenseById(id: number): Promise<Expense | null> {
   if (WEB) return null;
+
   const db = await getDatabase();
+
   const row = await db.getFirstAsync<Expense>(
     `SELECT * FROM expenses WHERE id = ?`,
     [id]
   );
+
   return row ?? null;
 }
 
@@ -62,53 +70,56 @@ export async function getExpensesByDateRange(
   toDate: string
 ): Promise<Expense[]> {
   if (WEB) return [];
+
   const db = await getDatabase();
+
   const rows = await db.getAllAsync<Expense>(
-    `SELECT * FROM expenses
+    `SELECT *
+     FROM expenses
      WHERE date >= ? AND date <= ?
      ORDER BY date DESC, created_at DESC`,
     [fromDate, toDate]
   );
-  return rows;
+
+  return rows ?? [];
 }
 
-// ─── Dashboard Stats ───────────────────────────────────────────────────────────
+// ─── Dashboard Stats ─────────────────────────────────
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   if (WEB) return EMPTY_STATS;
+
   const db = await getDatabase();
 
   const now = new Date();
 
-  // Today
-  const todayStr = now.toISOString().split('T')[0];
+  const todayStr = now.toISOString().split("T")[0];
 
-  // Start of this week (Monday)
   const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
-  const weekStartStr = weekStart.toISOString().split('T')[0];
+  weekStart.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const weekStartStr = weekStart.toISOString().split("T")[0];
 
-  // Start of this month
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const monthStartStr = monthStart.toISOString().split('T')[0];
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split("T")[0];
 
   type SumRow = { total: number; count: number };
 
   const [todayRow, weekRow, monthRow] = await Promise.all([
     db.getFirstAsync<SumRow>(
-      `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
+      `SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) AS count
        FROM expenses WHERE date = ?`,
       [todayStr]
     ),
     db.getFirstAsync<SumRow>(
-      `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
+      `SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) AS count
        FROM expenses WHERE date >= ? AND date <= ?`,
       [weekStartStr, todayStr]
     ),
     db.getFirstAsync<SumRow>(
-      `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
+      `SELECT COALESCE(SUM(amount),0) AS total, COUNT(*) AS count
        FROM expenses WHERE date >= ? AND date <= ?`,
-      [monthStartStr, todayStr]
+      [monthStart, todayStr]
     ),
   ]);
 
@@ -122,52 +133,129 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   };
 }
 
-// ─── Update ────────────────────────────────────────────────────────────────────
+// ─── Update ─────────────────────────────────────────
 
 export async function updateExpense(
   id: number,
   input: Partial<ExpenseInput>
 ): Promise<void> {
   if (WEB) throw new Error(WEB_ERR);
+
   const db = await getDatabase();
 
   const fields: string[] = [];
   const values: (string | number | null)[] = [];
 
   if (input.amount !== undefined) {
-    fields.push('amount = ?');
+    fields.push("amount = ?");
     values.push(input.amount);
   }
+
   if (input.category !== undefined) {
-    fields.push('category = ?');
+    fields.push("category = ?");
     values.push(input.category);
   }
+
   if (input.note !== undefined) {
-    fields.push('note = ?');
+    fields.push("note = ?");
     values.push(input.note);
   }
+
   if (input.date !== undefined) {
-    fields.push('date = ?');
+    fields.push("date = ?");
     values.push(input.date);
   }
+
   if (input.receipt_uri !== undefined) {
-    fields.push('receipt_uri = ?');
+    fields.push("receipt_uri = ?");
     values.push(input.receipt_uri ?? null);
   }
 
-  if (fields.length === 0) return;
+  if (!fields.length) return;
 
   values.push(id);
+
   await db.runAsync(
-    `UPDATE expenses SET ${fields.join(', ')} WHERE id = ?`,
+    `UPDATE expenses
+     SET ${fields.join(", ")}
+     WHERE id = ?`,
     values
   );
 }
 
-// ─── Delete ────────────────────────────────────────────────────────────────────
+// ─── Delete ─────────────────────────────────────────
 
 export async function deleteExpense(id: number): Promise<void> {
   if (WEB) throw new Error(WEB_ERR);
+
   const db = await getDatabase();
+
   await db.runAsync(`DELETE FROM expenses WHERE id = ?`, [id]);
+}
+
+// ─── Analytics ──────────────────────────────────────
+
+export interface CategoryStat {
+  category: string;
+  total: number;
+  count: number;
+}
+
+export async function getCategoryStats(): Promise<CategoryStat[]> {
+  if (WEB) return [];
+
+  const db = await getDatabase();
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split("T")[0];
+  const today = now.toISOString().split("T")[0];
+
+  const rows = await db.getAllAsync<CategoryStat>(
+    `SELECT
+       category,
+       COALESCE(SUM(amount),0) AS total,
+       COUNT(*) AS count
+     FROM expenses
+     WHERE date >= ? AND date <= ?
+     GROUP BY category
+     ORDER BY total DESC`,
+    [monthStart, today]
+  );
+
+  return rows ?? [];
+}
+
+// ─── CSV Export ─────────────────────────────────────
+
+function escapeCsvField(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+
+  const s = String(value);
+
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+
+  return s;
+}
+
+export async function exportExpenses(): Promise<string> {
+  if (WEB) throw new Error(WEB_ERR);
+
+  const expenses = await getAllExpenses();
+
+  const header = "Date,Category,Amount,Note";
+
+  const rows = expenses.map((e) =>
+    [
+      escapeCsvField(e.date),
+      escapeCsvField(e.category),
+      escapeCsvField(e.amount),
+      escapeCsvField(e.note),
+    ].join(",")
+  );
+
+  return [header, ...rows].join("\n");
 }

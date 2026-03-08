@@ -1,72 +1,151 @@
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useState,
-} from 'react';
-import { getAppwriteUser, logoutAppwrite } from './appwriteAuth';
-import {
-    clearUserSession,
-    type UserProfile,
-} from './authStorage';
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import {
+  getCurrentUser,
+  logout as logoutAppwrite,
+  signInWithApple,
+  signInWithGoogle,
+  type UserProfile,
+} from "./appwriteAuth";
+
+import { clearUserSession } from "./authStorage";
+
+// ─── Types ─────────────────────────────────────────
 
 interface AuthContextValue {
   user: UserProfile | null;
   authLoading: boolean;
-  signIn: (user: UserProfile) => Promise<void>;
-  signOut: () => Promise<void>;
+  signInGoogle: () => Promise<void>;
+  signInApple: () => Promise<void>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
-// ─── Context ──────────────────────────────────────────────────────────────────
+// ─── Context ───────────────────────────────────────
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   authLoading: true,
-  signIn: async () => {},
-  signOut: async () => {},
+  signInGoogle: async () => {},
+  signInApple: async () => {},
+  logout: async () => {},
+  refreshUser: async () => {},
 });
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
+// ─── Provider ──────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // On mount: restore an active Appwrite session if one exists.
+  // Restore session on app start
   useEffect(() => {
-    async function restoreSession() {
-      const appwriteUser = await getAppwriteUser();
-      if (appwriteUser) {
-        setUser(appwriteUser);
+    const restoreSession = async () => {
+      try {
+        const u = await getCurrentUser();
+        setUser(u);
+      } catch (error) {
+        console.error("Session restore failed:", error);
+        setUser(null);
+      } finally {
+        setAuthLoading(false);
       }
+    };
+
+    restoreSession();
+  }, []);
+
+  // ─── Google login ───────────────────────────────
+
+const signInGoogle = useCallback(async () => {
+  try {
+    setAuthLoading(true);
+
+    await signInWithGoogle();
+
+    const u = await getCurrentUser();
+    setUser(u);
+  } catch (error) {
+    console.error("Google login failed:", error);
+    throw error;
+  } finally {
+    setAuthLoading(false);
+  }
+}, []);
+
+  // ─── Apple login ────────────────────────────────
+
+ const signInApple = useCallback(async () => {
+  try {
+    setAuthLoading(true);
+
+    await signInWithApple();
+
+    const u = await getCurrentUser();
+    setUser(u);
+  } catch (error) {
+    console.error("Apple login failed:", error);
+    throw error;
+  } finally {
+    setAuthLoading(false);
+  }
+}, []);
+  // ─── Logout ─────────────────────────────────────
+
+  const logout = useCallback(async () => {
+    try {
+      setAuthLoading(true);
+
+      await logoutAppwrite();
+      await clearUserSession();
+
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setAuthLoading(false);
     }
-
-    restoreSession()
-      .catch(console.error)
-      .finally(() => setAuthLoading(false));
   }, []);
 
-  const signIn = useCallback(async (incoming: UserProfile) => {
-    setUser(incoming);
-  }, []);
+  // ─── Refresh user session ───────────────────────
 
-  const signOut = useCallback(async () => {
-    await logoutAppwrite();
-    await clearUserSession();
-    setUser(null);
+  const refreshUser = useCallback(async () => {
+    try {
+      setAuthLoading(true);
+
+      const u = await getCurrentUser();
+      setUser(u);
+    } catch (error) {
+      console.error("Refresh user failed:", error);
+      setUser(null);
+    } finally {
+      setAuthLoading(false);
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, authLoading, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        authLoading,
+        signInGoogle,
+        signInApple,
+        logout,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
+// ─── Hook ─────────────────────────────────────────
 
 export function useAuth(): AuthContextValue {
   return useContext(AuthContext);
