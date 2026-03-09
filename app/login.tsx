@@ -21,7 +21,7 @@ import {
   Platform,
   StyleSheet,
   Text,
-  View
+  View,
 } from "react-native";
 
 import Animated, {
@@ -95,7 +95,10 @@ export default function LoginScreen() {
       resizeMode="cover"
       blurRadius={6}
     >
+      {/* Base dark overlay */}
       <View style={styles.overlay} pointerEvents="none" />
+      {/* Extra vignette at bottom for button readability */}
+      <View style={styles.overlayBottom} pointerEvents="none" />
 
       <SafeAreaView style={styles.safe}>
         <View style={{ flex: 1 }} />
@@ -105,11 +108,11 @@ export default function LoginScreen() {
           entering={FadeInDown.delay(100).springify()}
           style={styles.brandSection}
         >
-          <Image source={logo} style={styles.logoImage} />
+          <View style={styles.logoRing}>
+            <Image source={logo} style={styles.logoImage} />
+          </View>
 
-          <Text style={styles.tagline}>
-            Track every mile & expense
-          </Text>
+          <Text style={styles.tagline}>Track every mile & expense</Text>
         </Animated.View>
 
         {/* Feature Pills */}
@@ -131,7 +134,7 @@ export default function LoginScreen() {
         {/* CTA */}
         <Animated.View
           entering={FadeInUp.delay(360).springify()}
-          style={styles.ctaSection}
+          style={styles.ctaCard}
         >
           {errorMsg && (
             <Animated.View
@@ -142,8 +145,6 @@ export default function LoginScreen() {
             </Animated.View>
           )}
 
-          {/* Apple Sign In (required if Google login exists) */}
-
           {Platform.OS === "ios" && (
             <View style={{ height: 50 }}>
               {appleLoading ? (
@@ -153,12 +154,10 @@ export default function LoginScreen() {
               ) : (
                 <AppleAuthentication.AppleAuthenticationButton
                   buttonType={
-                    AppleAuthentication.AppleAuthenticationButtonType
-                      .SIGN_IN
+                    AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
                   }
                   buttonStyle={
-                    AppleAuthentication.AppleAuthenticationButtonStyle
-                      .BLACK
+                    AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
                   }
                   cornerRadius={BorderRadius.md}
                   style={{ width: "100%", height: 50 }}
@@ -167,8 +166,6 @@ export default function LoginScreen() {
               )}
             </View>
           )}
-
-          {/* Google Button */}
 
           <GoogleSignInButton
             onPress={handleGoogleSignIn}
@@ -196,7 +193,16 @@ const styles = StyleSheet.create({
 
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(10,12,18,0.62)",
+    backgroundColor: "rgba(5, 8, 15, 0.60)",
+  },
+
+  overlayBottom: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: "50%",
+    backgroundColor: "rgba(5, 8, 15, 0.50)",
   },
 
   safe: {
@@ -206,7 +212,14 @@ const styles = StyleSheet.create({
 
   brandSection: {
     alignItems: "center",
-    gap: Spacing.md,
+    gap: Spacing.lg,
+  },
+
+  logoRing: {
+    padding: 3,
+    borderRadius: BorderRadius.xxl + 4,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.25)",
   },
 
   logoImage: {
@@ -215,15 +228,12 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xxl,
   },
 
-  appName: {
-    fontSize: FontSize.title + 4,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.textPrimary,
-  },
-
   tagline: {
     fontSize: FontSize.body,
-    color: Colors.textSecondary,
+    color: "rgba(255, 255, 255, 0.80)",
+    fontWeight: FontWeight.medium,
+    letterSpacing: 0.4,
+    textAlign: "center",
   },
 
   pillRow: {
@@ -236,29 +246,35 @@ const styles = StyleSheet.create({
 
   pill: {
     paddingVertical: Spacing.xs + 2,
-    paddingHorizontal: Spacing.md + 2,
+    paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.card,
+    backgroundColor: "rgba(255, 255, 255, 0.10)",
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: "rgba(255, 255, 255, 0.18)",
   },
 
   pillText: {
     fontSize: FontSize.caption,
-    color: Colors.textSecondary,
+    color: "rgba(255, 255, 255, 0.85)",
     fontWeight: FontWeight.medium,
   },
 
-  ctaSection: {
+  ctaCard: {
     gap: Spacing.md,
-    paddingBottom: Spacing.xl,
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    backgroundColor: "rgba(255, 255, 255, 0.07)",
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)",
   },
 
   errorBanner: {
-    backgroundColor: Colors.danger + "20",
+    backgroundColor: Colors.danger + "22",
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.danger + "50",
+    borderColor: Colors.danger + "55",
     padding: Spacing.sm,
     alignItems: "center",
   },
@@ -279,12 +295,12 @@ const styles = StyleSheet.create({
 
   legal: {
     fontSize: FontSize.small,
-    color: Colors.textMuted,
+    color: "rgba(255, 255, 255, 0.40)",
     textAlign: "center",
   },
 
   legalLink: {
-    color: Colors.textSecondary,
+    color: "rgba(255, 255, 255, 0.60)",
     textDecorationLine: "underline",
   },
 });
