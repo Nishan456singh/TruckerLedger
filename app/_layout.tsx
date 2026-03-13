@@ -105,6 +105,14 @@ function RootLayoutInner() {
 
         <Stack.Screen name="expense-history" />
 
+        <Stack.Screen name="monthly-summary" />
+
+        <Stack.Screen name="monthly-report" />
+
+        <Stack.Screen name="receipts" />
+
+        <Stack.Screen name="trip-profit" />
+
         <Stack.Screen name="expense-detail" />
 
         <Stack.Screen

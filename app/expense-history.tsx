@@ -1,31 +1,35 @@
 import ExpenseCard from "@/components/ExpenseCard";
 
 import {
-  BorderRadius,
-  CategoryMeta,
-  Colors,
-  FontSize,
-  FontWeight,
-  Spacing,
+    BorderRadius,
+    CategoryMeta,
+    Colors,
+    FontSize,
+    FontWeight,
+    Spacing,
 } from "@/constants/theme";
 
 import type { Category, Expense } from "@/lib/types";
 
-import { getAllExpenses } from "@/lib/expenseService";
+import { exportExpenses, getAllExpenses } from "@/lib/expenseService";
+
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 import { router, useFocusEffect } from "expo-router";
 
 import React, { useCallback, useState } from "react";
 
 import {
-  RefreshControl,
-  SectionList,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-  ScrollView,
+    Alert,
+    RefreshControl,
+    ScrollView,
+    SectionList,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -116,6 +120,7 @@ export default function ExpenseHistoryScreen() {
   const [selectedCategory, setSelectedCategory] =
     useState<Category | "all">("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   async function loadExpenses() {
     const data = await getAllExpenses();
@@ -132,6 +137,43 @@ export default function ExpenseHistoryScreen() {
     setRefreshing(true);
     await loadExpenses();
     setRefreshing(false);
+  }
+
+  async function handleExportCsv() {
+    if (exporting) return;
+
+    setExporting(true);
+
+    try {
+      const csv = await exportExpenses();
+
+      if (!csv || csv.trim() === "Date,Category,Amount,Note") {
+        Alert.alert("No Data", "You have no expenses to export yet.");
+        return;
+      }
+
+      const shareAvailable = await Sharing.isAvailableAsync();
+
+      if (!shareAvailable) {
+        Alert.alert("Not Available", "Sharing is not available on this device.");
+        return;
+      }
+
+      const file = new File(Paths.cache, `truckledger_expenses_${Date.now()}.csv`);
+      await file.write(csv);
+
+      await Sharing.shareAsync(file.uri, {
+        mimeType: "text/csv",
+        dialogTitle: "Export Expenses",
+        UTI: "public.comma-separated-values-text",
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to export expenses.";
+      Alert.alert("Export Failed", message);
+    } finally {
+      setExporting(false);
+    }
   }
 
   const filtered = allExpenses.filter((e) => {
@@ -224,6 +266,20 @@ export default function ExpenseHistoryScreen() {
           );
         })}
       </ScrollView>
+
+      <View style={styles.exportRow}>
+        <TouchableOpacity
+          onPress={handleExportCsv}
+          activeOpacity={0.8}
+          style={styles.exportBtn}
+          disabled={exporting}
+        >
+          <Text style={styles.exportBtnIcon}>📤</Text>
+          <Text style={styles.exportBtnText}>
+            {exporting ? "Exporting..." : "Export CSV"}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {/* List */}
       {sections.length === 0 ? (
@@ -372,6 +428,33 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.md,
+  },
+
+  exportRow: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.md,
+  },
+
+  exportBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: Spacing.sm + 2,
+  },
+
+  exportBtnIcon: {
+    fontSize: 14,
+  },
+
+  exportBtnText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textSecondary,
   },
 
   chip: {

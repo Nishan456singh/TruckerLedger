@@ -1,21 +1,18 @@
-import ExpenseCard from "@/components/ExpenseCard";
 import {
-  BorderRadius,
-  CategoryMeta,
-  Colors,
-  FontSize,
-  FontWeight,
-  Spacing,
-  type Category,
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Spacing
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
 
 import {
-  getAllExpenses,
-  getCategoryStats,
-  getDashboardStats,
-  type CategoryStat,
+    getAllExpenses,
+    getCategoryStats,
+    getDashboardStats,
+    type CategoryStat,
 } from "@/lib/expenseService";
 
 import type { DashboardStats, Expense } from "@/lib/types";
@@ -27,31 +24,33 @@ import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 
 import {
-  Dimensions,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import Animated, {
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withSpring,
-  withTiming,
+    FadeInDown,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSequence,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 
 import {
-  SafeAreaView,
-  useSafeAreaInsets,
+    SafeAreaView,
+    useSafeAreaInsets,
 } from "react-native-safe-area-context";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+function getCategoryTotal(stats: CategoryStat[], key: string): number {
+  const row = stats.find((item) => item.category === key);
+  return row?.total ?? 0;
+}
 
 function formatCurrency(value: number): string {
   if (value >= 1000) {
@@ -321,6 +320,59 @@ export default function DashboardScreen() {
           />
         </View>
 
+        <View style={styles.monthSummaryCard}>
+          <Text style={styles.monthSummaryTitle}>Monthly Summary</Text>
+
+          <View style={styles.monthSummaryRow}>
+            <Text style={styles.monthSummaryLabel}>This Month</Text>
+            <Text style={styles.monthSummaryValue}>
+              {formatCurrency(stats.monthTotal)}
+            </Text>
+          </View>
+
+          <View style={styles.monthSummaryRow}>
+            <Text style={styles.monthSummaryLabel}>Fuel</Text>
+            <Text style={styles.monthSummarySubValue}>
+              {formatCurrency(getCategoryTotal(categoryStats, "fuel"))}
+            </Text>
+          </View>
+
+          <View style={styles.monthSummaryRow}>
+            <Text style={styles.monthSummaryLabel}>Food</Text>
+            <Text style={styles.monthSummarySubValue}>
+              {formatCurrency(getCategoryTotal(categoryStats, "food"))}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => router.push("/monthly-report")}
+            activeOpacity={0.85}
+            style={styles.reportBtn}
+          >
+            <Text style={styles.reportBtnText}>View Monthly Report</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.toolsRow}>
+          <TouchableOpacity
+            onPress={() => router.push("/trip-profit")}
+            style={styles.toolBtn}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.toolBtnIcon}>🧮</Text>
+            <Text style={styles.toolBtnText}>Trip Profit</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/receipts")}
+            style={styles.toolBtn}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.toolBtnIcon}>🧾</Text>
+            <Text style={styles.toolBtnText}>Receipts</Text>
+          </TouchableOpacity>
+        </View>
+
         {recentExpenses.length === 0 && loaded && (
           <Animated.View
             entering={FadeInDown.delay(500).springify()}
@@ -331,7 +383,7 @@ export default function DashboardScreen() {
               No expenses yet
             </Text>
             <Text style={styles.emptyDesc}>
-              Tap "+ Add Expense" to log your first
+              Tap &quot;+ Add Expense&quot; to log your first
               expense
             </Text>
           </Animated.View>
@@ -387,7 +439,94 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: "row",
     gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+
+  monthSummaryCard: {
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
     marginBottom: Spacing.xl,
+  },
+
+  monthSummaryTitle: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.semibold,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: Spacing.sm,
+  },
+
+  monthSummaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.xs,
+  },
+
+  monthSummaryLabel: {
+    fontSize: FontSize.body,
+    color: Colors.textSecondary,
+  },
+
+  monthSummaryValue: {
+    fontSize: FontSize.section,
+    color: Colors.accent,
+    fontWeight: FontWeight.bold,
+  },
+
+  monthSummarySubValue: {
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+  },
+
+  reportBtn: {
+    marginTop: Spacing.md,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.md,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.sm + 2,
+  },
+
+  reportBtnText: {
+    fontSize: FontSize.caption,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
+  },
+
+  toolsRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+
+  toolBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.xs,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+  },
+
+  toolBtnIcon: {
+    fontSize: 14,
+  },
+
+  toolBtnText: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textSecondary,
   },
 
   statCard: {

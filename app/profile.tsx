@@ -5,88 +5,162 @@ import {
     FontWeight,
     Shadow,
     Spacing,
-} from '@/constants/theme';
-import { useAuth } from '@/lib/auth/AuthContext';
-import { exportExpenses } from '@/lib/expenseService';
-import * as Haptics from 'expo-haptics';
-import { Image } from 'expo-image';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+} from "@/constants/theme";
+import { useAuth } from "@/lib/auth/AuthContext";
+import {
+    exportExpenses,
+    getAllExpenses,
+    getDashboardStats,
+    getReceiptCount,
+} from "@/lib/expenseService";
+import { File, Paths } from "expo-file-system";
+import * as Haptics from "expo-haptics";
+import { Image } from "expo-image";
+import { router, useFocusEffect } from "expo-router";
+import * as Sharing from "expo-sharing";
+import React, { useCallback, useMemo, useState } from "react";
 import {
     Alert,
-    Share,
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
     View,
-} from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 function AvatarInitials({ name }: { name: string }) {
   const initials = name
-    .split(' ')
+    .split(" ")
     .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
-    .join('');
+    .map((w) => w[0]?.toUpperCase() ?? "")
+    .join("");
 
   return (
-    <View style={avatarStyles.circle}>
-      <Text style={avatarStyles.text}>{initials}</Text>
+    <View style={styles.avatarFallback}>
+      <Text style={styles.avatarFallbackText}>{initials}</Text>
     </View>
   );
 }
 
-const avatarStyles = StyleSheet.create({
-  circle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.primary + '30',
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    fontSize: 28,
-    fontWeight: FontWeight.bold,
-    color: Colors.primary,
-  },
-});
+function SectionCard({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>
+        {icon} {title}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue}>{value}</Text>
+    </View>
+  );
+}
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const [photoError, setPhotoError] = useState(false);
 
-  async function handleExport() {
+  const [totalExpenses, setTotalExpenses] = useState(0);
+  const [thisMonth, setThisMonth] = useState(0);
+  const [receiptsScanned, setReceiptsScanned] = useState(0);
+
+  const [exporting, setExporting] = useState(false);
+
+  const displayProvider = useMemo(
+    () => (user?.provider === "apple" ? "Apple" : "Google"),
+    [user?.provider]
+  );
+
+  const loadStats = useCallback(async () => {
+    const [all, dashboard, receiptCount] = await Promise.all([
+      getAllExpenses(),
+      getDashboardStats(),
+      getReceiptCount(),
+    ]);
+
+    const allTotal = all.reduce((sum, expense) => sum + expense.amount, 0);
+
+    setTotalExpenses(allTotal);
+    setThisMonth(dashboard.monthTotal);
+    setReceiptsScanned(receiptCount);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadStats().catch(console.error);
+    }, [loadStats])
+  );
+
+  async function handleExportCsv() {
+    if (exporting) return;
+
+    setExporting(true);
+
     try {
       const csv = await exportExpenses();
-      if (!csv || csv.trim() === 'Date,Category,Amount,Note') {
-        Alert.alert('No Data', 'You have no expenses to export yet.');
+
+      if (!csv || csv.trim() === "Date,Category,Amount,Note") {
+        Alert.alert("No Data", "You have no expenses to export yet.");
         return;
       }
-      await Share.share({
-        message: csv,
-        title: 'TruckLedger — Expense Report',
+
+      const shareAvailable = await Sharing.isAvailableAsync();
+      if (!shareAvailable) {
+        Alert.alert("Not Available", "Sharing is not available on this device.");
+        return;
+      }
+
+      const file = new File(Paths.cache, `truckledger_expenses_${Date.now()}.csv`);
+      await file.write(csv);
+
+      await Sharing.shareAsync(file.uri, {
+        mimeType: "text/csv",
+        dialogTitle: "Export Expenses",
+        UTI: "public.comma-separated-values-text",
       });
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Export failed. Please try again.';
-      Alert.alert('Export Failed', msg);
+      const message =
+        err instanceof Error ? err.message : "Failed to export expenses.";
+      Alert.alert("Export Failed", message);
+    } finally {
+      setExporting(false);
     }
   }
 
-  async function handleSignOut() {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
+  async function handleLogout() {
+    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: 'Sign Out',
-        style: 'destructive',
+        text: "Sign Out",
+        style: "destructive",
         onPress: async () => {
           await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           await logout();
-          router.replace('/login');
+          router.replace("/login");
         },
       },
     ]);
@@ -95,183 +169,125 @@ export default function ProfileScreen() {
   if (!user) return null;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      {/* Header */}
-      <Animated.View entering={FadeInDown.springify()} style={styles.header}>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>‹</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
         <View style={{ width: 36 }} />
-      </Animated.View>
+      </View>
 
-      {/* Avatar + identity */}
-      <Animated.View
-        entering={FadeInDown.delay(80).springify()}
-        style={styles.identityCard}
-      >
-        {user.photo && !photoError ? (
-          <Image
-            source={{ uri: user.photo }}
-            style={styles.avatar}
-            contentFit="cover"
-            onError={() => setPhotoError(true)}
-          />
-        ) : (
-          <AvatarInitials name={user.name} />
-        )}
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.identityCard}>
+          {user.photo && !photoError ? (
+            <Image
+              source={{ uri: user.photo }}
+              style={styles.avatar}
+              contentFit="cover"
+              onError={() => setPhotoError(true)}
+            />
+          ) : (
+            <AvatarInitials name={user.name} />
+          )}
 
-        <View style={styles.identityText}>
-          <Text style={styles.name}>{user.name}</Text>
-          {user.email ? <Text style={styles.email}>{user.email}</Text> : null}
+          <View style={styles.identityTextWrap}>
+            <Text style={styles.name}>{user.name}</Text>
+            {!!user.email && <Text style={styles.email}>{user.email}</Text>}
+          </View>
         </View>
-      </Animated.View>
 
-      {/* Account info rows */}
-      <Animated.View
-        entering={FadeInDown.delay(160).springify()}
-        style={styles.infoCard}
-      >
-        <InfoRow icon="🪪" label="Account ID" value={user.id.slice(0, 16) + '…'} />
-        {user.email ? (
-          <>
-            <View style={styles.divider} />
-            <InfoRow icon="✉️" label="Email" value={user.email} />
-          </>
-        ) : null}
-        <View style={styles.divider} />
-        <InfoRow
-          icon="🔐"
-          label="Auth Provider"
-          value={user.provider === 'apple' ? 'Apple' : 'Google'}
-        />
-      </Animated.View>
+        <SectionCard title="Driver Stats" icon="📊">
+          <Row label="Total Expenses" value={formatCurrency(totalExpenses)} />
+          <Row label="This Month" value={formatCurrency(thisMonth)} />
+          <Row label="Receipts Scanned" value={String(receiptsScanned)} />
+        </SectionCard>
 
-      {/* Export */}
-      <Animated.View
-        entering={FadeInDown.delay(220).springify()}
-        style={styles.exportSection}
-      >
-        <TouchableOpacity
-          style={styles.exportBtn}
-          onPress={handleExport}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.exportIcon}>📤</Text>
-          <Text style={styles.exportText}>Export Expenses (CSV)</Text>
+        <SectionCard title="Tools" icon="🧰">
+          <TouchableOpacity onPress={handleExportCsv} style={styles.toolBtn}>
+            <Text style={styles.toolBtnText}>
+              {exporting ? "Exporting..." : "Export Expenses (CSV)"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/monthly-report")}
+            style={styles.toolBtn}
+          >
+            <Text style={styles.toolBtnText}>Monthly Report</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/trip-profit")}
+            style={styles.toolBtn}
+          >
+            <Text style={styles.toolBtnText}>Trip Profit Calculator</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.push("/receipts")}
+            style={styles.toolBtn}
+          >
+            <Text style={styles.toolBtnText}>Receipt Gallery</Text>
+          </TouchableOpacity>
+        </SectionCard>
+
+        <SectionCard title="Account" icon="🔐">
+          <Row label="Email" value={user.email || "-"} />
+          <Row label="Account ID" value={user.id.slice(0, 16) + "..."} />
+          <Row label="Provider" value={displayProvider} />
+        </SectionCard>
+
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+          <Text style={styles.logoutBtnText}>Logout</Text>
         </TouchableOpacity>
-      </Animated.View>
-
-      {/* Sign out */}
-      <Animated.View
-        entering={FadeInDown.delay(300).springify()}
-        style={styles.signOutSection}
-      >
-        <TouchableOpacity
-          style={styles.signOutBtn}
-          onPress={handleSignOut}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.signOutIcon}>↪</Text>
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </TouchableOpacity>
-      </Animated.View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
-
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: string;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={infoRowStyles.row}>
-      <Text style={infoRowStyles.icon}>{icon}</Text>
-      <View style={infoRowStyles.text}>
-        <Text style={infoRowStyles.label}>{label}</Text>
-        <Text style={infoRowStyles.value} numberOfLines={1}>
-          {value}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-const infoRowStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-  },
-  icon: { fontSize: 18 },
-  text: { flex: 1 },
-  label: {
-    fontSize: FontSize.caption,
-    color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 2,
-  },
-  value: {
-    fontSize: FontSize.body,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.medium,
-  },
-});
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: Colors.background,
   },
-
-  // Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
   },
   backBtn: {
     width: 36,
     height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   backText: {
     fontSize: 28,
     color: Colors.textPrimary,
     fontWeight: FontWeight.bold,
-    lineHeight: 32,
   },
   headerTitle: {
-    flex: 1,
     fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
-    textAlign: 'center',
+    fontWeight: FontWeight.bold,
   },
-
-  // Identity
+  content: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xxl,
+    gap: Spacing.md,
+  },
   identityCard: {
-    margin: Spacing.xl,
-    marginTop: Spacing.sm,
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.xl,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
     ...Shadow.card,
   },
   avatar: {
@@ -279,88 +295,96 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: Colors.primary + '60',
+    borderColor: Colors.primary + "60",
   },
-  identityText: {
+  avatarFallback: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Colors.primary + "25",
+    borderWidth: 2,
+    borderColor: Colors.primary + "60",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarFallbackText: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.primary,
+  },
+  identityTextWrap: {
     flex: 1,
-    gap: 4,
   },
   name: {
     fontSize: FontSize.section - 2,
-    fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
   },
   email: {
+    marginTop: 2,
     fontSize: FontSize.caption,
     color: Colors.textSecondary,
   },
-
-  // Info card
-  infoCard: {
-    marginHorizontal: Spacing.xl,
+  card: {
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
     borderWidth: 1,
     borderColor: Colors.border,
-    overflow: 'hidden',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
     ...Shadow.card,
   },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: Spacing.lg,
-  },
-
-  // Export
-  exportSection: {
-    marginHorizontal: Spacing.xl,
-    marginTop: Spacing.lg,
-  },
-  exportBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  exportIcon: {
-    fontSize: 18,
-  },
-  exportText: {
-    fontSize: FontSize.body,
+  cardTitle: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
     fontWeight: FontWeight.semibold,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: Spacing.sm,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: Spacing.xs + 2,
+  },
+  rowLabel: {
+    fontSize: FontSize.body,
+    color: Colors.textSecondary,
+  },
+  rowValue: {
+    fontSize: FontSize.body,
     color: Colors.textPrimary,
-    letterSpacing: 0.3,
-  },
-
-  // Sign out
-  signOutSection: {
-    margin: Spacing.xl,
-    marginTop: Spacing.xxl,
-  },
-  signOutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.danger + '18',
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.danger + '40',
-  },
-  signOutIcon: {
-    fontSize: 18,
-    color: Colors.danger,
-  },
-  signOutText: {
-    fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
+    maxWidth: "55%",
+    textAlign: "right",
+  },
+  toolBtn: {
+    backgroundColor: Colors.cardAlt,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingVertical: Spacing.sm + 2,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  toolBtnText: {
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.medium,
+  },
+  logoutBtn: {
+    marginTop: Spacing.sm,
+    backgroundColor: Colors.danger + "1F",
+    borderWidth: 1,
+    borderColor: Colors.danger + "55",
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoutBtnText: {
+    fontSize: FontSize.body,
     color: Colors.danger,
-    letterSpacing: 0.3,
+    fontWeight: FontWeight.bold,
   },
 });
