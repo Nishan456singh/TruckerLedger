@@ -188,7 +188,12 @@ export default function MonthlyReportScreen() {
                   </View>
 
                   <View style={styles.barTrack}>
-                    <View style={[styles.barFill, { width: widthPct, backgroundColor: meta.color }]} />
+                    <View
+                      style={[
+                        styles.barFill,
+                        { width: widthPct, backgroundColor: meta.color },
+                      ]}
+                    />
                   </View>
                 </View>
               );
