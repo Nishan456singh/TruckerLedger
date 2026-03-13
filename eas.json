@@ -6,13 +6,28 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://sfo.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "69abde4e001a67d788ab",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "850662472442-fjuqtidumh7kkf08nenu0ie5ota7v32j.apps.googleusercontent.com"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://sfo.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "69abde4e001a67d788ab",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "850662472442-fjuqtidumh7kkf08nenu0ie5ota7v32j.apps.googleusercontent.com"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_APPWRITE_ENDPOINT": "https://sfo.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_APPWRITE_PROJECT_ID": "69abde4e001a67d788ab",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "850662472442-fjuqtidumh7kkf08nenu0ie5ota7v32j.apps.googleusercontent.com"
+      }
     }
   },
   "submit": {
