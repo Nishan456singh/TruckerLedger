@@ -95,14 +95,6 @@ function RootLayoutInner() {
           }}
         />
 
-        <Stack.Screen
-          name="scan-receipt"
-          options={{
-            presentation: "fullScreenModal",
-            animation: "slide_from_bottom",
-          }}
-        />
-
         <Stack.Screen name="expense-history" />
 
         <Stack.Screen name="monthly-summary" />

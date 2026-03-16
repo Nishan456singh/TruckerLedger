@@ -1,181 +1,94 @@
-import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-} from "@/constants/theme";
-
-import { addExpense } from "@/lib/expenseService";
-
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { Directory, File, Paths } from "expo-file-system";
-
-import * as Haptics from "expo-haptics";
-
 import { router } from "expo-router";
-
 import React, { useRef, useState } from "react";
-
 import {
-  ActivityIndicator,
-  Alert,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
-
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { extractReceiptText } from "../lib/receiptOcr";
 
 export default function ScanReceiptScreen() {
-  const insets = useSafeAreaInsets();
-
+  const cameraRef = useRef<any>(null);
   const [permission, requestPermission] = useCameraPermissions();
-  const [captured, setCaptured] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const cameraRef = useRef<CameraView>(null);
-
-  const flashScale = useSharedValue(0);
-  const shutterScale = useSharedValue(1);
-
-  const flashStyle = useAnimatedStyle(() => ({
-    opacity: flashScale.value,
-  }));
-
-  const shutterStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: shutterScale.value }],
-  }));
+  const [isCapturing, setIsCapturing] = useState(false);
 
   async function handleCapture() {
-    if (!cameraRef.current || captured) return;
-
-    shutterScale.value = withSequence(
-      withTiming(0.9, { duration: 80 }),
-      withTiming(1, { duration: 120 })
-    );
-
-    flashScale.value = withSequence(
-      withTiming(0.7, { duration: 60 }),
-      withTiming(0, { duration: 200 })
-    );
-
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-
-    setCaptured(true);
+    if (!cameraRef.current) return;
+    if (isCapturing) return;
 
     try {
+      setIsCapturing(true);
+
       const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.85,
+        quality: 0.8,
       });
 
-      if (!photo?.uri) {
-        setCaptured(false);
-        return;
-      }
+      console.log("Photo captured:", photo.uri);
 
-      setSaving(true);
+      // OCR STEP
+      const text = await extractReceiptText(photo.uri);
 
-      // ─── Create receipts directory ─────────────────────
+      console.log("OCR TEXT:", text);
 
-      const receiptsDir = new Directory(Paths.document, "receipts");
-
-    if (!receiptsDir.exists) {
-  await receiptsDir.create({ intermediates: true });
-}
-
-      const filename = `receipt_${Date.now()}.jpg`;
-
-      const sourceFile = new File(photo.uri);
-      const destFile = new File(receiptsDir, filename);
-
-      await sourceFile.copy(destFile);
-
-      const destUri = destFile.uri;
-
-      // ─── Create expense record ─────────────────────
-
-      const today = new Date().toISOString().split("T")[0];
-
-      const id = await addExpense({
-        amount: 0,
-        category: "other",
-        note: "Scanned receipt — tap to edit",
-        date: today,
-        receipt_uri: destUri,
+      // Navigate to expense screen with receipt data
+      router.push({
+        pathname: "/add-expense",
+        params: {
+          receiptUri: photo.uri,
+          ocrText: text,
+        },
       });
 
-      await Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Success
-      );
-
-      router.replace({
-        pathname: "/expense-detail",
-        params: { id, fromScan: "1" },
-      });
-    } catch (err) {
-      console.error(err);
-
-      Alert.alert(
-        "Error",
-        "Failed to save receipt. Please try again."
-      );
-
-      setCaptured(false);
-      setSaving(false);
+    } catch (error) {
+      console.error("Failed to capture or scan receipt:", error);
+    } finally {
+      setIsCapturing(false);
     }
   }
 
   if (!permission) {
     return (
-      <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.permissionContainer}>
+          <Text style={styles.permissionTitle}>
+            Loading camera permissions...
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   if (!permission.granted) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safeArea}>
         <View style={styles.permissionContainer}>
-          <Text style={styles.permissionIcon}>📷</Text>
-
           <Text style={styles.permissionTitle}>
-            Camera Access Needed
+            Camera access required
           </Text>
 
-          <Text style={styles.permissionDesc}>
-            TruckerLedger needs camera access to scan receipts.
+          <Text style={styles.permissionText}>
+            Enable camera permission to scan your receipts.
           </Text>
 
           <TouchableOpacity
-            style={styles.permissionBtn}
+            style={styles.permissionButton}
             onPress={requestPermission}
           >
-            <Text style={styles.permissionBtnText}>
-              Allow Camera Access
+            <Text style={styles.permissionButtonText}>
+              Grant Access
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={styles.cancelButton}
             onPress={() => router.back()}
-            style={styles.cancelLink}
           >
-            <Text style={styles.cancelLinkText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>
+              Cancel
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -183,233 +96,154 @@ export default function ScanReceiptScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <CameraView
-        ref={cameraRef}
-        style={StyleSheet.absoluteFill}
-        facing="back"
-      />
-
-      <Animated.View
-        style={[StyleSheet.absoluteFill, styles.flashOverlay, flashStyle]}
-        pointerEvents="none"
-      />
-
-      <Animated.View
-        entering={FadeIn.duration(400)}
-        style={styles.viewfinderWrapper}
-        pointerEvents="none"
-      >
-        <View style={styles.viewfinder}>
-          <View style={[styles.corner, styles.cornerTL]} />
-          <View style={[styles.corner, styles.cornerTR]} />
-          <View style={[styles.corner, styles.cornerBL]} />
-          <View style={[styles.corner, styles.cornerBR]} />
-        </View>
-
-        <Text style={styles.hint}>
-          Position receipt within the frame
-        </Text>
-      </Animated.View>
-
-      <SafeAreaView style={styles.topBar}>
-        <Animated.View
-          entering={FadeInDown.delay(100)}
-          style={styles.topBarContent}
-        >
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.topBar}>
           <TouchableOpacity
+            style={styles.backButton}
             onPress={() => router.back()}
-            style={styles.topBarBtn}
           >
-            <Text style={styles.topBarBtnText}>✕</Text>
+            <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
 
-          <Text style={styles.screenTitle}>Scan Receipt</Text>
+          <Text style={styles.title}>Scan Receipt</Text>
 
-          <View style={{ width: 40 }} />
-        </Animated.View>
-      </SafeAreaView>
+          <View style={styles.topBarSpacer} />
+        </View>
 
-      <Animated.View
-        entering={FadeInDown.delay(200)}
-        style={[
-          styles.shutterContainer,
-          { bottom: 20 + insets.bottom },
-        ]}
-      >
-        {saving ? (
-          <ActivityIndicator
-            size="large"
-            color={Colors.textPrimary}
+        <View style={styles.cameraWrapper}>
+          <CameraView
+            ref={cameraRef}
+            style={styles.camera}
+            facing="back"
+            mode="picture"
           />
-        ) : (
-          <Animated.View style={shutterStyle}>
-            <TouchableOpacity
-              style={styles.shutterOuter}
-              onPress={handleCapture}
-              activeOpacity={0.9}
-              disabled={captured}
-            >
-              <View style={styles.shutterInner} />
-            </TouchableOpacity>
-          </Animated.View>
-        )}
+        </View>
 
-        <Text style={styles.shutterLabel}>
-          {saving ? "Saving receipt…" : "Tap to capture"}
-        </Text>
-      </Animated.View>
-    </View>
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={styles.captureButton}
+            onPress={handleCapture}
+            disabled={isCapturing}
+          >
+            <Text style={styles.captureButtonText}>
+              {isCapturing ? "Scanning..." : "Capture Receipt"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.cancelButtonText}>
+              Cancel
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
-const CORNER_SIZE = 28;
-const CORNER_THICKNESS = 3;
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#000" },
-
-  center: {
+  safeArea: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: "#0B1220",
   },
-
-  safe: { flex: 1, backgroundColor: Colors.background },
-
-  flashOverlay: { backgroundColor: "#fff" },
-
-  viewfinderWrapper: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.xl,
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
-
-  viewfinder: { width: 280, height: 380 },
-
-  corner: {
-    position: "absolute",
-    width: CORNER_SIZE,
-    height: CORNER_SIZE,
-    borderColor: Colors.accent,
-  },
-
-  cornerTL: {
-    top: 0,
-    left: 0,
-    borderTopWidth: CORNER_THICKNESS,
-    borderLeftWidth: CORNER_THICKNESS,
-  },
-
-  cornerTR: {
-    top: 0,
-    right: 0,
-    borderTopWidth: CORNER_THICKNESS,
-    borderRightWidth: CORNER_THICKNESS,
-  },
-
-  cornerBL: {
-    bottom: 0,
-    left: 0,
-    borderBottomWidth: CORNER_THICKNESS,
-    borderLeftWidth: CORNER_THICKNESS,
-  },
-
-  cornerBR: {
-    bottom: 0,
-    right: 0,
-    borderBottomWidth: CORNER_THICKNESS,
-    borderRightWidth: CORNER_THICKNESS,
-  },
-
-  hint: {
-    fontSize: FontSize.caption,
-    color: "rgba(255,255,255,0.7)",
-  },
-
-  topBar: { position: "absolute", top: 0, left: 0, right: 0 },
-
-  topBarContent: {
+  topBar: {
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    padding: Spacing.lg,
+    marginBottom: 16,
   },
-
-  topBarBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.full,
-    backgroundColor: "rgba(0,0,0,0.5)",
+  backButton: {
+    minWidth: 56,
+  },
+  backButtonText: {
+    color: "#E2E8F0",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  topBarSpacer: {
+    minWidth: 56,
+  },
+  title: {
+    color: "#F8FAFC",
+    fontSize: 22,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  cameraWrapper: {
+    flex: 1,
+    overflow: "hidden",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#1E293B",
+    backgroundColor: "#020617",
+  },
+  camera: {
+    flex: 1,
+  },
+  bottomBar: {
+    marginTop: 16,
+  },
+  captureButton: {
+    backgroundColor: "#16A34A",
+    borderRadius: 14,
+    paddingVertical: 16,
     alignItems: "center",
-    justifyContent: "center",
   },
-
-  topBarBtnText: { color: "#fff", fontWeight: FontWeight.semibold },
-
-  screenTitle: { color: "#fff", fontWeight: FontWeight.bold },
-
-  shutterContainer: {
-    position: "absolute",
-    alignSelf: "center",
-    alignItems: "center",
+  captureButtonText: {
+    color: "#F8FAFC",
+    fontSize: 16,
+    fontWeight: "700",
   },
-
-  shutterOuter: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 4,
-    borderColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  shutterInner: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    backgroundColor: "#fff",
-  },
-
-  shutterLabel: {
+  cancelButton: {
     marginTop: 10,
-    color: "rgba(255,255,255,0.8)",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#334155",
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "#0F172A",
   },
-
+  cancelButtonText: {
+    color: "#CBD5E1",
+    fontSize: 15,
+    fontWeight: "600",
+  },
   permissionContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: Spacing.xxl,
+    paddingHorizontal: 24,
   },
-
-  permissionIcon: { fontSize: 56 },
-
   permissionTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    color: "#F8FAFC",
+    fontSize: 20,
+    fontWeight: "700",
+  },
+  permissionText: {
+    marginTop: 8,
+    color: "#94A3B8",
+    fontSize: 15,
     textAlign: "center",
   },
-
-  permissionDesc: {
-    textAlign: "center",
-    color: Colors.textSecondary,
-    marginVertical: 10,
+  permissionButton: {
+    marginTop: 18,
+    backgroundColor: "#2563EB",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
   },
-
-  permissionBtn: {
-    backgroundColor: Colors.primary,
-    padding: 16,
-    borderRadius: BorderRadius.full,
-    marginTop: 20,
-    ...Shadow.button,
+  permissionButtonText: {
+    color: "#F8FAFC",
+    fontSize: 15,
+    fontWeight: "700",
   },
-
-  permissionBtnText: { color: "#fff", fontWeight: FontWeight.bold },
-
-  cancelLink: { marginTop: 10 },
-
-  cancelLinkText: { color: Colors.textSecondary },
 });

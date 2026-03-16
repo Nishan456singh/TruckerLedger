@@ -21,16 +21,19 @@ export async function addExpense(input: ExpenseInput): Promise<number> {
   if (WEB) throw new Error(WEB_ERR);
 
   const db = await getDatabase();
+  const receiptPath = input.receipt_image ?? input.receipt_uri ?? null;
 
   const result = await db.runAsync(
-    `INSERT INTO expenses (amount, category, note, date, receipt_uri)
-     VALUES (?, ?, ?, ?, ?)`,
+    `INSERT INTO expenses (amount, category, note, date, receipt_uri, receipt_image, ocr_text)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       input.amount,
       input.category,
       input.note ?? "",
       input.date,
-      input.receipt_uri ?? null,
+      receiptPath,
+      receiptPath,
+      input.ocr_text ?? null,
     ]
   );
 
@@ -45,7 +48,17 @@ export async function getAllExpenses(): Promise<Expense[]> {
   const db = await getDatabase();
 
   const rows = await db.getAllAsync<Expense>(
-    `SELECT * FROM expenses
+     `SELECT
+       id,
+       amount,
+       category,
+       note,
+       date,
+       COALESCE(receipt_uri, receipt_image) AS receipt_uri,
+       COALESCE(receipt_image, receipt_uri) AS receipt_image,
+       ocr_text,
+       created_at
+      FROM expenses
      ORDER BY date DESC, created_at DESC`
   );
 
@@ -58,7 +71,18 @@ export async function getExpenseById(id: number): Promise<Expense | null> {
   const db = await getDatabase();
 
   const row = await db.getFirstAsync<Expense>(
-    `SELECT * FROM expenses WHERE id = ?`,
+    `SELECT
+       id,
+       amount,
+       category,
+       note,
+       date,
+       COALESCE(receipt_uri, receipt_image) AS receipt_uri,
+       COALESCE(receipt_image, receipt_uri) AS receipt_image,
+       ocr_text,
+       created_at
+     FROM expenses
+     WHERE id = ?`,
     [id]
   );
 
@@ -74,7 +98,16 @@ export async function getExpensesByDateRange(
   const db = await getDatabase();
 
   const rows = await db.getAllAsync<Expense>(
-    `SELECT *
+    `SELECT
+       id,
+       amount,
+       category,
+       note,
+       date,
+       COALESCE(receipt_uri, receipt_image) AS receipt_uri,
+       COALESCE(receipt_image, receipt_uri) AS receipt_image,
+       ocr_text,
+       created_at
      FROM expenses
      WHERE date >= ? AND date <= ?
      ORDER BY date DESC, created_at DESC`,
@@ -166,9 +199,21 @@ export async function updateExpense(
     values.push(input.date);
   }
 
-  if (input.receipt_uri !== undefined) {
+  if (input.receipt_uri !== undefined || input.receipt_image !== undefined) {
+    const receiptPath =
+      input.receipt_image !== undefined
+        ? input.receipt_image
+        : input.receipt_uri;
+
     fields.push("receipt_uri = ?");
-    values.push(input.receipt_uri ?? null);
+    fields.push("receipt_image = ?");
+    values.push(receiptPath ?? null);
+    values.push(receiptPath ?? null);
+  }
+
+  if (input.ocr_text !== undefined) {
+    fields.push("ocr_text = ?");
+    values.push(input.ocr_text ?? null);
   }
 
   if (!fields.length) return;
@@ -269,7 +314,16 @@ export async function getMonthlyExpenses(
   const { fromDate, toDate } = buildMonthRange(month, year);
 
   const rows = await db.getAllAsync<Expense>(
-    `SELECT *
+    `SELECT
+       id,
+       amount,
+       category,
+       note,
+       date,
+       COALESCE(receipt_uri, receipt_image) AS receipt_uri,
+       COALESCE(receipt_image, receipt_uri) AS receipt_image,
+       ocr_text,
+       created_at
      FROM expenses
      WHERE date >= ? AND date <= ?
      ORDER BY date DESC, created_at DESC`,

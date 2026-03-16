@@ -6,6 +6,25 @@ let schemaReady = false;
 
 // ─── Apply schema migrations ─────────────────────────
 
+async function ensureColumn(
+  database: SQLite.SQLiteDatabase,
+  table: string,
+  column: string,
+  definition: string
+): Promise<void> {
+  const columns = await database.getAllAsync<{ name: string }>(
+    `PRAGMA table_info(${table});`
+  );
+
+  const exists = columns.some((row) => row.name === column);
+
+  if (!exists) {
+    await database.execAsync(
+      `ALTER TABLE ${table} ADD COLUMN ${column} ${definition};`
+    );
+  }
+}
+
 async function applySchema(database: SQLite.SQLiteDatabase): Promise<void> {
   try {
     await database.execAsync("PRAGMA journal_mode = WAL;");
@@ -18,9 +37,14 @@ async function applySchema(database: SQLite.SQLiteDatabase): Promise<void> {
         note TEXT DEFAULT '',
         date TEXT NOT NULL,
         receipt_uri TEXT,
+        receipt_image TEXT,
+        ocr_text TEXT,
         created_at TEXT DEFAULT (datetime('now'))
       );
     `);
+
+    await ensureColumn(database, "expenses", "receipt_image", "TEXT");
+    await ensureColumn(database, "expenses", "ocr_text", "TEXT");
 
     await database.execAsync(
       "CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);"

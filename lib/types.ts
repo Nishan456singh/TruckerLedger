@@ -17,6 +17,8 @@ export interface Expense {
   note: string;
   date: string; // format: YYYY-MM-DD
   receipt_uri: string | null;
+  receipt_image: string | null;
+  ocr_text: string | null;
   created_at: string;
 }
 
@@ -28,6 +30,8 @@ export interface ExpenseInput {
   note?: string;
   date: string;
   receipt_uri?: string | null;
+  receipt_image?: string | null;
+  ocr_text?: string | null;
 }
 
 // ─── Partial update for editing an expense ─────────
@@ -38,6 +42,8 @@ export interface ExpenseUpdate {
   note?: string;
   date?: string;
   receipt_uri?: string | null;
+  receipt_image?: string | null;
+  ocr_text?: string | null;
 }
 
 // ─── Dashboard statistics ──────────────────────────

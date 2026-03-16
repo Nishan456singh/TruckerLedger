@@ -1,0 +1,9 @@
+{
+  "name": "receipt-ai-function",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

@@ -1,4 +1,4 @@
-import { Client, Account, OAuthProvider } from "appwrite";
+import { Account, Client, Functions, OAuthProvider } from "appwrite";
 
 // ─── Appwrite Configuration ───────────────────────
 
@@ -15,6 +15,7 @@ export const client = new Client()
 // ─── Services ─────────────────────────────────────
 
 export const account = new Account(client);
+export const appwriteFunctions = new Functions(client);
 
 // Re-export OAuth provider enum
 export { OAuthProvider };

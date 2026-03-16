@@ -3,21 +3,21 @@ import PrimaryButton from "@/components/PrimaryButton";
 import ReceiptPreview from "@/components/ReceiptPreview";
 
 import {
-  BorderRadius,
-  CategoryMeta,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
+    BorderRadius,
+    CategoryMeta,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
 } from "@/constants/theme";
 
 import type { Category, Expense } from "@/lib/types";
 
 import {
-  deleteExpense,
-  getExpenseById,
-  updateExpense,
+    deleteExpense,
+    getExpenseById,
+    updateExpense,
 } from "@/lib/expenseService";
 
 import * as Haptics from "expo-haptics";
@@ -28,16 +28,16 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -223,6 +223,12 @@ export default function ExpenseDetailScreen() {
   const meta =
     CategoryMeta[expense.category as Category] || CategoryMeta.other;
 
+  const isScannedEntry = params.fromScan === "1" || !!expense.ocr_text;
+  const detectedVendor = note.startsWith("Vendor:")
+    ? note.replace("Vendor:", "").trim()
+    : "";
+  const editCategoryMeta = CategoryMeta[category] || CategoryMeta.other;
+
   if (!editing) {
     return (
       <SafeAreaView style={styles.safe}>
@@ -294,6 +300,37 @@ export default function ExpenseDetailScreen() {
       >
         <ScrollView contentContainerStyle={styles.editContent}>
           <Text style={styles.viewTitle}>Edit Expense</Text>
+
+          {isScannedEntry && (
+            <Animated.View entering={FadeIn.duration(220)} style={styles.detectedCard}>
+              <Text style={styles.detectedTitle}>Detected fields</Text>
+              <Text style={styles.detectedHint}>Review and edit before saving.</Text>
+
+              <View style={styles.detectedRow}>
+                <Text style={styles.detectedLabel}>Vendor</Text>
+                <Text style={styles.detectedValue}>{detectedVendor || "-"}</Text>
+              </View>
+
+              <View style={styles.detectedRow}>
+                <Text style={styles.detectedLabel}>Amount</Text>
+                <Text style={styles.detectedValue}>
+                  {Number(amount) > 0 ? formatCurrency(Number(amount)) : "-"}
+                </Text>
+              </View>
+
+              <View style={styles.detectedRow}>
+                <Text style={styles.detectedLabel}>Category</Text>
+                <Text style={styles.detectedValue}>
+                  {editCategoryMeta.icon} {editCategoryMeta.label}
+                </Text>
+              </View>
+
+              <View style={styles.detectedRow}>
+                <Text style={styles.detectedLabel}>Date</Text>
+                <Text style={styles.detectedValue}>{formatDateDisplay(date)}</Text>
+              </View>
+            </Animated.View>
+          )}
 
           <View style={styles.amountContainer}>
             <Text style={styles.currencySign}>$</Text>
@@ -391,6 +428,45 @@ const styles = StyleSheet.create({
   modalCloseText: { color: "#fff", fontSize: 18 },
 
   editContent: { padding: Spacing.xl, gap: Spacing.lg },
+
+  detectedCard: {
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.lg,
+    gap: Spacing.sm,
+    ...Shadow.button,
+  },
+
+  detectedTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+
+  detectedHint: {
+    fontSize: FontSize.caption,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+  },
+
+  detectedRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  detectedLabel: {
+    fontSize: FontSize.caption,
+    color: Colors.textSecondary,
+  },
+
+  detectedValue: {
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+  },
 
   amountContainer: {
     flexDirection: "row",
