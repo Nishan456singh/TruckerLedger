@@ -1,28 +1,23 @@
+import HighContrastCard from "@/components/HighContrastCard";
 import {
     BorderRadius,
     Colors,
     FontSize,
     FontWeight,
-    Spacing
+    Shadow,
+    Spacing,
 } from "@/constants/theme";
-
+import { getBusinessInsights, type AiInsightResult } from "@/lib/ai/insightsAI";
 import { useAuth } from "@/lib/auth/AuthContext";
-
 import {
     getAllExpenses,
-    getCategoryStats,
     getDashboardStats,
-    type CategoryStat,
+    getMonthlyTotal,
 } from "@/lib/expenseService";
-
+import { getWeeklyTripSnapshot } from "@/lib/tripService";
 import type { DashboardStats, Expense } from "@/lib/types";
-
-import * as Haptics from "expo-haptics";
-
-import { router, useFocusEffect } from "expo-router";
-
-import React, { useCallback, useEffect, useState } from "react";
-
+import { router, useFocusEffect, type Href } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
     RefreshControl,
     ScrollView,
@@ -31,32 +26,9 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-
-import Animated, {
-    FadeInDown,
-    useAnimatedStyle,
-    useSharedValue,
-    withRepeat,
-    withSequence,
-    withSpring,
-    withTiming,
-} from "react-native-reanimated";
-
-import {
-    SafeAreaView,
-    useSafeAreaInsets,
-} from "react-native-safe-area-context";
-
-function getCategoryTotal(stats: CategoryStat[], key: string): number {
-  const row = stats.find((item) => item.category === key);
-  return row?.total ?? 0;
-}
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function formatCurrency(value: number): string {
-  if (value >= 1000) {
-    return `$${(value / 1000).toFixed(1)}k`;
-  }
-
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -65,141 +37,26 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function StatCard({
+function QuickAction({
   label,
-  amount,
-  count,
-  index,
-  highlight,
+  icon,
+  onPress,
 }: {
   label: string;
-  amount: number;
-  count: number;
-  index: number;
-  highlight?: boolean;
+  icon: string;
+  onPress: () => void;
 }) {
   return (
-    <Animated.View
-      entering={FadeInDown.delay(index * 120).springify()}
-      style={[
-        styles.statCard,
-        highlight && styles.statCardHighlight,
-      ]}
-    >
-      <Text style={styles.statLabel}>{label}</Text>
-
-      <Text
-        style={[
-          styles.statAmount,
-          highlight && styles.statAmountHighlight,
-        ]}
-      >
-        {formatCurrency(amount)}
-      </Text>
-
-      <Text style={styles.statCount}>
-        {count} {count === 1 ? "expense" : "expenses"}
-      </Text>
-    </Animated.View>
-  );
-}
-
-function GreetingBanner({ firstName }: { firstName?: string }) {
-  const hour = new Date().getHours();
-
-  const greeting =
-    hour < 12
-      ? "Good morning"
-      : hour < 17
-      ? "Good afternoon"
-      : "Good evening";
-
-  const displayName = firstName ? `, ${firstName}` : "";
-
-  return (
-    <Animated.View entering={FadeInDown.springify()}>
-      <Text style={styles.greeting}>
-        {greeting}
-        {displayName} 👋
-      </Text>
-
-      <Text style={styles.greetingSub}>
-        {new Date().toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        })}
-      </Text>
-    </Animated.View>
-  );
-}
-
-function FABButton() {
-  const insets = useSafeAreaInsets();
-
-  const scale = useSharedValue(1);
-  const glow = useSharedValue(1);
-
-  useEffect(() => {
-    glow.value = withRepeat(
-      withSequence(
-        withTiming(1.06, { duration: 1800 }),
-        withTiming(1, { duration: 1800 })
-      ),
-      -1
-    );
-  }, []);
-
-  const glowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: glow.value }],
-    opacity: (glow.value - 1) * 6 + 0.5,
-  }));
-
-  const fabStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  async function handlePress() {
-    scale.value = withSpring(0.9, {}, () => {
-      scale.value = withSpring(1);
-    });
-
-    await Haptics.impactAsync(
-      Haptics.ImpactFeedbackStyle.Heavy
-    );
-
-    router.push("/add-expense");
-  }
-
-  return (
-    <View
-      style={[
-        styles.fabContainer,
-        { bottom: Spacing.lg + insets.bottom },
-      ]}
-    >
-      <Animated.View style={[styles.fabGlow, glowStyle]} />
-
-      <Animated.View style={fabStyle}>
-        <TouchableOpacity
-          onPress={handlePress}
-          activeOpacity={1}
-          style={styles.fab}
-        >
-          <Text style={styles.fabIcon}>+</Text>
-          <Text style={styles.fabLabel}>Add Expense</Text>
-        </TouchableOpacity>
-      </Animated.View>
-    </View>
+    <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.85}>
+      <Text style={styles.quickActionIcon}>{icon}</Text>
+      <Text style={styles.quickActionLabel}>{label}</Text>
+    </TouchableOpacity>
   );
 }
 
 export default function DashboardScreen() {
   const { user } = useAuth();
-  const insets = useSafeAreaInsets();
-
-  const firstName = user?.name?.split(" ")[0];
-
+  const [refreshing, setRefreshing] = useState(false);
   const [stats, setStats] = useState<DashboardStats>({
     todayTotal: 0,
     weekTotal: 0,
@@ -208,56 +65,66 @@ export default function DashboardScreen() {
     weekCount: 0,
     monthCount: 0,
   });
+  const [weeklySnapshot, setWeeklySnapshot] = useState({
+    income: 0,
+    fuel: 0,
+    otherExpenses: 0,
+    profit: 0,
+  });
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
+  const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
+  const [aiInsight, setAiInsight] = useState<AiInsightResult | null>(null);
 
-  const [recentExpenses, setRecentExpenses] = useState<
-    Expense[]
-  >([]);
+  const firstName = user?.name?.split(" ")[0] ?? "Driver";
 
-  const [categoryStats, setCategoryStats] = useState<
-    CategoryStat[]
-  >([]);
+  const loadDashboard = useCallback(async () => {
+    const now = new Date();
 
-  const [refreshing, setRefreshing] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+    const [dashboardStats, allExpenses, weeklyTripData, monthlyTotal] = await Promise.all([
+      getDashboardStats(),
+      getAllExpenses(),
+      getWeeklyTripSnapshot(),
+      getMonthlyTotal(now.getMonth() + 1, now.getFullYear()),
+    ]);
 
-  async function loadData() {
-    const [statsData, expenses, catStats] =
-      await Promise.all([
-        getDashboardStats(),
-        getAllExpenses(),
-        getCategoryStats(),
-      ]);
+    setStats(dashboardStats);
+    setWeeklySnapshot(weeklyTripData);
+    setMonthlyExpenses(monthlyTotal);
+    setRecentExpenses(allExpenses.slice(0, 6));
 
-    setStats(statsData);
-    setRecentExpenses(expenses.slice(0, 5));
-    setCategoryStats(catStats);
-    setLoaded(true);
-  }
+    const insight = await getBusinessInsights({
+      todayTotal: dashboardStats.todayTotal,
+      weekTotal: dashboardStats.weekTotal,
+      monthTotal: dashboardStats.monthTotal,
+      weekCount: dashboardStats.weekCount,
+      monthCount: dashboardStats.monthCount,
+      weeklyIncome: weeklyTripData.income,
+      weeklyFuel: weeklyTripData.fuel,
+      weeklyOtherExpenses: weeklyTripData.otherExpenses,
+      weeklyProfit: weeklyTripData.profit,
+    });
 
-  useEffect(() => {
-    loadData().catch(console.error);
+    setAiInsight(insight);
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      loadData().catch(console.error);
-    }, [])
+      loadDashboard().catch(console.error);
+    }, [loadDashboard])
   );
 
   async function handleRefresh() {
     setRefreshing(true);
-
-    await loadData().catch(console.error);
-
+    await loadDashboard().catch(console.error);
     setRefreshing(false);
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top"]}>
+    <SafeAreaView style={styles.safe}>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
+        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -267,132 +134,135 @@ export default function DashboardScreen() {
         }
       >
         <View style={styles.header}>
-          <GreetingBanner firstName={firstName} />
+          <View>
+            <Text style={styles.greeting}>Hello, {firstName}</Text>
+            <Text style={styles.subtitle}>Keep your truck business on track.</Text>
+          </View>
 
-          <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => router.push("/profile")} style={styles.profileBtn}>
+            <Text style={styles.profileBtnText}>{firstName.slice(0, 1).toUpperCase()}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.summaryRow}>
+          <HighContrastCard style={styles.summaryCard}>
+            <Text style={styles.cardLabel}>Today Expenses</Text>
+            <Text style={styles.cardValue}>{formatCurrency(stats.todayTotal)}</Text>
+          </HighContrastCard>
+
+          <HighContrastCard style={styles.summaryCard}>
+            <Text style={styles.cardLabel}>Monthly Expenses</Text>
+            <Text style={styles.cardValue}>{formatCurrency(monthlyExpenses)}</Text>
+          </HighContrastCard>
+        </View>
+
+        <HighContrastCard style={styles.snapshotCard}>
+          <Text style={styles.snapshotTitle}>Weekly Snapshot</Text>
+
+          <View style={styles.snapshotRow}>
+            <Text style={styles.snapshotLabel}>Income</Text>
+            <Text style={styles.snapshotValue}>{formatCurrency(weeklySnapshot.income)}</Text>
+          </View>
+
+          <View style={styles.snapshotRow}>
+            <Text style={styles.snapshotLabel}>Fuel Cost</Text>
+            <Text style={styles.snapshotValue}>{formatCurrency(weeklySnapshot.fuel)}</Text>
+          </View>
+
+          <View style={styles.snapshotRow}>
+            <Text style={styles.snapshotLabel}>Other Expenses</Text>
+            <Text style={styles.snapshotValue}>{formatCurrency(weeklySnapshot.otherExpenses)}</Text>
+          </View>
+
+          <View style={styles.snapshotDivider} />
+
+          <View style={styles.snapshotRow}>
+            <Text style={styles.snapshotProfitLabel}>Profit</Text>
+            <Text
+              style={[
+                styles.snapshotProfitValue,
+                { color: weeklySnapshot.profit >= 0 ? Colors.accent : Colors.danger },
+              ]}
+            >
+              {formatCurrency(weeklySnapshot.profit)}
+            </Text>
+          </View>
+        </HighContrastCard>
+
+        {aiInsight ? (
+          <HighContrastCard style={styles.aiCard}>
+            <Text style={styles.aiTitle}>{aiInsight.headline}</Text>
+            <Text style={styles.aiSummary}>{aiInsight.summary}</Text>
+            {aiInsight.actions.map((action, index) => (
+              <Text key={`${index}-${action}`} style={styles.aiAction}>
+                {`• ${action}`}
+              </Text>
+            ))}
+          </HighContrastCard>
+        ) : null}
+
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.quickActionsRow}>
+          <QuickAction label="Add Expense" icon="➕" onPress={() => router.push("/add-expense")} />
+          <QuickAction label="Scan Receipt" icon="🧾" onPress={() => router.push("/scan-receipt")} />
+        </View>
+
+        <View style={styles.quickActionsRow}>
+          <QuickAction
+            label="Scan BOL"
+            icon="📄"
+            onPress={() => router.push("/scan-bol" as Href)}
+          />
+          <QuickAction label="Trip Profit" icon="🧮" onPress={() => router.push("/trip-profit")} />
+        </View>
+
+        <View style={styles.quickActionsRow}>
+          <QuickAction label="Fuel Stats" icon="⛽" onPress={() => router.push("/fuel-stats" as Href)} />
+          <QuickAction label="BOL History" icon="📚" onPress={() => router.push("/bol-history" as Href)} />
+        </View>
+
+        <Text style={styles.sectionTitle}>Recent Expenses</Text>
+
+        {recentExpenses.length === 0 ? (
+          <HighContrastCard style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>No expenses yet</Text>
+            <Text style={styles.emptySubtitle}>Tap Add Expense to log your first record.</Text>
+          </HighContrastCard>
+        ) : (
+          <HighContrastCard style={styles.listCard}>
+            {recentExpenses.map((expense) => (
+              <TouchableOpacity
+                key={expense.id}
+                onPress={() =>
+                  router.push({
+                    pathname: "/expense-detail",
+                    params: { id: expense.id },
+                  })
+                }
+                style={styles.listRow}
+                activeOpacity={0.85}
+              >
+                <View>
+                  <Text style={styles.listAmount}>{formatCurrency(expense.amount)}</Text>
+                  <Text style={styles.listMeta}>
+                    {expense.category.toUpperCase()} • {expense.date}
+                  </Text>
+                </View>
+
+                <Text style={styles.listChevron}>›</Text>
+              </TouchableOpacity>
+            ))}
+
             <TouchableOpacity
-              onPress={() =>
-                router.push("/expense-history")
-              }
               style={styles.historyBtn}
+              onPress={() => router.push("/expense-history")}
+              activeOpacity={0.85}
             >
-              <Text style={styles.historyBtnText}>
-                History
-              </Text>
+              <Text style={styles.historyBtnText}>View Full History</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => router.push("/profile")}
-              style={styles.avatarBtn}
-            >
-              <Text style={styles.avatarInitial}>
-                {firstName
-                  ? firstName[0].toUpperCase()
-                  : "👤"}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>Summary</Text>
-
-        <View style={styles.statsRow}>
-          <StatCard
-            label="Today"
-            amount={stats.todayTotal}
-            count={stats.todayCount}
-            index={0}
-            highlight
-          />
-
-          <StatCard
-            label="This Week"
-            amount={stats.weekTotal}
-            count={stats.weekCount}
-            index={1}
-          />
-
-          <StatCard
-            label="This Month"
-            amount={stats.monthTotal}
-            count={stats.monthCount}
-            index={2}
-          />
-        </View>
-
-        <View style={styles.monthSummaryCard}>
-          <Text style={styles.monthSummaryTitle}>Monthly Summary</Text>
-
-          <View style={styles.monthSummaryRow}>
-            <Text style={styles.monthSummaryLabel}>This Month</Text>
-            <Text style={styles.monthSummaryValue}>
-              {formatCurrency(stats.monthTotal)}
-            </Text>
-          </View>
-
-          <View style={styles.monthSummaryRow}>
-            <Text style={styles.monthSummaryLabel}>Fuel</Text>
-            <Text style={styles.monthSummarySubValue}>
-              {formatCurrency(getCategoryTotal(categoryStats, "fuel"))}
-            </Text>
-          </View>
-
-          <View style={styles.monthSummaryRow}>
-            <Text style={styles.monthSummaryLabel}>Food</Text>
-            <Text style={styles.monthSummarySubValue}>
-              {formatCurrency(getCategoryTotal(categoryStats, "food"))}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            onPress={() => router.push("/monthly-report")}
-            activeOpacity={0.85}
-            style={styles.reportBtn}
-          >
-            <Text style={styles.reportBtnText}>View Monthly Report</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.toolsRow}>
-          <TouchableOpacity
-            onPress={() => router.push("/trip-profit")}
-            style={styles.toolBtn}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.toolBtnIcon}>🧮</Text>
-            <Text style={styles.toolBtnText}>Trip Profit</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push("/receipts")}
-            style={styles.toolBtn}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.toolBtnIcon}>🧾</Text>
-            <Text style={styles.toolBtnText}>Receipts</Text>
-          </TouchableOpacity>
-        </View>
-
-        {recentExpenses.length === 0 && loaded && (
-          <Animated.View
-            entering={FadeInDown.delay(500).springify()}
-            style={styles.emptyState}
-          >
-            <Text style={styles.emptyIcon}>🚛</Text>
-            <Text style={styles.emptyTitle}>
-              No expenses yet
-            </Text>
-            <Text style={styles.emptyDesc}>
-              Tap &quot;+ Add Expense&quot; to log your first
-              expense
-            </Text>
-          </Animated.View>
+          </HighContrastCard>
         )}
-
-        <View style={{ height: 80 + insets.bottom }} />
       </ScrollView>
-
-      <FABButton />
     </SafeAreaView>
   );
 }
@@ -402,259 +272,192 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-
-  scroll: {
-    flex: 1,
-  },
-
   content: {
     padding: Spacing.xl,
-    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+    gap: Spacing.md,
   },
-
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: Spacing.xl,
-  },
-
-  headerActions: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
+    justifyContent: "space-between",
+    marginBottom: Spacing.sm,
   },
-
   greeting: {
+    color: Colors.textPrimary,
     fontSize: FontSize.section,
     fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
   },
-
-  greetingSub: {
-    fontSize: FontSize.caption,
+  subtitle: {
     color: Colors.textSecondary,
+    fontSize: FontSize.caption,
+    marginTop: 2,
   },
-
-  statsRow: {
-    flexDirection: "row",
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-
-  monthSummaryCard: {
+  profileBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    marginBottom: Spacing.xl,
+    alignItems: "center",
+    justifyContent: "center",
   },
-
-  monthSummaryTitle: {
+  profileBtnText: {
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
+  },
+  summaryRow: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+  },
+  summaryCard: {
+    flex: 1,
+  },
+  cardLabel: {
+    color: Colors.textSecondary,
     fontSize: FontSize.caption,
-    color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
+    marginBottom: Spacing.xs,
+  },
+  cardValue: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+  },
+  snapshotCard: {
+  },
+  aiCard: {
+    gap: Spacing.xs,
+  },
+  aiTitle: {
+    color: Colors.accent,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    marginBottom: 2,
+  },
+  aiSummary: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.caption + 1,
+    marginBottom: 2,
+  },
+  aiAction: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.caption,
+  },
+  snapshotTitle: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
     marginBottom: Spacing.sm,
   },
-
-  monthSummaryRow: {
+  snapshotRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: Spacing.xs,
   },
-
-  monthSummaryLabel: {
-    fontSize: FontSize.body,
+  snapshotLabel: {
     color: Colors.textSecondary,
-  },
-
-  monthSummaryValue: {
-    fontSize: FontSize.section,
-    color: Colors.accent,
-    fontWeight: FontWeight.bold,
-  },
-
-  monthSummarySubValue: {
     fontSize: FontSize.body,
+  },
+  snapshotValue: {
     color: Colors.textPrimary,
+    fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
   },
-
-  reportBtn: {
-    marginTop: Spacing.md,
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.md,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.sm + 2,
+  snapshotDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.sm,
   },
-
-  reportBtnText: {
-    fontSize: FontSize.caption,
+  snapshotProfitLabel: {
     color: Colors.textPrimary,
+    fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },
-
-  toolsRow: {
+  snapshotProfitValue: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.extrabold,
+  },
+  sectionTitle: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    marginTop: Spacing.sm,
+  },
+  quickActionsRow: {
     flexDirection: "row",
     gap: Spacing.sm,
-    marginBottom: Spacing.xl,
   },
-
-  toolBtn: {
+  quickAction: {
     flex: 1,
-    flexDirection: "row",
+    minHeight: 74,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
     alignItems: "center",
     justifyContent: "center",
+    gap: 2,
+    ...Shadow.card,
+  },
+  quickActionIcon: {
+    fontSize: 18,
+  },
+  quickActionLabel: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.caption + 1,
+    fontWeight: FontWeight.semibold,
+  },
+  emptyCard: {
+    alignItems: "center",
     gap: Spacing.xs,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
   },
-
-  toolBtnIcon: {
-    fontSize: 14,
-  },
-
-  toolBtnText: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    color: Colors.textSecondary,
-  },
-
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-
-  statCardHighlight: {
-    borderColor: Colors.primary,
-  },
-
-  statLabel: {
-    fontSize: FontSize.small,
-    color: Colors.textMuted,
-  },
-
-  statAmount: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-  },
-
-  statAmountHighlight: {
-    color: Colors.primary,
-  },
-
-  statCount: {
-    fontSize: FontSize.small,
-    color: Colors.textMuted,
-  },
-
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: Spacing.xl,
-    gap: Spacing.md,
-  },
-
-  emptyIcon: {
-    fontSize: 56,
-  },
-
   emptyTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
-  },
-
-  emptyDesc: {
     fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+  },
+  emptySubtitle: {
     color: Colors.textSecondary,
-    textAlign: "center",
+    fontSize: FontSize.caption,
   },
-
-  fabContainer: {
-    position: "absolute",
-    alignSelf: "center",
+  listCard: {
+    paddingHorizontal: Spacing.lg,
   },
-
-  fabGlow: {
-    position: "absolute",
-    width: 200,
-    height: 56,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primary,
-  },
-
-  fab: {
+  listRow: {
+    minHeight: 64,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    backgroundColor: Colors.primary,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.full,
+    justifyContent: "space-between",
   },
-
-  fabIcon: {
-    fontSize: 22,
-    color: "#fff",
-  },
-
-  fabLabel: {
+  listAmount: {
+    color: Colors.textPrimary,
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
-    color: "#fff",
   },
-  avatarBtn: {
-  width: 36,
-  height: 36,
-  borderRadius: 18,
-  backgroundColor: Colors.primary + "25",
-  borderWidth: 1.5,
-  borderColor: Colors.primary + "60",
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-avatarInitial: {
-  fontSize: 14,
-  fontWeight: FontWeight.bold,
-  color: Colors.primary,
-},
-
-sectionTitle: {
-  fontSize: FontSize.caption,
-  fontWeight: FontWeight.semibold,
-  color: Colors.textMuted,
-  textTransform: "uppercase",
-  letterSpacing: 1.2,
-  marginBottom: Spacing.md,
-  marginTop: Spacing.sm,
-},
-historyBtn: {
-  backgroundColor: Colors.card,
-  borderRadius: BorderRadius.full,
-  paddingVertical: Spacing.xs + 2,
-  paddingHorizontal: Spacing.md + 2,
-  borderWidth: 1,
-  borderColor: Colors.border,
-},
-
-historyBtnText: {
-  fontSize: FontSize.caption,
-  fontWeight: FontWeight.semibold,
-  color: Colors.textSecondary,
-},
+  listMeta: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.caption,
+    marginTop: 2,
+  },
+  listChevron: {
+    color: Colors.textMuted,
+    fontSize: 24,
+  },
+  historyBtn: {
+    marginVertical: Spacing.md,
+    minHeight: 54,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  historyBtnText: {
+    color: Colors.background,
+    fontWeight: FontWeight.bold,
+    fontSize: FontSize.caption,
+  },
 });

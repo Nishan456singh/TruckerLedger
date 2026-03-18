@@ -1,3 +1,4 @@
+import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from "@/constants/theme";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -8,7 +9,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { extractReceiptText } from "../lib/receiptOcr";
 
 export default function ScanReceiptScreen() {
   const cameraRef = useRef<any>(null);
@@ -28,17 +28,10 @@ export default function ScanReceiptScreen() {
 
       console.log("Photo captured:", photo.uri);
 
-      // OCR STEP
-      const text = await extractReceiptText(photo.uri);
-
-      console.log("OCR TEXT:", text);
-
-      // Navigate to expense screen with receipt data
       router.push({
         pathname: "/add-expense",
         params: {
           receiptUri: photo.uri,
-          ocrText: text,
         },
       });
 
@@ -148,102 +141,106 @@ export default function ScanReceiptScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#0B1220",
+    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: Spacing.lg,
   },
   backButton: {
     minWidth: 56,
   },
   backButtonText: {
-    color: "#E2E8F0",
-    fontSize: 16,
-    fontWeight: "600",
+    color: Colors.textPrimary,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   topBarSpacer: {
     minWidth: 56,
   },
   title: {
-    color: "#F8FAFC",
-    fontSize: 22,
-    fontWeight: "700",
+    color: Colors.textPrimary,
+    fontSize: FontSize.section + 2,
+    fontWeight: FontWeight.bold,
     textAlign: "center",
   },
   cameraWrapper: {
     flex: 1,
     overflow: "hidden",
-    borderRadius: 20,
+    borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: "#1E293B",
-    backgroundColor: "#020617",
+    borderColor: Colors.border,
+    backgroundColor: Colors.cardStrong,
   },
   camera: {
     flex: 1,
   },
   bottomBar: {
-    marginTop: 16,
+    marginTop: Spacing.lg,
   },
   captureButton: {
-    backgroundColor: "#16A34A",
-    borderRadius: 14,
-    paddingVertical: 16,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    minHeight: 56,
     alignItems: "center",
+    justifyContent: "center",
   },
   captureButtonText: {
-    color: "#F8FAFC",
-    fontSize: 16,
-    fontWeight: "700",
+    color: Colors.background,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
   cancelButton: {
-    marginTop: 10,
-    borderRadius: 14,
+    marginTop: Spacing.sm + 2,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: "#334155",
-    paddingVertical: 14,
+    borderColor: Colors.border,
+    minHeight: 52,
     alignItems: "center",
-    backgroundColor: "#0F172A",
+    justifyContent: "center",
+    backgroundColor: Colors.card,
   },
   cancelButtonText: {
-    color: "#CBD5E1",
-    fontSize: 15,
-    fontWeight: "600",
+    color: Colors.textPrimary,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
   },
   permissionContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: Spacing.xl,
   },
   permissionTitle: {
-    color: "#F8FAFC",
-    fontSize: 20,
-    fontWeight: "700",
+    color: Colors.textPrimary,
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
   },
   permissionText: {
-    marginTop: 8,
-    color: "#94A3B8",
-    fontSize: 15,
+    marginTop: Spacing.sm,
+    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     textAlign: "center",
   },
   permissionButton: {
-    marginTop: 18,
-    backgroundColor: "#2563EB",
-    borderRadius: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
+    marginTop: Spacing.lg,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.lg,
+    minHeight: 52,
+    minWidth: 180,
+    alignItems: "center",
+    justifyContent: "center",
   },
   permissionButtonText: {
-    color: "#F8FAFC",
-    fontSize: 15,
-    fontWeight: "700",
+    color: Colors.background,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
   },
 });

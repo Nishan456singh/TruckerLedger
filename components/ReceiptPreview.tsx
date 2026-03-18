@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   },
   compactBadge: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: Colors.overlay,
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingBottom: 4,

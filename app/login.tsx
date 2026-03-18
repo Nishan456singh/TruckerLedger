@@ -1,11 +1,11 @@
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Spacing,
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Spacing,
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -15,19 +15,19 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import React, { useState } from "react";
 
 import {
-  ActivityIndicator,
-  Image,
-  ImageBackground,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Image,
+    ImageBackground,
+    Platform,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeInUp,
+    FadeIn,
+    FadeInDown,
+    FadeInUp,
 } from "react-native-reanimated";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -149,7 +149,7 @@ export default function LoginScreen() {
             <View style={{ height: 50 }}>
               {appleLoading ? (
                 <View style={styles.appleLoading}>
-                  <ActivityIndicator color="#000" />
+                  <ActivityIndicator color={Colors.background} />
                 </View>
               ) : (
                 <AppleAuthentication.AppleAuthenticationButton
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
 
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(5, 8, 15, 0.60)",
+    backgroundColor: Colors.overlay,
   },
 
   overlayBottom: {
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: "50%",
-    backgroundColor: "rgba(5, 8, 15, 0.50)",
+    backgroundColor: "rgba(11, 18, 32, 0.72)",
   },
 
   safe: {
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     padding: 3,
     borderRadius: BorderRadius.xxl + 4,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.25)",
+    borderColor: Colors.border,
   },
 
   logoImage: {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
 
   tagline: {
     fontSize: FontSize.body,
-    color: "rgba(255, 255, 255, 0.80)",
+    color: Colors.textPrimary,
     fontWeight: FontWeight.medium,
     letterSpacing: 0.4,
     textAlign: "center",
@@ -248,14 +248,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs + 2,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
-    backgroundColor: "rgba(255, 255, 255, 0.10)",
+    backgroundColor: Colors.cardStrong,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.18)",
+    borderColor: Colors.border,
   },
 
   pillText: {
     fontSize: FontSize.caption,
-    color: "rgba(255, 255, 255, 0.85)",
+    color: Colors.textPrimary,
     fontWeight: FontWeight.medium,
   },
 
@@ -264,10 +264,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    backgroundColor: "rgba(255, 255, 255, 0.07)",
+    backgroundColor: Colors.cardStrong,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)",
+    borderColor: Colors.border,
   },
 
   errorBanner: {
@@ -295,12 +295,12 @@ const styles = StyleSheet.create({
 
   legal: {
     fontSize: FontSize.small,
-    color: "rgba(255, 255, 255, 0.40)",
+    color: Colors.textSecondary,
     textAlign: "center",
   },
 
   legalLink: {
-    color: "rgba(255, 255, 255, 0.60)",
+    color: Colors.accent,
     textDecorationLine: "underline",
   },
 });

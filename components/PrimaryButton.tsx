@@ -89,7 +89,13 @@ export default function PrimaryButton({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'ghost' ? Colors.primary : Colors.textPrimary}
+          color={
+            variant === 'ghost'
+              ? Colors.primary
+              : variant === 'primary' || variant === 'accent'
+                ? Colors.background
+                : Colors.textPrimary
+          }
           size="small"
         />
       ) : (
@@ -164,8 +170,8 @@ const styles = StyleSheet.create({
   labelSize_md: { fontSize: FontSize.body },
   labelSize_lg: { fontSize: FontSize.section - 2 },
 
-  labelColor_primary: { color: Colors.textPrimary },
-  labelColor_accent: { color: '#0A1A14' },
+  labelColor_primary: { color: Colors.background },
+  labelColor_accent: { color: Colors.background },
   labelColor_danger: { color: Colors.textPrimary },
   labelColor_ghost: { color: Colors.textSecondary },
   labelColor_card: { color: Colors.textPrimary },

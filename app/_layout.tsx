@@ -105,6 +105,14 @@ function RootLayoutInner() {
 
         <Stack.Screen name="trip-profit" />
 
+        <Stack.Screen name="fuel-stats" />
+
+        <Stack.Screen name="scan-receipt" />
+
+        <Stack.Screen name="scan-bol" />
+
+        <Stack.Screen name="bol-history" />
+
         <Stack.Screen name="expense-detail" />
 
         <Stack.Screen

@@ -65,3 +65,41 @@ export interface CategoryStat {
   total: number;
   count: number;
 }
+
+// ─── Trip Profit ───────────────────────────────────
+
+export interface TripInput {
+  income: number;
+  fuel: number;
+  tolls: number;
+  food: number;
+  parking: number;
+  repairs: number;
+  other_expenses: number;
+  date: string;
+  note?: string;
+}
+
+export interface Trip extends TripInput {
+  id: number;
+  total_expenses: number;
+  profit: number;
+  created_at: string;
+}
+
+// ─── BOL ───────────────────────────────────────────
+
+export interface BOLInput {
+  pickup_location: string;
+  delivery_location: string;
+  load_amount: number | null;
+  date: string;
+  broker: string;
+  image_uri: string | null;
+  ocr_text?: string | null;
+}
+
+export interface BOLRecord extends BOLInput {
+  id: number;
+  created_at: string;
+}

@@ -16,6 +16,42 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
+## AI Integration Setup (OpenAI + Appwrite)
+
+This app uses an Appwrite Function as a secure proxy for OpenAI, so your API key never ships in the mobile app.
+
+### 1. Configure app env vars
+
+Create a local `.env` file with:
+
+```bash
+EXPO_PUBLIC_APPWRITE_RECEIPT_AI_FUNCTION_ID=69b4c5a5000a6e580608
+```
+
+Use your real function ID if it is different.
+
+### 2. Deploy the Appwrite AI function
+
+Function source is in:
+
+- `functions/receipt-ai/src/index.js`
+
+Create/update the Appwrite Function and set environment variables in Appwrite:
+
+- `OPENAI_API_KEY=<your-openai-key>`
+- `OPENAI_MODEL=gpt-4.1-mini` (optional)
+
+Runtime notes:
+
+- Function handles three AI tasks: `receipt_parse`, `bol_parse`, `business_insights`.
+- App client calls this function through `lib/ai/aiFunctionClient.ts`.
+
+### 3. Verify flows
+
+- Scan receipt: OCR + parser + AI fallback in `app/add-expense.tsx`
+- Scan BOL: OCR + parser + AI fallback in `app/scan-bol.tsx`
+- Dashboard: AI weekly insight card in `app/(tabs)/index.tsx`
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

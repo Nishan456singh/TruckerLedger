@@ -1,6 +1,6 @@
 import { appwriteFunctions } from "@/lib/appwrite";
 
-const DEFAULT_FUNCTION_ID = "parse-receipt-ai";
+const DEFAULT_FUNCTION_ID = "69b4c5a5000a6e580608";
 
 interface ExecutionResponse {
   error?: string;

@@ -3,21 +3,21 @@ import PrimaryButton from "@/components/PrimaryButton";
 import ReceiptPreview from "@/components/ReceiptPreview";
 
 import {
-    BorderRadius,
-    CategoryMeta,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
+  BorderRadius,
+  CategoryMeta,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
 } from "@/constants/theme";
 
 import type { Category, Expense } from "@/lib/types";
 
 import {
-    deleteExpense,
-    getExpenseById,
-    updateExpense,
+  deleteExpense,
+  getExpenseById,
+  updateExpense,
 } from "@/lib/expenseService";
 
 import * as Haptics from "expo-haptics";
@@ -28,16 +28,16 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
 
   modalBg: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.9)",
+    backgroundColor: Colors.overlay,
     padding: Spacing.xl,
   },
 
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     right: 20,
   },
 
-  modalCloseText: { color: "#fff", fontSize: 18 },
+  modalCloseText: { color: Colors.textPrimary, fontSize: 18 },
 
   editContent: { padding: Spacing.xl, gap: Spacing.lg },
 
