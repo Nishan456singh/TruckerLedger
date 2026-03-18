@@ -6,10 +6,9 @@ import {
     FontWeight,
     Spacing,
 } from "@/constants/theme";
-import { parseBOLWithAI } from "@/lib/ai/bolAI";
-import { isBOLParseWeak, parseBOLText } from "@/lib/bolParser";
+import { parseBOL } from "@/lib/bol/bolParser";
 import { createBOL } from "@/lib/bolService";
-import { extractTextFromImage } from "@/lib/receipt/ocrService";
+import { extractReceiptText } from "@/lib/receipt/ocrService";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
@@ -36,100 +35,103 @@ export default function ScanBOLScreen() {
   const cameraRef = useRef<any>(null);
   const [permission, requestPermission] = useCameraPermissions();
   const [isCapturing, setIsCapturing] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isOCRing, setIsOCRing] = useState(false);
 
   const [imageUri, setImageUri] = useState<string | null>(null);
-  const [ocrText, setOcrText] = useState("");
-
   const [pickupLocation, setPickupLocation] = useState("");
   const [deliveryLocation, setDeliveryLocation] = useState("");
   const [loadAmount, setLoadAmount] = useState("");
   const [date, setDate] = useState(todayISO());
   const [broker, setBroker] = useState("");
+  const [ocrStatus, setOcrStatus] = useState<string>("");
 
   async function handleCapture() {
-    if (!cameraRef.current || isCapturing || isProcessing) return;
+    if (!cameraRef.current || isCapturing) return;
 
     try {
       setIsCapturing(true);
-
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.8 });
       setImageUri(photo.uri);
 
-      setIsProcessing(true);
-
-      const ocr = await extractTextFromImage(photo.uri);
-      const text = ocr.text;
-      setOcrText(text);
-
-      if (!text.trim()) {
-        Alert.alert(
-          "Could not read text",
-          ocr.engine === "none"
-            ? "OCR engine is not available in this runtime. Use a development build to enable BOL OCR."
-            : "No readable text was detected in this image. Try better lighting and alignment."
-        );
-        return;
-      }
-
-      const parsed = parseBOLText(text);
-      let finalParsed = parsed;
-
-      if (isBOLParseWeak(parsed)) {
-        const aiParsed = await parseBOLWithAI(text);
-
-        if (aiParsed) {
-          finalParsed = {
-            pickup_location: aiParsed.pickup_location || parsed.pickup_location,
-            delivery_location: aiParsed.delivery_location || parsed.delivery_location,
-            load_amount: aiParsed.load_amount ?? parsed.load_amount,
-            date: aiParsed.date || parsed.date,
-            broker: aiParsed.broker || parsed.broker,
-          };
-        }
-      }
-
-      setPickupLocation(finalParsed.pickup_location);
-      setDeliveryLocation(finalParsed.delivery_location);
-      setLoadAmount(finalParsed.load_amount !== null ? String(finalParsed.load_amount) : "");
-      setDate(finalParsed.date || todayISO());
-      setBroker(finalParsed.broker);
-
-      if (isBOLParseWeak(finalParsed)) {
-        Alert.alert("Review required", "Could not fully parse this BOL. Please edit fields manually.");
-      }
+      // Auto-run OCR after photo is captured
+      await performOCR(photo.uri);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to scan BOL.";
-      Alert.alert("Scan failed", message);
+      Alert.alert("Capture failed", "Could not capture photo");
+      console.error(error);
     } finally {
       setIsCapturing(false);
-      setIsProcessing(false);
     }
   }
 
-  async function handleSaveBOL() {
-    if (!imageUri) {
-      Alert.alert("Capture required", "Capture a BOL photo before saving.");
+  async function performOCR(uri: string) {
+    setIsOCRing(true);
+    setOcrStatus("Extracting text...");
+
+    try {
+      const ocrResult = await extractReceiptText(uri);
+
+      if (!ocrResult.success) {
+        setOcrStatus("Could not extract text. Please fill in manually.");
+        setIsOCRing(false);
+        return;
+      }
+
+      setOcrStatus("Parsing BOL...");
+
+      const parsed = parseBOL(ocrResult.fullText);
+
+      // Auto-fill fields
+      if (parsed.pickupLocation) {
+        setPickupLocation(parsed.pickupLocation);
+      }
+
+      if (parsed.deliveryLocation) {
+        setDeliveryLocation(parsed.deliveryLocation);
+      }
+
+      if (parsed.loadAmount) {
+        setLoadAmount(parsed.loadAmount.toString());
+      }
+
+      if (parsed.date) {
+        setDate(parsed.date);
+      }
+
+      if (parsed.broker) {
+        setBroker(parsed.broker);
+      }
+
+      setOcrStatus("");
+    } catch (error) {
+      console.error("OCR failed:", error);
+      setOcrStatus("Error processing BOL");
+    } finally {
+      setIsOCRing(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!pickupLocation.trim() || !deliveryLocation.trim()) {
+      Alert.alert("Required fields", "Please enter pickup and delivery locations.");
       return;
     }
+
+    const loadAmountNum = Number(loadAmount.replace(/[^\d.]/g, ""));
 
     setIsSaving(true);
 
     try {
-      const amountValue = Number(loadAmount.replace(/[^\d.-]/g, ""));
-
       await createBOL({
         pickup_location: pickupLocation.trim(),
         delivery_location: deliveryLocation.trim(),
-        load_amount: Number.isFinite(amountValue) && amountValue > 0 ? amountValue : null,
+        load_amount: Number.isFinite(loadAmountNum) && loadAmountNum > 0 ? loadAmountNum : null,
         date,
         broker: broker.trim(),
         image_uri: imageUri,
-        ocr_text: ocrText || null,
       });
 
-      Alert.alert("Saved", "BOL saved to local history.");
+      Alert.alert("Saved", "BOL saved successfully.");
       router.back();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to save BOL.";
@@ -144,7 +146,7 @@ export default function ScanBOLScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerWrap}>
           <ActivityIndicator color={Colors.primary} />
-          <Text style={styles.helperText}>Loading camera permissions...</Text>
+          <Text style={styles.helperText}>Loading camera...</Text>
         </View>
       </SafeAreaView>
     );
@@ -155,12 +157,113 @@ export default function ScanBOLScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerWrap}>
           <Text style={styles.title}>Camera access required</Text>
-          <Text style={styles.helperText}>Grant permission to scan BOL documents.</Text>
+          <Text style={styles.helperText}>Grant permission to scan BOLs.</Text>
 
           <Pressable onPress={requestPermission} style={styles.primaryBtn}>
             <Text style={styles.primaryBtnText}>Grant Access</Text>
           </Pressable>
         </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (imageUri) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            <View style={styles.header}>
+              <TouchableOpacity
+                onPress={() => {
+                  setImageUri(null);
+                  setOcrStatus("");
+                }}
+                disabled={isOCRing}
+              >
+                <Text style={styles.backText}>‹</Text>
+              </TouchableOpacity>
+              <Text style={styles.title}>BOL Details</Text>
+              <View style={{ width: 36 }} />
+            </View>
+
+            {isOCRing && (
+              <HighContrastCard style={[styles.card, styles.ocrCard]}>
+                <ActivityIndicator color={Colors.primary} size="small" />
+                <Text style={styles.ocrStatus}>{ocrStatus}</Text>
+              </HighContrastCard>
+            )}
+
+            {ocrStatus && !isOCRing && (
+              <HighContrastCard style={[styles.card, styles.ocrWarning]}>
+                <Text style={styles.ocrWarningText}>⚠️ {ocrStatus}</Text>
+              </HighContrastCard>
+            )}
+
+            <HighContrastCard style={styles.card}>
+              <Text style={styles.fieldLabel}>Pickup Location</Text>
+              <TextInput
+                value={pickupLocation}
+                onChangeText={setPickupLocation}
+                style={styles.input}
+                editable={!isOCRing}
+              />
+
+              <Text style={styles.fieldLabel}>Delivery Location</Text>
+              <TextInput
+                value={deliveryLocation}
+                onChangeText={setDeliveryLocation}
+                style={styles.input}
+                editable={!isOCRing}
+              />
+
+              <Text style={styles.fieldLabel}>Load Amount</Text>
+              <TextInput
+                value={loadAmount}
+                onChangeText={setLoadAmount}
+                keyboardType="decimal-pad"
+                style={styles.input}
+                placeholder="0.00"
+                placeholderTextColor={Colors.textMuted}
+                editable={!isOCRing}
+              />
+
+              <Text style={styles.fieldLabel}>Date (YYYY-MM-DD)</Text>
+              <TextInput
+                value={date}
+                onChangeText={setDate}
+                style={styles.input}
+                editable={!isOCRing}
+              />
+
+              <Text style={styles.fieldLabel}>Broker</Text>
+              <TextInput
+                value={broker}
+                onChangeText={setBroker}
+                style={styles.input}
+                editable={!isOCRing}
+              />
+            </HighContrastCard>
+
+            <Pressable
+              onPress={handleSave}
+              disabled={isSaving || isOCRing}
+              style={({ pressed }) => [
+                styles.saveBtn,
+                pressed && { opacity: 0.85 },
+                (isSaving || isOCRing) && { opacity: 0.7 },
+              ]}
+            >
+              {isSaving ? (
+                <ActivityIndicator color={Colors.textPrimary} />
+              ) : (
+                <Text style={styles.saveBtnText}>Save BOL</Text>
+              )}
+            </Pressable>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -173,7 +276,7 @@ export default function ScanBOLScreen() {
       >
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
             <Text style={styles.title}>Scan BOL</Text>
@@ -186,56 +289,16 @@ export default function ScanBOLScreen() {
 
           <Pressable
             onPress={handleCapture}
-            disabled={isCapturing || isProcessing}
+            disabled={isCapturing}
             style={({ pressed }) => [
               styles.primaryBtn,
               pressed && { opacity: 0.85 },
-              (isCapturing || isProcessing) && { opacity: 0.7 },
+              isCapturing && { opacity: 0.7 },
             ]}
           >
             <Text style={styles.primaryBtnText}>
-              {isProcessing ? "Processing..." : isCapturing ? "Capturing..." : "Capture BOL"}
+              {isCapturing ? "Capturing..." : "Capture BOL"}
             </Text>
-          </Pressable>
-
-          <HighContrastCard style={styles.card}>
-            <Text style={styles.fieldLabel}>Pickup Location</Text>
-            <TextInput value={pickupLocation} onChangeText={setPickupLocation} style={styles.input} />
-
-            <Text style={styles.fieldLabel}>Delivery Location</Text>
-            <TextInput value={deliveryLocation} onChangeText={setDeliveryLocation} style={styles.input} />
-
-            <Text style={styles.fieldLabel}>Load Amount</Text>
-            <TextInput
-              value={loadAmount}
-              onChangeText={setLoadAmount}
-              keyboardType="decimal-pad"
-              style={styles.input}
-              placeholder="0.00"
-              placeholderTextColor={Colors.textMuted}
-            />
-
-            <Text style={styles.fieldLabel}>Date (YYYY-MM-DD)</Text>
-            <TextInput value={date} onChangeText={setDate} style={styles.input} />
-
-            <Text style={styles.fieldLabel}>Broker</Text>
-            <TextInput value={broker} onChangeText={setBroker} style={styles.input} />
-          </HighContrastCard>
-
-          <Pressable
-            onPress={handleSaveBOL}
-            disabled={isSaving}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              pressed && { opacity: 0.85 },
-              isSaving && { opacity: 0.7 },
-            ]}
-          >
-            {isSaving ? (
-              <ActivityIndicator color={Colors.textPrimary} />
-            ) : (
-              <Text style={styles.saveBtnText}>Save BOL</Text>
-            )}
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -263,12 +326,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
   },
   backText: {
     fontSize: 28,
@@ -314,6 +371,26 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm + 2,
+  },
+  ocrCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    backgroundColor: Colors.cardAlt,
+  },
+  ocrStatus: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.caption,
+  },
+  ocrWarning: {
+    backgroundColor: "rgba(255, 152, 0, 0.1)",
+    borderWidth: 1,
+    borderColor: Colors.warning,
+  },
+  ocrWarningText: {
+    color: Colors.warning,
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
   },
   primaryBtn: {
     minHeight: 52,

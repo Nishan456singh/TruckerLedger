@@ -1,148 +1,234 @@
-import type { Category } from "@/lib/types";
+import type { Category } from "../types";
 
-export interface ParsedReceiptData {
-	amount: number | null;
-	date: string | null;
-	vendor: string | null;
-	category: Category | null;
+export interface ParsedReceipt {
+  amount: number | null;
+  category: Category | null;
+  date: string | null;
+  vendor: string | null;
+  confidence: {
+    amount: "high" | "medium" | "low";
+    category: "high" | "medium" | "low";
+    date: "high" | "medium" | "low";
+  };
 }
 
-const CATEGORY_KEYWORDS: Array<{ category: Category; keywords: string[] }> = [
-	{
-		category: "fuel",
-		keywords: ["fuel", "diesel", "gas", "petrol", "shell", "chevron"],
-	},
-	{
-		category: "food",
-		keywords: ["restaurant", "cafe", "coffee", "pizza", "food", "diner"],
-	},
-	{
-		category: "repair",
-		keywords: ["repair", "service", "mechanic", "parts", "maintenance"],
-	},
-	{
-		category: "toll",
-		keywords: ["toll", "turnpike", "highway", "bridge fee"],
-	},
-	{
-		category: "parking",
-		keywords: ["parking", "garage", "meter", "lot"],
-	},
+/**
+ * Vendor name patterns to infer category.
+ * More specific patterns should come first.
+ */
+const VENDOR_PATTERNS: Array<{
+  pattern: RegExp;
+  category: Category;
+}> = [
+  // FUEL stations
+  { pattern: /shell|chevron|exxon|bp|mobil|sunoco|pilot|love\'s|ta\/petro|love truck/i, category: "fuel" },
+  { pattern: /gas\s?station|fuel|ethanol/i, category: "fuel" },
+  { pattern: /speedway|circle k|kwik-e-mart|chevrolet gas|diesel/i, category: "fuel" },
+
+  // TOLLS
+  { pattern: /toll|pike|turnpike|expressway|highway toll|e-?z\s*pass|transponder/i, category: "toll" },
+
+  // PARKING
+  { pattern: /parking|park|lot|garage|meter|valet/i, category: "parking" },
+
+  // FOOD & RESTAURANTS
+  { pattern: /mcdonald\'?s|burger king|wendy\'?s|taco bell|kfc|popeyes|subway|chick-?fil|arby\'?s|sonic|chipotle|panera|starbucks|dunkin|denny\'?s|ihop|waffle house|cracker barrel/i, category: "food" },
+  { pattern: /restaurant|cafe|caf(e|é)|diner|pizza|grill|bbq|bar|pub|bistro|eatery|burger|taco|sandwich/i, category: "food" },
+  { pattern: /fast food|quick service|qsr|doordash|uber eats|delivery/i, category: "food" },
+
+  // REPAIRS & MAINTENANCE
+  { pattern: /truck stop|love\'?s|ta\/petro|repair|maintenance|diesel|oil change|tire|brake|suspension|service|mechanic|shop|automotive/i, category: "repair" },
+  { pattern: /firestone|goodyear|michelin|bridgestone|yokohama|continental|o\'?reilly|autozone|napa/i, category: "repair" },
+
+  // OTHER (default for misc)
 ];
 
-function normalizeAmount(raw: string): number | null {
-	const parsed = Number(raw.replace(/[^\d.-]/g, ""));
-	if (!Number.isFinite(parsed) || parsed <= 0) return null;
-	return Number(parsed.toFixed(2));
+/**
+ * Extract amount from OCR text.
+ * Looks for $ signs and decimal patterns.
+ */
+function extractAmount(lines: string[]): number | null {
+  // Look for lines with $ and numbers
+  for (const line of lines) {
+    // Pattern: $ followed by digits and optional decimals
+    const match = line.match(/\$\s?([\d,]+(?:\.\d{2})?)/);
+    if (match) {
+      const amountStr = match[1].replace(/,/g, ""); // Remove commas
+      const amount = parseFloat(amountStr);
+      if (!isNaN(amount) && amount > 0 && amount < 1000) {
+        return Number(amount.toFixed(2));
+      }
+    }
+
+    // Also try: number followed by cents (XX.XX pattern without $)
+    const simpleMatch = line.match(/^\s*(?:total|amount|subtotal|due)[\s:]*(\d+[.,]\d{2})?/i);
+    if (simpleMatch && simpleMatch[1]) {
+      const amountStr = simpleMatch[1].replace(",", ".");
+      const amount = parseFloat(amountStr);
+      if (!isNaN(amount) && amount > 0 && amount < 1000) {
+        return Number(amount.toFixed(2));
+      }
+    }
+  }
+
+  return null;
 }
 
-function extractAmount(text: string): number | null {
-	const explicitTotal = text.match(
-		/(?:total|amount\s*due|grand\s*total|balance\s*due|net\s*amount)[^\d]{0,10}(\d{1,6}(?:[.,]\d{2})?)/i
-	);
+/**
+ * Extract vendor name from OCR text.
+ * Takes first recognizable line that looks like a business name.
+ */
+function extractVendor(lines: string[]): string | null {
+  if (lines.length === 0) return null;
 
-	if (explicitTotal?.[1]) {
-		return normalizeAmount(explicitTotal[1]);
-	}
+  // Usually first few lines contain vendor name
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    const line = lines[i];
+    // Skip lines that are too short or are numbers
+    if (line.length > 3 && !/^\d+$/.test(line)) {
+      return line.substring(0, 50); // Cap at 50 chars
+    }
+  }
 
-	const moneyCandidates = [...text.matchAll(/\$?\s?(\d{1,6}(?:[.,]\d{2}))/g)]
-		.map((match) => normalizeAmount(match[1]))
-		.filter((value): value is number => value !== null);
-
-	if (!moneyCandidates.length) return null;
-
-	return Math.max(...moneyCandidates);
+  return null;
 }
 
-function toIsoDate(year: number, month: number, day: number): string | null {
-	if (year < 2000 || year > 2100) return null;
-	if (month < 1 || month > 12) return null;
-	if (day < 1 || day > 31) return null;
+/**
+ * Infer category from vendor name or entire receipt text.
+ */
+function inferCategory(vendorOrText: string | null): Category | null {
+  if (!vendorOrText) return null;
 
-	const normalized = new Date(Date.UTC(year, month - 1, day));
+  for (const { pattern, category } of VENDOR_PATTERNS) {
+    if (pattern.test(vendorOrText)) {
+      return category;
+    }
+  }
 
-	if (
-		normalized.getUTCFullYear() !== year ||
-		normalized.getUTCMonth() !== month - 1 ||
-		normalized.getUTCDate() !== day
-	) {
-		return null;
-	}
-
-	return normalized.toISOString().split("T")[0];
+  return null;
 }
 
-function extractDate(text: string): string | null {
-	const isoMatch = text.match(/\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
-	if (isoMatch) {
-		return toIsoDate(Number(isoMatch[1]), Number(isoMatch[2]), Number(isoMatch[3]));
-	}
+/**
+ * Extract date from OCR text.
+ * Looks for common date formats: MM/DD/YYYY, MM-DD-YYYY, DD/MM/YYYY, etc.
+ */
+function extractDate(lines: string[]): string | null {
+  const fullText = lines.join(" ");
 
-	const usMatch = text.match(/\b(\d{1,2})[-/.](\d{1,2})[-/.](20\d{2})\b/);
-	if (usMatch) {
-		return toIsoDate(Number(usMatch[3]), Number(usMatch[1]), Number(usMatch[2]));
-	}
+  // Common patterns: MM/DD/YYYY, MM-DD-YYYY, DD/MM/YYYY
+  const patterns = [
+    /(\d{1,2})\/(\d{1,2})\/(\d{4})/,  // MM/DD/YYYY or DD/MM/YYYY
+    /(\d{1,2})-(\d{1,2})-(\d{4})/,    // MM-DD-YYYY or DD-MM-YYYY
+    /(\d{4})\/(\d{1,2})\/(\d{1,2})/, // YYYY/MM/DD
+    /(\d{4})-(\d{1,2})-(\d{1,2})/,    // YYYY-MM-DD
+  ];
 
-	const parsed = Date.parse(text);
-	if (!Number.isNaN(parsed)) {
-		return new Date(parsed).toISOString().split("T")[0];
-	}
+  for (const pattern of patterns) {
+    const match = fullText.match(pattern);
+    if (match) {
+      // Determine format and convert to YYYY-MM-DD
+      if (match[3].length === 4) {
+        // First pair is year (YYYY/MM/DD or YYYY-MM-DD)
+        const year = match[1];
+        const month = match[2].padStart(2, "0");
+        const day = match[3].padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      } else if (match[3].length === 4) {
+        // Third pair is year (MM/DD/YYYY or MM-DD-YYYY or DD/MM/YYYY)
+        const year = match[3];
+        const first = parseInt(match[1]);
+        const second = parseInt(match[2]);
 
-	return null;
+        // Heuristic: if first number > 12, it's day (European format)
+        // Otherwise assume MM/DD/YYYY (US format)
+        const month = first > 12 ? second : first;
+        const day = first > 12 ? first : second;
+
+        const monthStr = String(month).padStart(2, "0");
+        const dayStr = String(day).padStart(2, "0");
+        return `${year}-${monthStr}-${dayStr}`;
+      }
+    }
+  }
+
+  return null;
 }
 
-function extractVendor(text: string): string | null {
-	const lines = text
-		.split(/\r?\n/)
-		.map((line) => line.trim())
-		.filter(Boolean);
+/**
+ * Parse OCR text from a receipt into structured fields.
+ * Returns best-guess extraction with confidence levels.
+ * Gracefully handles incomplete/bad OCR.
+ */
+export function parseReceipt(ocrText: string): ParsedReceipt {
+  const lines = ocrText
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 
-	for (const line of lines) {
-		const normalized = line.toLowerCase();
-		if (/^\d/.test(normalized)) continue;
-		if (normalized.includes("total")) continue;
-		if (normalized.includes("tax")) continue;
-		if (normalized.includes("invoice")) continue;
-		if (normalized.length < 3) continue;
-		return line;
-	}
+  if (lines.length === 0) {
+    return {
+      amount: null,
+      category: null,
+      date: null,
+      vendor: null,
+      confidence: {
+        amount: "low",
+        category: "low",
+        date: "low",
+      },
+    };
+  }
 
-	return null;
+  // Extract fields
+  const vendor = extractVendor(lines);
+  const amount = extractAmount(lines);
+  const category = inferCategory(vendor || ocrText);
+  const date = extractDate(lines);
+
+  // Assess confidence
+  return {
+    amount,
+    category: category ?? null,
+    date,
+    vendor,
+    confidence: {
+      amount: amount ? (amount > 0 ? "high" : "low") : "low",
+      category: category ? (vendor ? "high" : "medium") : "low",
+      date: date ? "high" : "low",
+    },
+  };
 }
 
-function extractCategory(text: string): Category | null {
-	const lower = text.toLowerCase();
+/**
+ * Validate a parsed receipt has minimum required fields.
+ * Amount is required; category and date are optional but helpful.
+ */
+export function isValidParsedReceipt(
+  parsed: ParsedReceipt
+): {
+  valid: boolean;
+  reason?: string;
+} {
+  if (parsed.amount === null) {
+    return {
+      valid: false,
+      reason: "No amount detected",
+    };
+  }
 
-	for (const entry of CATEGORY_KEYWORDS) {
-		if (entry.keywords.some((keyword) => lower.includes(keyword))) {
-			return entry.category;
-		}
-	}
+  if (parsed.amount <= 0) {
+    return {
+      valid: false,
+      reason: "Amount must be positive",
+    };
+  }
 
-	return null;
+  if (parsed.amount > 10000) {
+    return {
+      valid: false,
+      reason: "Amount seems too high",
+    };
+  }
+
+  return { valid: true };
 }
-
-export function parseReceiptText(text: string): ParsedReceiptData {
-	const normalizedText = text.trim();
-
-	if (!normalizedText) {
-		return {
-			amount: null,
-			date: null,
-			vendor: null,
-			category: null,
-		};
-	}
-
-	return {
-		amount: extractAmount(normalizedText),
-		date: extractDate(normalizedText),
-		vendor: extractVendor(normalizedText),
-		category: extractCategory(normalizedText),
-	};
-}
-
-export function shouldUseAiFallback(parsed: ParsedReceiptData): boolean {
-	return parsed.amount === null || parsed.date === null || parsed.category === null;
-}
-
