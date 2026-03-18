@@ -14,7 +14,7 @@ import {
     getDashboardStats,
     getReceiptCount,
 } from "@/lib/expenseService";
-import { exportTrips } from "@/lib/tripService";
+import { exportTrips, getTripCount } from "@/lib/tripService";
 import { File, Paths } from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
@@ -89,6 +89,7 @@ export default function ProfileScreen() {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [thisMonth, setThisMonth] = useState(0);
   const [receiptsScanned, setReceiptsScanned] = useState(0);
+  const [tripsLogged, setTripsLogged] = useState(0);
 
   const [exportingExpenses, setExportingExpenses] = useState(false);
   const [exportingTrips, setExportingTrips] = useState(false);
@@ -100,10 +101,11 @@ export default function ProfileScreen() {
   );
 
   const loadStats = useCallback(async () => {
-    const [all, dashboard, receiptCount] = await Promise.all([
+    const [all, dashboard, receiptCount, tripCount] = await Promise.all([
       getAllExpenses(),
       getDashboardStats(),
       getReceiptCount(),
+      getTripCount(),
     ]);
 
     const allTotal = all.reduce((sum, expense) => sum + expense.amount, 0);
@@ -111,6 +113,7 @@ export default function ProfileScreen() {
     setTotalExpenses(allTotal);
     setThisMonth(dashboard.monthTotal);
     setReceiptsScanned(receiptCount);
+    setTripsLogged(tripCount);
   }, []);
 
   useFocusEffect(
@@ -277,6 +280,7 @@ export default function ProfileScreen() {
           <Row label="Total Expenses" value={formatCurrency(totalExpenses)} />
           <Row label="This Month" value={formatCurrency(thisMonth)} />
           <Row label="Receipts Scanned" value={String(receiptsScanned)} />
+          <Row label="Trips Logged" value={String(tripsLogged)} />
         </SectionCard>
 
         <SectionCard title="Tools" icon="🧰">

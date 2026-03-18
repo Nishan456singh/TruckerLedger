@@ -161,6 +161,85 @@ export async function getBOLsByLocation(location: string): Promise<BOLRecord[]> 
   return rows ?? [];
 }
 
+export async function getBOLById(id: number): Promise<BOLRecord | null> {
+  if (WEB) return null;
+
+  const db = await getDatabase();
+
+  const row = await db.getFirstAsync<BOLRecord>(
+    `SELECT
+      id,
+      pickup_location,
+      delivery_location,
+      load_amount,
+      date,
+      broker,
+      image_uri,
+      ocr_text,
+      created_at
+    FROM bols
+    WHERE id = ?`,
+    [id]
+  );
+
+  return row ?? null;
+}
+
+export async function updateBOL(id: number, input: Partial<BOLInput>): Promise<void> {
+  if (WEB) throw new Error("BOL update requires the mobile app.");
+
+  const db = await getDatabase();
+
+  // Get current BOL to preserve existing values
+  const current = await getBOLById(id);
+  if (!current) throw new Error("BOL not found");
+
+  // Merge with new values
+  const updated: BOLInput = {
+    pickup_location: input.pickup_location ?? current.pickup_location,
+    delivery_location: input.delivery_location ?? current.delivery_location,
+    load_amount: input.load_amount ?? current.load_amount,
+    date: input.date ?? current.date,
+    broker: input.broker ?? current.broker,
+    image_uri: input.image_uri ?? current.image_uri,
+    ocr_text: input.ocr_text ?? current.ocr_text,
+  };
+
+  await db.runAsync(
+    `UPDATE bols SET
+      pickup_location = ?,
+      delivery_location = ?,
+      load_amount = ?,
+      date = ?,
+      broker = ?,
+      image_uri = ?,
+      ocr_text = ?
+    WHERE id = ?`,
+    [
+      updated.pickup_location,
+      updated.delivery_location,
+      updated.load_amount,
+      updated.date,
+      updated.broker,
+      updated.image_uri,
+      updated.ocr_text,
+      id,
+    ]
+  );
+}
+
+export async function getBOLCount(): Promise<number> {
+  if (WEB) return 0;
+
+  const db = await getDatabase();
+
+  type CountRow = { count: number };
+
+  const row = await db.getFirstAsync<CountRow>(`SELECT COUNT(*) AS count FROM bols`);
+
+  return row?.count ?? 0;
+}
+
 export async function deleteBOL(id: number): Promise<void> {
   if (WEB) throw new Error("BOL deletion requires the mobile app.");
 

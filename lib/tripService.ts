@@ -71,8 +71,117 @@ export async function createTrip(input: TripInput): Promise<number> {
   return Number(result.lastInsertRowId);
 }
 
-export async function getTrips(): Promise<Trip[]> {
-  if (WEB) return [];
+export async function getTripById(id: number): Promise<Trip | null> {
+  if (WEB) return null;
+
+  const db = await getDatabase();
+
+  const row = await db.getFirstAsync<Trip>(
+    `SELECT
+      id,
+      income,
+      fuel,
+      tolls,
+      food,
+      parking,
+      repairs,
+      other_expenses,
+      total_expenses,
+      profit,
+      date,
+      note,
+      created_at
+    FROM trips
+    WHERE id = ?`,
+    [id]
+  );
+
+  return row ?? null;
+}
+
+export async function updateTrip(id: number, input: Partial<TripInput>): Promise<void> {
+  if (WEB) throw new Error("Trips require the mobile app.");
+
+  const db = await getDatabase();
+
+  // Get current trip to preserve existing values
+  const current = await getTripById(id);
+  if (!current) throw new Error("Trip not found");
+
+  // Merge with new values
+  const updated: TripInput = {
+    income: input.income ?? current.income,
+    fuel: input.fuel ?? current.fuel,
+    tolls: input.tolls ?? current.tolls,
+    food: input.food ?? current.food,
+    parking: input.parking ?? current.parking,
+    repairs: input.repairs ?? current.repairs,
+    other_expenses: input.other_expenses ?? current.other_expenses,
+    date: input.date ?? current.date,
+    note: input.note ?? current.note,
+  };
+
+  // Recalculate expenses and profit
+  const { totalExpenses, profit } = calculateTripProfit({
+    income: updated.income,
+    fuel: updated.fuel,
+    tolls: updated.tolls,
+    food: updated.food,
+    parking: updated.parking,
+    repairs: updated.repairs,
+    other_expenses: updated.other_expenses,
+  });
+
+  await db.runAsync(
+    `UPDATE trips SET
+      income = ?,
+      fuel = ?,
+      tolls = ?,
+      food = ?,
+      parking = ?,
+      repairs = ?,
+      other_expenses = ?,
+      total_expenses = ?,
+      profit = ?,
+      date = ?,
+      note = ?
+    WHERE id = ?`,
+    [
+      updated.income,
+      updated.fuel,
+      updated.tolls,
+      updated.food,
+      updated.parking,
+      updated.repairs,
+      updated.other_expenses,
+      totalExpenses,
+      profit,
+      updated.date,
+      updated.note,
+      id,
+    ]
+  );
+}
+
+export async function deleteTrip(id: number): Promise<void> {
+  if (WEB) throw new Error("Trips require the mobile app.");
+
+  const db = await getDatabase();
+
+  await db.runAsync(`DELETE FROM trips WHERE id = ?`, [id]);
+}
+
+export async function getTripCount(): Promise<number> {
+  if (WEB) return 0;
+
+  const db = await getDatabase();
+
+  type CountRow = { count: number };
+
+  const row = await db.getFirstAsync<CountRow>(`SELECT COUNT(*) AS count FROM trips`);
+
+  return row?.count ?? 0;
+}
 
   const db = await getDatabase();
 
