@@ -10,7 +10,10 @@ import {
     Spacing
 } from "@/constants/theme";
 
+import { parseReceiptWithAI } from "@/lib/ai/receiptAI";
 import { addExpense } from "@/lib/expenseService";
+import { extractTextFromImage } from "@/lib/receipt/ocrService";
+import { parseReceiptText, shouldUseAiFallback } from "@/lib/receipt/receiptParser";
 import type { Category } from "@/lib/types";
 
 import * as Haptics from "expo-haptics";
@@ -62,7 +65,11 @@ function formatDateDisplay(isoDate: string): string {
 }
 
 export default function AddExpenseScreen() {
-  const params = useLocalSearchParams<{ mode?: string; category?: string }>();
+  const params = useLocalSearchParams<{
+    mode?: string;
+    category?: string;
+    receiptUri?: string;
+  }>();
 
   const initialCategory: Category =
     params.category === "fuel" ||
@@ -84,6 +91,7 @@ export default function AddExpenseScreen() {
   const [note, setNote] = useState("");
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [didProcessReceipt, setDidProcessReceipt] = useState(false);
 
   const amountRef = useRef<TextInput>(null);
 
@@ -92,6 +100,109 @@ export default function AddExpenseScreen() {
       setTimeout(() => amountRef.current?.focus(), 300);
     }
   }, [mode]);
+
+  useEffect(() => {
+    const scannedUri =
+      typeof params.receiptUri === "string" ? params.receiptUri : "";
+
+    if (!scannedUri || didProcessReceipt) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const runPipeline = async () => {
+      try {
+        setMode("manual");
+        setReceiptUri(scannedUri);
+
+        console.log("OCR: Starting text extraction from", scannedUri);
+        const ocr = await extractTextFromImage(scannedUri);
+        const ocrText = ocr.text;
+
+        console.log("OCR: Engine", ocr.engine, "Text length:", ocrText.length, "Reason:", ocr.reason);
+
+        if (!ocrText.trim()) {
+          if (!cancelled) {
+            Alert.alert(
+              "Could not read text",
+              ocr.engine === "none"
+                ? "OCR engine is not available in this runtime. Use a development build to enable receipt OCR, or continue manual entry."
+                : "Receipt photo captured, but no readable text was detected. You can still fill the expense manually."
+            );
+          }
+          return;
+        }
+
+        console.log("OCR: Extracted text preview:", ocrText.substring(0, 200));
+
+        const parserResult = parseReceiptText(ocrText);
+        console.log("Receipt Parser: Local result", parserResult);
+
+        let finalResult = parserResult;
+
+        if (shouldUseAiFallback(parserResult)) {
+          console.log("Receipt Parser: Using AI fallback due to missing fields");
+          const aiResult = await parseReceiptWithAI(ocrText);
+
+          console.log("Receipt AI: Result", aiResult);
+
+          if (aiResult) {
+            finalResult = {
+              amount: aiResult.amount ?? parserResult.amount,
+              date: aiResult.date ?? parserResult.date,
+              vendor: aiResult.vendor ?? parserResult.vendor,
+              category: aiResult.category ?? parserResult.category,
+            };
+            console.log("Receipt AI: Merged result", finalResult);
+          }
+
+          if (!aiResult && !cancelled) {
+            Alert.alert(
+              "Low confidence scan",
+              "Some receipt details could not be auto-filled. Please review and complete the fields manually."
+            );
+          }
+        }
+
+        if (cancelled) return;
+
+        console.log("Receipt: Final result to autofill", finalResult);
+
+        if (finalResult.amount !== null) {
+          console.log("Setting amount:", finalResult.amount);
+          setAmount(String(finalResult.amount));
+        }
+
+        if (finalResult.category) {
+          console.log("Setting category:", finalResult.category);
+          setCategory(finalResult.category as Category);
+        }
+
+        if (finalResult.date) {
+          console.log("Setting date:", finalResult.date);
+          setDate(finalResult.date);
+        }
+
+        if (finalResult.vendor) {
+          console.log("Setting note with vendor:", finalResult.vendor);
+          setNote(`Vendor: ${finalResult.vendor}`);
+        }
+      } catch (error) {
+        console.error("Receipt processing failed:", error);
+      } finally {
+        if (!cancelled) {
+          setDidProcessReceipt(true);
+        }
+      }
+    };
+
+    runPipeline();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [didProcessReceipt, params.receiptUri]);
 
   // ─── Pick image ─────────────────────────
 
