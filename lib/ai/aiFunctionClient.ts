@@ -8,17 +8,21 @@ interface ExecutionResponse {
 }
 
 function getFunctionId(): string {
-  return process.env.EXPO_PUBLIC_APPWRITE_RECEIPT_AI_FUNCTION_ID ?? DEFAULT_FUNCTION_ID;
+  return (
+    process.env.EXPO_PUBLIC_APPWRITE_RECEIPT_AI_FUNCTION_ID ??
+    DEFAULT_FUNCTION_ID
+  );
 }
 
 function safeParseResponse(raw: string): ExecutionResponse | null {
   try {
     const parsed = JSON.parse(raw);
+
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       return parsed as ExecutionResponse;
     }
-  } catch {
-    return null;
+  } catch (err) {
+    console.error("AI Function Client: JSON parse error", raw);
   }
 
   return null;
@@ -48,27 +52,49 @@ export async function executeAiTask<T>(
       }),
     });
 
-    if (!execution.responseBody) {
-      console.error("AI Function Client: No response body from execution");
+    // 🔥 DEBUG: log full execution
+    console.log("AI Function Client: FULL EXECUTION", execution);
+
+    const raw = execution.responseBody;
+
+    // 🔥 FIX: handle empty / undefined / blank response
+    if (!raw || raw.trim() === "") {
+      console.error(
+        "AI Function Client: Empty response body. Execution:",
+        {
+          status: (execution as any).status,
+          logs: (execution as any).logs,
+        }
+      );
       return null;
     }
 
-    const body = safeParseResponse(execution.responseBody);
+    const body = safeParseResponse(raw);
 
     if (!body) {
-      console.error("AI Function Client: Failed to parse response", execution.responseBody);
+      console.error(
+        "AI Function Client: Failed to parse response",
+        raw
+      );
       return null;
     }
 
     if (body.error) {
-      console.error("AI Function Client: API returned error", body.error);
+      console.error(
+        "AI Function Client: API returned error",
+        body.error
+      );
       return null;
     }
 
     return body as T;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`AI Function Client: Execution failed - ${message}`);
+
+    console.error(
+      `AI Function Client: Execution failed - ${message}`
+    );
+
     return null;
   }
 }

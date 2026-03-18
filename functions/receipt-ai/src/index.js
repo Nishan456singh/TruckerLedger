@@ -9,6 +9,10 @@ const ALLOWED_CATEGORIES = new Set([
   "other",
 ]);
 
+// ------------------------
+// Helpers
+// ------------------------
+
 function safeJson(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return value;
@@ -20,143 +24,141 @@ function safeJson(value) {
       if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
         return parsed;
       }
-    } catch {
-      return null;
-    }
+    } catch {}
   }
 
   return null;
 }
 
 function getRequestBody(req) {
-  if (req.bodyJson && typeof req.bodyJson === "object") {
-    return req.bodyJson;
-  }
-
-  if (typeof req.bodyText === "string") {
-    return safeJson(req.bodyText) ?? {};
-  }
-
-  if (typeof req.body === "string") {
-    return safeJson(req.body) ?? {};
-  }
-
-  if (req.body && typeof req.body === "object") {
-    return req.body;
-  }
-
+  if (req.bodyJson) return req.bodyJson;
+  if (req.bodyText) return safeJson(req.bodyText) ?? {};
+  if (req.body) return safeJson(req.body) ?? {};
   return {};
 }
 
 function extractJsonObject(text) {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) return null;
-
   try {
-    return JSON.parse(match[0]);
+    return JSON.parse(text);
   } catch {
-    return null;
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return null;
+
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return null;
+    }
   }
 }
 
 function normalizeAmount(value) {
-  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+  if (typeof value === "number" && value > 0) {
     return Number(value.toFixed(2));
   }
 
   if (typeof value === "string") {
     const parsed = Number(value.replace(/[^\d.-]/g, ""));
-    if (Number.isFinite(parsed) && parsed > 0) {
-      return Number(parsed.toFixed(2));
-    }
+    if (parsed > 0) return Number(parsed.toFixed(2));
   }
 
   return null;
 }
 
 function normalizeDate(value) {
-  if (typeof value !== "string") return "";
-  const trimmed = value.trim();
-  if (!trimmed) return "";
+  if (!value) return "";
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    return trimmed;
-  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
 
-  const parsed = new Date(trimmed);
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return "";
 
-  return parsed.toISOString().split("T")[0];
+  return d.toISOString().split("T")[0];
 }
 
 function normalizeCategory(value) {
   if (typeof value !== "string") return "other";
-
-  const normalized = value.toLowerCase().trim();
-  return ALLOWED_CATEGORIES.has(normalized) ? normalized : "other";
+  const v = value.toLowerCase().trim();
+  return ALLOWED_CATEGORIES.has(v) ? v : "other";
 }
 
+// ------------------------
+// Prompt Builder
+// ------------------------
+
 function buildTaskPrompt(task, payload) {
-  const text = typeof payload.text === "string" ? payload.text.trim() : "";
+  const text = payload.text || "";
 
   if (task === "receipt_parse") {
-    return [
-      "Extract structured expense fields from this receipt OCR text.",
-      "Return strict JSON only with: vendor, amount, date, category.",
-      "Category must be one of: fuel, food, repair, toll, parking, other.",
-      "Date format must be YYYY-MM-DD when possible.",
-      "If a value is missing, return empty string for text fields and null for amount.",
-      "",
-      "OCR text:",
-      text,
-    ].join("\n");
+    return `
+Extract:
+- vendor
+- amount
+- date
+- category (fuel, food, repair, toll, parking, other)
+
+Return ONLY JSON.
+
+Text:
+${text}
+`;
   }
 
   if (task === "bol_parse") {
-    return [
-      "Extract structured BOL fields from this OCR text.",
-      "Return strict JSON only with: pickup_location, delivery_location, load_amount, date, broker.",
-      "Date format must be YYYY-MM-DD when possible.",
-      "If a value is missing, return empty string for text fields and null for load_amount.",
-      "",
-      "OCR text:",
-      text,
-    ].join("\n");
+    return `
+Extract:
+- pickup_location
+- delivery_location
+- load_amount
+- date
+- broker
+
+Return ONLY JSON.
+
+Text:
+${text}
+`;
   }
 
   if (task === "business_insights") {
-    return [
-      "You are a trucking business assistant.",
-      "Generate concise operational insights from these metrics.",
-      "Return strict JSON only with: headline, summary, actions (array of 1-3 short action strings).",
-      "Avoid generic fluff and be practical.",
-      "",
-      "Metrics JSON:",
-      JSON.stringify(payload),
-    ].join("\n");
+    return `
+Analyze trucking business data.
+
+Return JSON:
+{
+  "headline": "",
+  "summary": "",
+  "actions": []
+}
+
+Data:
+${JSON.stringify(payload)}
+`;
   }
 
   return "";
 }
 
-async function callOpenAI({ apiKey, model, prompt }) {
+// ------------------------
+// OpenAI Call
+// ------------------------
+
+async function callOpenAI({ apiKey, prompt, log }) {
+  log("Calling OpenAI...");
+
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model,
+      model: "gpt-4o-mini",
       temperature: 0.2,
-      max_tokens: 350,
-      response_format: { type: "json_object" },
       messages: [
         {
           role: "system",
-          content: "You are a strict JSON extraction assistant. Return only valid JSON.",
+          content: "Return ONLY valid JSON. No explanation.",
         },
         {
           role: "user",
@@ -166,31 +168,39 @@ async function callOpenAI({ apiKey, model, prompt }) {
     }),
   });
 
+  const text = await response.text();
+
+  log("OpenAI raw response: " + text);
+
   if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`OpenAI ${response.status}: ${text}`);
+    throw new Error(`OpenAI error: ${text}`);
   }
 
-  const payload = await response.json();
-  const content = payload?.choices?.[0]?.message?.content;
+  const json = JSON.parse(text);
+  const content = json?.choices?.[0]?.message?.content;
 
-  if (typeof content !== "string" || !content.trim()) {
-    throw new Error("OpenAI returned empty message content");
+  if (!content) {
+    throw new Error("Empty AI response");
   }
 
   const parsed = extractJsonObject(content);
+
   if (!parsed) {
-    throw new Error("Unable to parse JSON object from model response");
+    throw new Error("Failed to parse AI JSON");
   }
 
   return parsed;
 }
 
+// ------------------------
+// Normalize Output
+// ------------------------
+
 function normalizeTaskResponse(task, parsed) {
   if (task === "receipt_parse") {
     return {
-      vendor: typeof parsed.vendor === "string" ? parsed.vendor.trim() : "",
-      amount: normalizeAmount(parsed.amount ?? parsed.total_amount),
+      vendor: parsed.vendor || "",
+      amount: normalizeAmount(parsed.amount),
       date: normalizeDate(parsed.date),
       category: normalizeCategory(parsed.category),
     };
@@ -198,78 +208,70 @@ function normalizeTaskResponse(task, parsed) {
 
   if (task === "bol_parse") {
     return {
-      pickup_location:
-        typeof parsed.pickup_location === "string" ? parsed.pickup_location.trim() : "",
-      delivery_location:
-        typeof parsed.delivery_location === "string" ? parsed.delivery_location.trim() : "",
+      pickup_location: parsed.pickup_location || "",
+      delivery_location: parsed.delivery_location || "",
       load_amount: normalizeAmount(parsed.load_amount),
       date: normalizeDate(parsed.date),
-      broker: typeof parsed.broker === "string" ? parsed.broker.trim() : "",
+      broker: parsed.broker || "",
     };
   }
 
   if (task === "business_insights") {
-    const actions = Array.isArray(parsed.actions)
-      ? parsed.actions
-          .map((item) => (typeof item === "string" ? item.trim() : ""))
-          .filter(Boolean)
-          .slice(0, 3)
-      : [];
-
     return {
-      headline:
-        typeof parsed.headline === "string" && parsed.headline.trim()
-          ? parsed.headline.trim()
-          : "AI Insight",
-      summary: typeof parsed.summary === "string" ? parsed.summary.trim() : "",
-      actions,
+      headline: parsed.headline || "Insight",
+      summary: parsed.summary || "",
+      actions: Array.isArray(parsed.actions) ? parsed.actions.slice(0, 3) : [],
     };
   }
 
   return { error: "Unsupported task" };
 }
 
+// ------------------------
+// MAIN FUNCTION
+// ------------------------
+
 export default async ({ req, res, log, error }) => {
   try {
+    log("Function STARTED");
+
     const body = getRequestBody(req);
-    const task = typeof body.task === "string" ? body.task : "";
+    const task = body.task;
     const payload = safeJson(body.payload) ?? {};
 
-    log(`AI function called: task=${task}, bodyKeys=${Object.keys(body).join(",")}`);
+    log(`Task: ${task}`);
 
-    if (!task || !["receipt_parse", "bol_parse", "business_insights"].includes(task)) {
-      error(`Invalid task: ${task}`);
-      return res.json({ error: "Invalid task" }, 400);
+    if (!task) {
+      return res.json({ error: "Missing task" });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      error("CRITICAL: Missing OPENAI_API_KEY in function environment variables");
-      return res.json({ error: "AI is not configured. Missing OPENAI_API_KEY." }, 500);
-    }
 
-    const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
-    log(`Using model: ${model}`);
+    if (!apiKey) {
+      error("Missing OPENAI_API_KEY");
+      return res.json({ error: "Server misconfigured" });
+    }
 
     const prompt = buildTaskPrompt(task, payload);
 
     if (!prompt) {
-      error("Failed to build task prompt");
-      return res.json({ error: "Invalid request payload" }, 400);
+      return res.json({ error: "Invalid prompt" });
     }
 
-    log(`Calling OpenAI with model ${model}, prompt length=${prompt.length}`);
-    const parsed = await callOpenAI({ apiKey, model, prompt });
-    const normalized = normalizeTaskResponse(task, parsed);
+    const parsed = await callOpenAI({ apiKey, prompt, log });
 
-    log(`AI task completed: ${task}, result=${JSON.stringify(normalized)}`);
+    const result = normalizeTaskResponse(task, parsed);
 
-    return res.json(normalized, 200, {
-      "Content-Type": "application/json",
-    });
+    log("SUCCESS RESPONSE: " + JSON.stringify(result));
+
+    return res.json(result); // 🔥 ALWAYS RETURNS
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    error(`EXCEPTION: AI function failed: ${message}`);
-    return res.json({ error: `AI request failed: ${message}` }, 500);
+    const msg = err instanceof Error ? err.message : String(err);
+
+    error("FUNCTION ERROR: " + msg);
+
+    return res.json({
+      error: msg,
+    }); // 🔥 NEVER EMPTY
   }
 };
