@@ -147,3 +147,44 @@ export async function getWeeklyTripSnapshot(): Promise<{
     profit: row?.profit ?? 0,
   };
 }
+
+// ─── CSV Export ─────────────────────────────────────
+
+function escapeCsvField(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+
+  const s = String(value);
+
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+
+  return s;
+}
+
+export async function exportTrips(): Promise<string> {
+  if (WEB) throw new Error("Exports require the mobile app.");
+
+  const trips = await getTrips();
+
+  const header =
+    "Date,Income,Fuel,Tolls,Food,Parking,Repairs,Other,Total Expenses,Profit,Note";
+
+  const rows = trips.map((t) =>
+    [
+      escapeCsvField(t.date),
+      escapeCsvField(t.income),
+      escapeCsvField(t.fuel),
+      escapeCsvField(t.tolls),
+      escapeCsvField(t.food),
+      escapeCsvField(t.parking),
+      escapeCsvField(t.repairs),
+      escapeCsvField(t.other_expenses),
+      escapeCsvField(t.total_expenses),
+      escapeCsvField(t.profit),
+      escapeCsvField(t.note),
+    ].join(",")
+  );
+
+  return [header, ...rows].join("\n");
+}

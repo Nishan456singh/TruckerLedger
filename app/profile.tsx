@@ -7,12 +7,14 @@ import {
     Spacing,
 } from "@/constants/theme";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { exportBOLs } from "@/lib/bolService";
 import {
     exportExpenses,
     getAllExpenses,
     getDashboardStats,
     getReceiptCount,
 } from "@/lib/expenseService";
+import { exportTrips } from "@/lib/tripService";
 import { File, Paths } from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
@@ -88,7 +90,9 @@ export default function ProfileScreen() {
   const [thisMonth, setThisMonth] = useState(0);
   const [receiptsScanned, setReceiptsScanned] = useState(0);
 
-  const [exporting, setExporting] = useState(false);
+  const [exportingExpenses, setExportingExpenses] = useState(false);
+  const [exportingTrips, setExportingTrips] = useState(false);
+  const [exportingBOLs, setExportingBOLs] = useState(false);
 
   const displayProvider = useMemo(
     () => (user?.provider === "apple" ? "Apple" : "Google"),
@@ -116,9 +120,9 @@ export default function ProfileScreen() {
   );
 
   async function handleExportCsv() {
-    if (exporting) return;
+    if (exportingExpenses) return;
 
-    setExporting(true);
+    setExportingExpenses(true);
 
     try {
       const csv = await exportExpenses();
@@ -147,7 +151,79 @@ export default function ProfileScreen() {
         err instanceof Error ? err.message : "Failed to export expenses.";
       Alert.alert("Export Failed", message);
     } finally {
-      setExporting(false);
+      setExportingExpenses(false);
+    }
+  }
+
+  async function handleExportTrips() {
+    if (exportingTrips) return;
+
+    setExportingTrips(true);
+
+    try {
+      const csv = await exportTrips();
+
+      if (!csv || csv.trim() === "Date,Income,Fuel,Tolls,Food,Parking,Repairs,Other,Total Expenses,Profit,Note") {
+        Alert.alert("No Data", "You have no trips to export yet.");
+        return;
+      }
+
+      const shareAvailable = await Sharing.isAvailableAsync();
+      if (!shareAvailable) {
+        Alert.alert("Not Available", "Sharing is not available on this device.");
+        return;
+      }
+
+      const file = new File(Paths.cache, `truckledger_trips_${Date.now()}.csv`);
+      await file.write(csv);
+
+      await Sharing.shareAsync(file.uri, {
+        mimeType: "text/csv",
+        dialogTitle: "Export Trips",
+        UTI: "public.comma-separated-values-text",
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to export trips.";
+      Alert.alert("Export Failed", message);
+    } finally {
+      setExportingTrips(false);
+    }
+  }
+
+  async function handleExportBOLs() {
+    if (exportingBOLs) return;
+
+    setExportingBOLs(true);
+
+    try {
+      const csv = await exportBOLs();
+
+      if (!csv || csv.trim() === "Date,Broker,Pickup Location,Delivery Location,Load Amount") {
+        Alert.alert("No Data", "You have no BOLs to export yet.");
+        return;
+      }
+
+      const shareAvailable = await Sharing.isAvailableAsync();
+      if (!shareAvailable) {
+        Alert.alert("Not Available", "Sharing is not available on this device.");
+        return;
+      }
+
+      const file = new File(Paths.cache, `truckledger_bols_${Date.now()}.csv`);
+      await file.write(csv);
+
+      await Sharing.shareAsync(file.uri, {
+        mimeType: "text/csv",
+        dialogTitle: "Export BOLs",
+        UTI: "public.comma-separated-values-text",
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to export BOLs.";
+      Alert.alert("Export Failed", message);
+    } finally {
+      setExportingBOLs(false);
     }
   }
 
@@ -206,7 +282,19 @@ export default function ProfileScreen() {
         <SectionCard title="Tools" icon="🧰">
           <TouchableOpacity onPress={handleExportCsv} style={styles.toolBtn}>
             <Text style={styles.toolBtnText}>
-              {exporting ? "Exporting..." : "Export Expenses (CSV)"}
+              {exportingExpenses ? "Exporting..." : "Export Expenses (CSV)"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleExportTrips} style={styles.toolBtn}>
+            <Text style={styles.toolBtnText}>
+              {exportingTrips ? "Exporting..." : "Export Trips (CSV)"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleExportBOLs} style={styles.toolBtn}>
+            <Text style={styles.toolBtnText}>
+              {exportingBOLs ? "Exporting..." : "Export BOLs (CSV)"}
             </Text>
           </TouchableOpacity>
 
