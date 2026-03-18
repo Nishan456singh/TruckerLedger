@@ -7,7 +7,8 @@ import {
     Spacing,
 } from "@/constants/theme";
 import { deleteTrip, getTripById, updateTrip } from "@/lib/tripService";
-import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
+import type { Trip } from "@/lib/types";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
     ActivityIndicator,
@@ -23,7 +24,6 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { Trip } from "@/lib/types";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {

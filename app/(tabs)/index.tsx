@@ -7,7 +7,6 @@ import {
     Shadow,
     Spacing,
 } from "@/constants/theme";
-import { getBusinessInsights, type AiInsightResult } from "@/lib/ai/insightsAI";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
     getAllExpenses,
@@ -73,7 +72,6 @@ export default function DashboardScreen() {
   });
   const [monthlyExpenses, setMonthlyExpenses] = useState(0);
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
-  const [aiInsight, setAiInsight] = useState<AiInsightResult | null>(null);
 
   const firstName = user?.name?.split(" ")[0] ?? "Driver";
 
@@ -91,20 +89,6 @@ export default function DashboardScreen() {
     setWeeklySnapshot(weeklyTripData);
     setMonthlyExpenses(monthlyTotal);
     setRecentExpenses(allExpenses.slice(0, 6));
-
-    const insight = await getBusinessInsights({
-      todayTotal: dashboardStats.todayTotal,
-      weekTotal: dashboardStats.weekTotal,
-      monthTotal: dashboardStats.monthTotal,
-      weekCount: dashboardStats.weekCount,
-      monthCount: dashboardStats.monthCount,
-      weeklyIncome: weeklyTripData.income,
-      weeklyFuel: weeklyTripData.fuel,
-      weeklyOtherExpenses: weeklyTripData.otherExpenses,
-      weeklyProfit: weeklyTripData.profit,
-    });
-
-    setAiInsight(insight);
   }, []);
 
   useFocusEffect(
@@ -189,18 +173,6 @@ export default function DashboardScreen() {
           </View>
         </HighContrastCard>
 
-        {aiInsight ? (
-          <HighContrastCard style={styles.aiCard}>
-            <Text style={styles.aiTitle}>{aiInsight.headline}</Text>
-            <Text style={styles.aiSummary}>{aiInsight.summary}</Text>
-            {aiInsight.actions.map((action, index) => (
-              <Text key={`${index}-${action}`} style={styles.aiAction}>
-                {`• ${action}`}
-              </Text>
-            ))}
-          </HighContrastCard>
-        ) : null}
-
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.quickActionsRow}>
           <QuickAction label="Add Expense" icon="➕" onPress={() => router.push("/add-expense")} />
@@ -208,11 +180,7 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.quickActionsRow}>
-          <QuickAction
-            label="Scan BOL"
-            icon="📄"
-            onPress={() => router.push("/scan-bol" as Href)}
-          />
+          <QuickAction label="Scan BOL" icon="📄" onPress={() => router.push("/scan-bol" as Href)} />
           <QuickAction label="Trip Profit" icon="🧮" onPress={() => router.push("/trip-profit")} />
         </View>
 
@@ -325,24 +293,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   snapshotCard: {
-  },
-  aiCard: {
-    gap: Spacing.xs,
-  },
-  aiTitle: {
-    color: Colors.accent,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-    marginBottom: 2,
-  },
-  aiSummary: {
-    color: Colors.textPrimary,
-    fontSize: FontSize.caption + 1,
-    marginBottom: 2,
-  },
-  aiAction: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.caption,
   },
   snapshotTitle: {
     color: Colors.textPrimary,

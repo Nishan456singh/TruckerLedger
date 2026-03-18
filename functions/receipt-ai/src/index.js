@@ -143,9 +143,7 @@ ${JSON.stringify(payload)}
 // OpenAI Call
 // ------------------------
 
-async function callOpenAI({ apiKey, prompt, log }) {
-  log("Calling OpenAI...");
-
+async function callOpenAI({ apiKey, prompt }) {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -170,23 +168,21 @@ async function callOpenAI({ apiKey, prompt, log }) {
 
   const text = await response.text();
 
-  log("OpenAI raw response: " + text);
-
   if (!response.ok) {
-    throw new Error(`OpenAI error: ${text}`);
+    throw new Error(`OpenAI API error: ${text}`);
   }
 
   const json = JSON.parse(text);
   const content = json?.choices?.[0]?.message?.content;
 
   if (!content) {
-    throw new Error("Empty AI response");
+    throw new Error("Empty response from OpenAI");
   }
 
   const parsed = extractJsonObject(content);
 
   if (!parsed) {
-    throw new Error("Failed to parse AI JSON");
+    throw new Error("Invalid JSON in AI response");
   }
 
   return parsed;
@@ -231,47 +227,38 @@ function normalizeTaskResponse(task, parsed) {
 // MAIN FUNCTION
 // ------------------------
 
-export default async ({ req, res, log, error }) => {
+export default async ({ req, res, error }) => {
   try {
-    log("Function STARTED");
-
     const body = getRequestBody(req);
     const task = body.task;
     const payload = safeJson(body.payload) ?? {};
 
-    log(`Task: ${task}`);
-
     if (!task) {
+      error("Missing task in request");
       return res.json({ error: "Missing task" });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      error("Missing OPENAI_API_KEY");
-      return res.json({ error: "Server misconfigured" });
+      error("CRITICAL: OPENAI_API_KEY not configured");
+      return res.json({ error: "Server misconfigured" }, 500);
     }
 
     const prompt = buildTaskPrompt(task, payload);
 
     if (!prompt) {
-      return res.json({ error: "Invalid prompt" });
+      error("Failed to build prompt for task: " + task);
+      return res.json({ error: "Invalid request payload" }, 400);
     }
 
-    const parsed = await callOpenAI({ apiKey, prompt, log });
-
+    const parsed = await callOpenAI({ apiKey, prompt });
     const result = normalizeTaskResponse(task, parsed);
 
-    log("SUCCESS RESPONSE: " + JSON.stringify(result));
-
-    return res.json(result); // 🔥 ALWAYS RETURNS
+    return res.json(result, 200);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-
-    error("FUNCTION ERROR: " + msg);
-
-    return res.json({
-      error: msg,
-    }); // 🔥 NEVER EMPTY
+    error("Function error: " + msg);
+    return res.json({ error: "Request failed" }, 500);
   }
 };

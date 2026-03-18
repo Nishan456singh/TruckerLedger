@@ -16,41 +16,28 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
-## AI Integration Setup (OpenAI + Appwrite)
+## OCR Integration
 
-This app uses an Appwrite Function as a secure proxy for OpenAI, so your API key never ships in the mobile app.
+This app uses OCR to extract text from receipt images.
 
-### 1. Configure app env vars
+### 1. Development Build Required
 
-Create a local `.env` file with:
+OCR requires a development build (or Expo Go with native modules). Create one with:
 
 ```bash
-EXPO_PUBLIC_APPWRITE_RECEIPT_AI_FUNCTION_ID=69b4c5a5000a6e580608
+eas build --platform ios --profile preview
+# or
+eas build --platform android --profile preview
 ```
 
-Use your real function ID if it is different.
+### 2. How It Works
 
-### 2. Deploy the Appwrite AI function
+- User takes/picks a receipt photo
+- OCR engine extracts text from the image
+- Basic parser extracts: amount, date, vendor, category
+- Fields are autofilled in the expense form
 
-Function source is in:
-
-- `functions/receipt-ai/src/index.js`
-
-Create/update the Appwrite Function and set environment variables in Appwrite:
-
-- `OPENAI_API_KEY=<your-openai-key>`
-- `OPENAI_MODEL=gpt-4.1-mini` (optional)
-
-Runtime notes:
-
-- Function handles three AI tasks: `receipt_parse`, `bol_parse`, `business_insights`.
-- App client calls this function through `lib/ai/aiFunctionClient.ts`.
-
-### 3. Verify flows
-
-- Scan receipt: OCR + parser + AI fallback in `app/add-expense.tsx`
-- Scan BOL: OCR + parser + AI fallback in `app/scan-bol.tsx`
-- Dashboard: AI weekly insight card in `app/(tabs)/index.tsx`
+### 3. Verify OCR
 
 In the output, you'll find options to open the app in a
 

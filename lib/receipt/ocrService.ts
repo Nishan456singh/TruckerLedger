@@ -1,7 +1,14 @@
-import * as TextRecognition from "expo-text-recognition";
 import { Platform } from "react-native";
 
 const WEB = Platform.OS === "web";
+
+// Attempt to import native module, with graceful fallback
+let TextRecognition: any = null;
+try {
+  TextRecognition = require("expo-text-recognition");
+} catch (e) {
+  console.warn("expo-text-recognition not available - using development build for OCR support");
+}
 
 export interface OCRResult {
   fullText: string;
@@ -12,7 +19,7 @@ export interface OCRResult {
 
 /**
  * Extract text from a receipt image using device ML.
- * Uses expo-text-recognition for on-device OCR.
+ * Uses expo-text-recognition for on-device OCR (requires development build).
  */
 export async function extractReceiptText(imageUri: string): Promise<OCRResult> {
   if (WEB) {
@@ -21,6 +28,15 @@ export async function extractReceiptText(imageUri: string): Promise<OCRResult> {
       lines: [],
       success: false,
       error: "OCR not available on web",
+    };
+  }
+
+  if (!TextRecognition) {
+    return {
+      fullText: "",
+      lines: [],
+      success: false,
+      error: "OCR module not available. Use a development build for OCR support.",
     };
   }
 
@@ -36,7 +52,7 @@ export async function extractReceiptText(imageUri: string): Promise<OCRResult> {
       };
     }
 
-    const fullText = result.map((block) => block.text).join("\n");
+    const fullText = result.map((block: any) => block.text).join("\n");
     const lines = fullText
       .split("\n")
       .map((line) => line.trim())

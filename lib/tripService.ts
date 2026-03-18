@@ -183,6 +183,9 @@ export async function getTripCount(): Promise<number> {
   return row?.count ?? 0;
 }
 
+export async function getTrips(): Promise<Trip[]> {
+  if (WEB) return [];
+
   const db = await getDatabase();
 
   const rows = await db.getAllAsync<Trip>(

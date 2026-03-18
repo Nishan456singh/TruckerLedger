@@ -1,6 +1,5 @@
 import CategorySelector from "@/components/CategorySelector";
 import PrimaryButton from "@/components/PrimaryButton";
-import ReceiptPreview from "@/components/ReceiptPreview";
 
 import {
     BorderRadius,
@@ -10,16 +9,12 @@ import {
     Spacing
 } from "@/constants/theme";
 
-import { parseReceiptWithAI } from "@/lib/ai/receiptAI";
-import { addExpense } from "@/lib/expenseService";
-import { extractTextFromImage } from "@/lib/receipt/ocrService";
-import { parseReceiptText, shouldUseAiFallback } from "@/lib/receipt/receiptParser";
+import { addExpense, getDashboardStats } from "@/lib/expenseService";
 import type { Category } from "@/lib/types";
 
 import * as Haptics from "expo-haptics";
-import * as ImagePicker from "expo-image-picker";
 
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 
 import React, { useEffect, useRef, useState } from "react";
 
@@ -36,200 +31,62 @@ import {
 } from "react-native";
 
 import Animated, {
-    FadeIn,
     FadeInDown,
     FadeInUp,
 } from "react-native-reanimated";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type ScreenMode = "pick" | "manual";
+type Category_ = Category;
 
 function todayISO(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-function yesterdayISO(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
-function formatDateDisplay(isoDate: string): string {
-  return new Date(isoDate + "T00:00:00").toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const QUICK_AMOUNTS = [10, 25, 50, 100];
+const CATEGORY_EMOJIS: Record<Category_, string> = {
+  fuel: "⛽",
+  food: "🍔",
+  repair: "🔧",
+  toll: "🛣️",
+  parking: "🅿️",
+  other: "📦",
+};
 
 export default function AddExpenseScreen() {
-  const params = useLocalSearchParams<{
-    mode?: string;
-    category?: string;
-    receiptUri?: string;
-  }>();
-
-  const initialCategory: Category =
-    params.category === "fuel" ||
-      params.category === "toll" ||
-      params.category === "parking" ||
-      params.category === "food" ||
-      params.category === "repair" ||
-      params.category === "other"
-      ? (params.category as Category)
-      : "fuel";
-
-  const [mode, setMode] = useState<ScreenMode>(
-    params.mode === "manual" ? "manual" : "pick"
-  );
-
   const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState<Category>(initialCategory);
+  const [category, setCategory] = useState<Category_>("fuel");
   const [date, setDate] = useState(todayISO());
   const [note, setNote] = useState("");
-  const [receiptUri, setReceiptUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [didProcessReceipt, setDidProcessReceipt] = useState(false);
+  const [todayTotal, setTodayTotal] = useState(0);
 
   const amountRef = useRef<TextInput>(null);
 
   useEffect(() => {
-    if (mode === "manual") {
-      setTimeout(() => amountRef.current?.focus(), 300);
-    }
-  }, [mode]);
+    setTimeout(() => amountRef.current?.focus(), 300);
+  }, []);
 
   useEffect(() => {
-    const scannedUri =
-      typeof params.receiptUri === "string" ? params.receiptUri : "";
-
-    if (!scannedUri || didProcessReceipt) {
-      return;
-    }
-
-    let cancelled = false;
-
-    const runPipeline = async () => {
+    const loadTodayTotal = async () => {
       try {
-        setMode("manual");
-        setReceiptUri(scannedUri);
-
-        console.log("OCR: Starting text extraction from", scannedUri);
-        const ocr = await extractTextFromImage(scannedUri);
-        const ocrText = ocr.text;
-
-        console.log("OCR: Engine", ocr.engine, "Text length:", ocrText.length, "Reason:", ocr.reason);
-
-        if (!ocrText.trim()) {
-          if (!cancelled) {
-            Alert.alert(
-              "Could not read text",
-              ocr.engine === "none"
-                ? "OCR engine is not available in this runtime. Use a development build to enable receipt OCR, or continue manual entry."
-                : "Receipt photo captured, but no readable text was detected. You can still fill the expense manually."
-            );
-          }
-          return;
-        }
-
-        console.log("OCR: Extracted text preview:", ocrText.substring(0, 200));
-
-        const parserResult = parseReceiptText(ocrText);
-        console.log("Receipt Parser: Local result", parserResult);
-
-        let finalResult = parserResult;
-
-        if (shouldUseAiFallback(parserResult)) {
-          console.log("Receipt Parser: Using AI fallback due to missing fields");
-          const aiResult = await parseReceiptWithAI(ocrText);
-
-          console.log("Receipt AI: Result", aiResult);
-
-          if (aiResult) {
-            finalResult = {
-              amount: aiResult.amount ?? parserResult.amount,
-              date: aiResult.date ?? parserResult.date,
-              vendor: aiResult.vendor ?? parserResult.vendor,
-              category: aiResult.category ?? parserResult.category,
-            };
-            console.log("Receipt AI: Merged result", finalResult);
-          }
-
-          if (!aiResult && !cancelled) {
-            Alert.alert(
-              "Low confidence scan",
-              "Some receipt details could not be auto-filled. Please review and complete the fields manually."
-            );
-          }
-        }
-
-        if (cancelled) return;
-
-        console.log("Receipt: Final result to autofill", finalResult);
-
-        if (finalResult.amount !== null) {
-          console.log("Setting amount:", finalResult.amount);
-          setAmount(String(finalResult.amount));
-        }
-
-        if (finalResult.category) {
-          console.log("Setting category:", finalResult.category);
-          setCategory(finalResult.category as Category);
-        }
-
-        if (finalResult.date) {
-          console.log("Setting date:", finalResult.date);
-          setDate(finalResult.date);
-        }
-
-        if (finalResult.vendor) {
-          console.log("Setting note with vendor:", finalResult.vendor);
-          setNote(`Vendor: ${finalResult.vendor}`);
-        }
+        const stats = await getDashboardStats();
+        setTodayTotal(stats.todayTotal);
       } catch (error) {
-        console.error("Receipt processing failed:", error);
-      } finally {
-        if (!cancelled) {
-          setDidProcessReceipt(true);
-        }
+        console.error("Failed to load today total:", error);
       }
     };
-
-    runPipeline();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [didProcessReceipt, params.receiptUri]);
-
-  // ─── Pick image ─────────────────────────
-
-  async function handlePickImage() {
-    const { status } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission needed",
-        "Photo library access is required to attach receipts."
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: false,
-      quality: 0.85,
-    });
-
-    if (!result.canceled && result.assets?.[0]) {
-      setReceiptUri(result.assets[0].uri);
-    }
-  }
-
-  // ─── Save expense ───────────────────────
+    loadTodayTotal();
+  }, []);
 
   async function handleSave() {
     const parsedAmount = Number(amount.replace(/[^\d.]/g, ""));
@@ -251,7 +108,6 @@ export default function AddExpenseScreen() {
         category,
         note: note.trim(),
         date,
-        receipt_uri: receiptUri,
       });
 
       await Haptics.notificationAsync(
@@ -273,51 +129,12 @@ export default function AddExpenseScreen() {
     }
   }
 
-  // ─── Pick mode screen ───────────────────
+  const handleQuickAmount = (quickAmount: number) => {
+    setAmount(String(quickAmount));
+  };
 
-  if (mode === "pick") {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <Animated.View entering={FadeIn.duration(200)} style={styles.pickContainer}>
-          <View style={styles.pickHeader}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={styles.closeBtnText}>✕</Text>
-            </TouchableOpacity>
-
-            <Text style={styles.pickTitle}>Add Expense</Text>
-
-            <View style={{ width: 20 }} />
-          </View>
-
-          <Text style={styles.pickSubtitle}>
-            How would you like to add this expense?
-          </Text>
-
-          <Animated.View entering={FadeInDown.delay(100)}>
-            <TouchableOpacity
-              style={styles.pickCard}
-              onPress={() => router.push("/scan-receipt")}
-            >
-              <Text style={styles.pickIcon}>📷</Text>
-              <Text style={styles.pickCardTitle}>Scan Receipt</Text>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(200)}>
-            <TouchableOpacity
-              style={styles.pickCard}
-              onPress={() => setMode("manual")}
-            >
-              <Text style={styles.pickIcon}>✏️</Text>
-              <Text style={styles.pickCardTitle}>Add Manually</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </Animated.View>
-      </SafeAreaView>
-    );
-  }
-
-  // ─── Manual form ────────────────────────
+  const parsedAmount = Number(amount.replace(/[^\d.]/g, "")) || 0;
+  const projectedTotal = todayTotal + parsedAmount;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -327,16 +144,22 @@ export default function AddExpenseScreen() {
       >
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: Spacing.xl, gap: Spacing.lg }}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
           <Animated.View entering={FadeInDown}>
-            <Text style={styles.formTitle}>New Expense</Text>
+            <View style={styles.header}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.formTitle}>💰 Add Expense</Text>
+              <View style={{ width: 20 }} />
+            </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(100)}>
+          <Animated.View entering={FadeInDown.delay(50)}>
             <View style={styles.amountContainer}>
               <Text style={styles.currencySign}>$</Text>
-
               <TextInput
                 ref={amountRef}
                 style={styles.amountInput}
@@ -349,58 +172,82 @@ export default function AddExpenseScreen() {
             </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(200)}>
-            <CategorySelector selected={category} onChange={setCategory} />
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(260)}>
-            <Text style={styles.fieldLabel}>Date</Text>
-
-            <View style={styles.dateRow}>
-              <TouchableOpacity
-                style={[styles.datePill, date === todayISO() && styles.datePillActive]}
-                onPress={() => setDate(todayISO())}
-              >
-                <Text style={[styles.datePillText, date === todayISO() && styles.datePillTextActive]}>
-                  Today
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.datePill, date === yesterdayISO() && styles.datePillActive]}
-                onPress={() => setDate(yesterdayISO())}
-              >
-                <Text style={[styles.datePillText, date === yesterdayISO() && styles.datePillTextActive]}>
-                  Yesterday
-                </Text>
-              </TouchableOpacity>
-
-              <View style={styles.dateDisplayPill}>
-                <Text style={styles.datePillText}>{formatDateDisplay(date)}</Text>
-              </View>
+          <Animated.View entering={FadeInDown.delay(100)}>
+            <Text style={styles.fieldLabel}>Quick amounts</Text>
+            <View style={styles.quickAmounts}>
+              {QUICK_AMOUNTS.map((qa) => (
+                <TouchableOpacity
+                  key={qa}
+                  style={styles.quickAmountBtn}
+                  onPress={() => handleQuickAmount(qa)}
+                >
+                  <Text style={styles.quickAmountText}>${qa}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(320)}>
-            <Text style={styles.fieldLabel}>Notes</Text>
+          <Animated.View entering={FadeInDown.delay(150)}>
+            <Text style={styles.fieldLabel}>Category</Text>
+            <View style={styles.categoryGrid}>
+              {(["fuel", "food", "repair", "toll", "parking", "other"] as Category_[]).map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.categoryBtn, category === cat && styles.categoryBtnActive]}
+                  onPress={() => setCategory(cat)}
+                >
+                  <Text style={styles.categoryEmoji}>{CATEGORY_EMOJIS[cat]}</Text>
+                  <Text style={[styles.categoryLabel, category === cat && styles.categoryLabelActive]}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </Animated.View>
 
+          <Animated.View entering={FadeInDown.delay(200)}>
+            <Text style={styles.fieldLabel}>Date</Text>
+            <TextInput
+              style={styles.dateInput}
+              value={date}
+              onChangeText={setDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={Colors.textMuted}
+            />
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.delay(250)}>
+            <Text style={styles.fieldLabel}>Note</Text>
             <TextInput
               style={styles.notesInput}
               value={note}
               onChangeText={setNote}
-              placeholder="Optional note"
+              placeholder="Optional note (vendor, description, etc.)"
               placeholderTextColor={Colors.textMuted}
               multiline
             />
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(380)}>
-            {receiptUri ? (
-              <ReceiptPreview uri={receiptUri} onRemove={() => setReceiptUri(null)} />
-            ) : (
-              <TouchableOpacity style={styles.attachReceiptBtn} onPress={handlePickImage}>
-                <Text>📎 Attach Receipt</Text>
-              </TouchableOpacity>
+          <Animated.View entering={FadeInDown.delay(300)} style={styles.summaryCard}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Today's total</Text>
+              <Text style={styles.summaryValue}>{formatCurrency(todayTotal)}</Text>
+            </View>
+            {parsedAmount > 0 && (
+              <>
+                <View style={styles.summaryDivider} />
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>+ This expense</Text>
+                  <Text style={styles.summaryValue}>{formatCurrency(parsedAmount)}</Text>
+                </View>
+                <View style={styles.summaryDivider} />
+                <View style={styles.summaryRow}>
+                  <Text style={[styles.summaryLabel, { fontWeight: FontWeight.bold }]}>New total</Text>
+                  <Text style={[styles.summaryValue, { color: Colors.accent, fontWeight: FontWeight.bold }]}>
+                    {formatCurrency(projectedTotal)}
+                  </Text>
+                </View>
+              </>
             )}
           </Animated.View>
         </ScrollView>
@@ -412,6 +259,9 @@ export default function AddExpenseScreen() {
             loading={saving}
             disabled={!amount || saving}
           />
+          <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
+            <Text style={styles.cancelBtnText}>Cancel</Text>
+          </TouchableOpacity>
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -424,46 +274,22 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
 
-  pickContainer: {
-    flex: 1,
+  scrollContent: {
     padding: Spacing.xl,
-    gap: Spacing.lg,
-  },
-
-  pickHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-
-  pickTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-  },
-
-  pickSubtitle: {
-    fontSize: FontSize.body,
-    color: Colors.textSecondary,
-  },
-
-  pickCard: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    flexDirection: "row",
     gap: Spacing.md,
+    paddingBottom: Spacing.xxl,
+  },
+
+  header: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: Spacing.lg,
   },
 
-  pickIcon: {
-    fontSize: 24,
-  },
-
-  pickCardTitle: {
-    fontSize: FontSize.body,
-    color: Colors.textPrimary,
+  closeBtnText: {
+    fontSize: 18,
+    color: Colors.textSecondary,
   },
 
   formTitle: {
@@ -475,88 +301,167 @@ const styles = StyleSheet.create({
   amountContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.primary,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
 
   currencySign: {
-    fontSize: FontSize.title,
-    color: Colors.primary,
+    fontSize: 32,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
   },
 
   amountInput: {
     flex: 1,
-    fontSize: FontSize.title,
+    fontSize: 32,
+    fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
 
   fieldLabel: {
     fontSize: FontSize.caption,
     color: Colors.textSecondary,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.sm,
   },
 
-  dateRow: {
+  quickAmounts: {
     flexDirection: "row",
     gap: Spacing.sm,
+    flexWrap: "wrap",
+    marginBottom: Spacing.md,
   },
 
-  datePill: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.full,
+  quickAmountBtn: {
+    flex: 1,
+    minWidth: "22%",
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
+    alignItems: "center",
+    backgroundColor: Colors.card,
   },
 
-  datePillActive: {
+  quickAmountText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+
+  categoryGrid: {
+    flexDirection: "row",
+    gap: Spacing.sm,
+    flexWrap: "wrap",
+    marginBottom: Spacing.md,
+  },
+
+  categoryBtn: {
+    flex: 1,
+    minWidth: "31%",
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+    gap: Spacing.xs,
+    backgroundColor: Colors.card,
+  },
+
+  categoryBtnActive: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
 
-  datePillText: {
-    fontSize: FontSize.caption,
-    color: Colors.textSecondary,
+  categoryEmoji: {
+    fontSize: 20,
   },
 
-  datePillTextActive: {
-    color: Colors.textPrimary,
+  categoryLabel: {
+    fontSize: FontSize.caption,
+    color: Colors.textSecondary,
     fontWeight: FontWeight.semibold,
   },
 
-  dateDisplayPill: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.cardAlt,
-    borderRadius: BorderRadius.full,
+  categoryLabelActive: {
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
+  },
+
+  dateInput: {
+    backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
-    flex: 1,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    color: Colors.textPrimary,
+    fontSize: FontSize.body,
+    marginBottom: Spacing.md,
   },
 
   notesInput: {
     backgroundColor: Colors.card,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
     minHeight: 80,
+    color: Colors.textPrimary,
+    fontSize: FontSize.body,
   },
 
-  attachReceiptBtn: {
+  summaryCard: {
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
+    marginTop: Spacing.md,
+  },
+
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+  },
+
+  summaryLabel: {
+    fontSize: FontSize.body,
+    color: Colors.textSecondary,
+  },
+
+  summaryValue: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+
+  summaryDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.sm,
+  },
+
+  footer: {
+    padding: Spacing.xl,
+    gap: Spacing.sm,
+  },
+
+  cancelBtn: {
+    paddingVertical: Spacing.md,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: "center",
   },
 
-  footer: {
-    padding: Spacing.xl,
-  },
-
-  closeBtnText: {
-    fontSize: 16,
+  cancelBtnText: {
+    fontSize: FontSize.body,
     color: Colors.textSecondary,
+    fontWeight: FontWeight.semibold,
   },
 });
