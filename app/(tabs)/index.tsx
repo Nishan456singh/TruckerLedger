@@ -12,6 +12,7 @@ import {
     Spacing,
 } from "@/constants/theme";
 import { useAuth } from "@/lib/auth/AuthContext";
+import { getBackupStatus, formatBytes } from "@/lib/backup/appwriteBackup";
 import {
     getAllExpenses,
     getDashboardStats,
@@ -296,6 +297,11 @@ export default function DashboardScreen() {
             label="Analytics"
             icon="📊"
             onPress={() => router.push("/analytics")}
+          />
+          <QuickActionButton
+            label="Settings"
+            icon="⚙️"
+            onPress={() => router.push("/cloud-settings")}
           />
         </View>
 

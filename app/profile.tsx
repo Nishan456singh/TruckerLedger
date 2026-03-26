@@ -330,6 +330,13 @@ export default function ProfileScreen() {
           <Row label="Provider" value={displayProvider} />
         </SectionCard>
 
+        <TouchableOpacity
+          onPress={() => router.push("/cloud-settings")}
+          style={styles.toolBtn}
+        >
+          <Text style={styles.toolBtnText}>⚙️ Cloud Settings & Backup</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
           <Text style={styles.logoutBtnText}>Logout</Text>
         </TouchableOpacity>
