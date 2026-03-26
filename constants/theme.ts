@@ -40,6 +40,9 @@ export const FontSize = {
   body: 16,
   caption: 13,
   small: 11,
+  largeIcon: 36,
+  headerIcon: 24,
+  statIcon: 20,
 };
 
 export const FontWeight = {
