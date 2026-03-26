@@ -260,6 +260,109 @@ export async function getWeeklyTripSnapshot(): Promise<{
   };
 }
 
+export async function getMonthlyTripSnapshot(): Promise<{
+  income: number;
+  fuel: number;
+  otherExpenses: number;
+  profit: number;
+  tripCount: number;
+}> {
+  if (WEB) {
+    return {
+      income: 0,
+      fuel: 0,
+      otherExpenses: 0,
+      profit: 0,
+      tripCount: 0,
+    };
+  }
+
+  const db = await getDatabase();
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split("T")[0];
+  const monthEnd = now.toISOString().split("T")[0];
+
+  type Row = {
+    income: number;
+    fuel: number;
+    other_expenses: number;
+    profit: number;
+    trip_count: number;
+  };
+
+  const row = await db.getFirstAsync<Row>(
+    `SELECT
+      COALESCE(SUM(income),0) AS income,
+      COALESCE(SUM(fuel),0) AS fuel,
+      COALESCE(SUM(tolls + food + parking + repairs + other_expenses),0) AS other_expenses,
+      COALESCE(SUM(profit),0) AS profit,
+      COUNT(*) AS trip_count
+    FROM trips
+    WHERE date >= ? AND date <= ?`,
+    [monthStart, monthEnd]
+  );
+
+  return {
+    income: row?.income ?? 0,
+    fuel: row?.fuel ?? 0,
+    otherExpenses: row?.other_expenses ?? 0,
+    profit: row?.profit ?? 0,
+    tripCount: row?.trip_count ?? 0,
+  };
+}
+
+export async function getMonthlyInsights(): Promise<{
+  bestTripProfit: number;
+  profitableTripsCount: number;
+  totalTripsCount: number;
+  averageTripProfit: number;
+}> {
+  if (WEB) {
+    return {
+      bestTripProfit: 0,
+      profitableTripsCount: 0,
+      totalTripsCount: 0,
+      averageTripProfit: 0,
+    };
+  }
+
+  const db = await getDatabase();
+
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split("T")[0];
+  const monthEnd = now.toISOString().split("T")[0];
+
+  type InsightRow = {
+    best_profit: number;
+    profitable_count: number;
+    total_count: number;
+    avg_profit: number;
+  };
+
+  const row = await db.getFirstAsync<InsightRow>(
+    `SELECT
+      MAX(profit) AS best_profit,
+      SUM(CASE WHEN profit > 0 THEN 1 ELSE 0 END) AS profitable_count,
+      COUNT(*) AS total_count,
+      AVG(profit) AS avg_profit
+    FROM trips
+    WHERE date >= ? AND date <= ?`,
+    [monthStart, monthEnd]
+  );
+
+  return {
+    bestTripProfit: row?.best_profit ?? 0,
+    profitableTripsCount: row?.profitable_count ?? 0,
+    totalTripsCount: row?.total_count ?? 0,
+    averageTripProfit: Number((row?.avg_profit ?? 0).toFixed(2)),
+  };
+}
+
 // ─── CSV Export ─────────────────────────────────────
 
 function escapeCsvField(value: string | number | null | undefined): string {
