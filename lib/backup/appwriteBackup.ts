@@ -1,16 +1,24 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Account, Client, Databases, Storage } from 'react-native-appwrite';
+import { Account, Client, Databases, Storage } from 'appwrite';
 import type { Trip, Expense, BOLRecord } from '@/lib/types';
 
-const APPWRITE_ENDPOINT = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!;
-const APPWRITE_PROJECT_ID = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!;
-const APPWRITE_DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID!;
+const APPWRITE_ENDPOINT = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
+const APPWRITE_PROJECT_ID = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID;
+const APPWRITE_DATABASE_ID = process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID;
 const APPWRITE_BACKUP_COLLECTION = 'backups';
 const APPWRITE_STORAGE_BUCKET = 'images';
 
+// Validate required environment variables
+if (!APPWRITE_PROJECT_ID) {
+  console.warn('Warning: EXPO_PUBLIC_APPWRITE_PROJECT_ID not set. Cloud backups will be disabled.');
+}
+if (!APPWRITE_DATABASE_ID) {
+  console.warn('Warning: EXPO_PUBLIC_APPWRITE_DATABASE_ID not set. Cloud backups will be disabled.');
+}
+
 const client = new Client()
   .setEndpoint(APPWRITE_ENDPOINT)
-  .setProject(APPWRITE_PROJECT_ID);
+  .setProject(APPWRITE_PROJECT_ID || 'default');
 
 const databases = new Databases(client);
 const storage = new Storage(client);
@@ -66,6 +74,10 @@ export async function createBackup(
   bols: BOLRecord[]
 ): Promise<{ success: boolean; backup_id?: string; error?: string }> {
   try {
+    if (!APPWRITE_DATABASE_ID) {
+      return { success: false, error: 'Cloud backup not configured' };
+    }
+
     const userId = await getCurrentUserId();
     if (!userId) {
       return { success: false, error: 'Not authenticated' };
@@ -120,6 +132,10 @@ export async function restoreBackup(
   backupId: string
 ): Promise<{ success: boolean; backup?: BackupData; error?: string }> {
   try {
+    if (!APPWRITE_DATABASE_ID) {
+      return { success: false, error: 'Cloud backup not configured' };
+    }
+
     const userId = await getCurrentUserId();
     if (!userId) {
       return { success: false, error: 'Not authenticated' };
@@ -153,6 +169,8 @@ export async function getBackupsList(): Promise<
   Array<{ id: string; createdAt: string; itemCount: number; size: number }>
 > {
   try {
+    if (!APPWRITE_DATABASE_ID) return [];
+
     const userId = await getCurrentUserId();
     if (!userId) return [];
 
@@ -187,6 +205,8 @@ export async function getBackupsList(): Promise<
  */
 export async function deleteBackup(backupId: string): Promise<boolean> {
   try {
+    if (!APPWRITE_DATABASE_ID) return false;
+
     const userId = await getCurrentUserId();
     if (!userId) return false;
 
