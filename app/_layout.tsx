@@ -1,6 +1,7 @@
 import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/lib/auth/AuthContext";
 import { initDatabase } from "@/lib/db";
+import { hasCompletedOnboarding } from "@/lib/onboardingStorage";
 import { Stack, router, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
@@ -17,21 +18,54 @@ export const unstable_settings = {
 function AuthGate({ dbReady }: { dbReady: boolean }) {
   const { user, authLoading } = useAuth();
   const segments = useSegments();
+  const [onboardingLoaded, setOnboardingLoaded] = useState(false);
+  const [completedOnboarding, setCompletedOnboarding] = useState(false);
 
   useEffect(() => {
-    if (!dbReady || authLoading) return;
+    async function checkOnboarding() {
+      if (!user) {
+        setOnboardingLoaded(true);
+        return;
+      }
+
+      try {
+        const completed = await hasCompletedOnboarding();
+        setCompletedOnboarding(completed);
+      } catch (err) {
+        console.error("Error checking onboarding:", err);
+      } finally {
+        setOnboardingLoaded(true);
+      }
+    }
+
+    checkOnboarding();
+  }, [user]);
+
+  useEffect(() => {
+    if (!dbReady || authLoading || !onboardingLoaded) return;
 
     const segment = segments?.[0];
     const onLoginScreen = segment === "login";
+    const onOnboardingScreen = segment === "onboarding-welcome";
 
     if (!user && !onLoginScreen) {
       router.replace("/login");
+      return;
     }
 
     if (user && onLoginScreen) {
-      router.replace("/");
+      if (completedOnboarding) {
+        router.replace("/");
+      } else {
+        router.replace("/onboarding-welcome");
+      }
+      return;
     }
-  }, [user, authLoading, dbReady, segments]);
+
+    if (user && !completedOnboarding && !onOnboardingScreen) {
+      router.replace("/onboarding-welcome");
+    }
+  }, [user, authLoading, dbReady, segments, onboardingLoaded, completedOnboarding]);
 
   return null;
 }
