@@ -12,6 +12,7 @@ import {
 import type { Category, Expense } from "@/lib/types";
 
 import { exportExpenses, getAllExpenses } from "@/lib/expenseService";
+import { formatCurrency } from "@/lib/formatUtils";
 
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -85,13 +86,6 @@ function formatSectionDate(dateStr: string): string {
   });
 }
 
-function formatCurrency(v: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(v);
-}
-
 interface FilterChipProps {
   label: string;
   icon?: string;
@@ -119,6 +113,7 @@ export default function ExpenseHistoryScreen() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState<Category | "all">("all");
+  const [dateRange, setDateRange] = useState<"all" | "week" | "month">("all");
   const [refreshing, setRefreshing] = useState(false);
   const [exporting, setExporting] = useState(false);
 
@@ -188,7 +183,23 @@ export default function ExpenseHistoryScreen() {
       (e.note ?? "").toLowerCase().includes(q) ||
       String(e.amount).includes(q);
 
-    return matchesCategory && matchesSearch;
+    // Date range filter
+    let matchesDateRange = true;
+    if (dateRange !== "all") {
+      const expenseDate = new Date(e.date);
+      const now = new Date();
+
+      if (dateRange === "week") {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        matchesDateRange = expenseDate >= sevenDaysAgo;
+      } else if (dateRange === "month") {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        matchesDateRange = expenseDate >= monthStart;
+      }
+    }
+
+    return matchesCategory && matchesSearch && matchesDateRange;
   });
 
   const sections = groupByDate(filtered);
@@ -267,6 +278,32 @@ export default function ExpenseHistoryScreen() {
         })}
       </ScrollView>
 
+      {/* Date Range Filters */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+      >
+        <FilterChip
+          label="All Time"
+          icon="📅"
+          active={dateRange === "all"}
+          onPress={() => setDateRange("all")}
+        />
+        <FilterChip
+          label="This Month"
+          icon="📆"
+          active={dateRange === "month"}
+          onPress={() => setDateRange("month")}
+        />
+        <FilterChip
+          label="Last 7 Days"
+          icon="📊"
+          active={dateRange === "week"}
+          onPress={() => setDateRange("week")}
+        />
+      </ScrollView>
+
       <View style={styles.exportRow}>
         <TouchableOpacity
           onPress={handleExportCsv}
@@ -287,13 +324,13 @@ export default function ExpenseHistoryScreen() {
           <Text style={styles.emptyIcon}>📭</Text>
 
           <Text style={styles.emptyTitle}>
-            {search || selectedCategory !== "all"
+            {search || selectedCategory !== "all" || dateRange !== "all"
               ? "No matching expenses"
               : "No expenses yet"}
           </Text>
 
           <Text style={styles.emptyDesc}>
-            {search || selectedCategory !== "all"
+            {search || selectedCategory !== "all" || dateRange !== "all"
               ? "Try adjusting your filters"
               : "Add your first expense from the dashboard"}
           </Text>
