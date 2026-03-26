@@ -101,7 +101,7 @@ export default function TripDetailScreen() {
         setRepairs(loaded.repairs.toString());
         setOtherExpenses(loaded.other_expenses.toString());
         setDate(loaded.date);
-        setNote(loaded.note);
+        setNote(loaded.note ?? "");
       }
     } catch (error) {
       console.error("Failed to load trip:", error);

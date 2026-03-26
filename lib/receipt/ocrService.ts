@@ -2,8 +2,14 @@ import { Platform } from "react-native";
 
 const WEB = Platform.OS === "web";
 
+// Type for OCR text block from expo-text-recognition
+interface TextBlock {
+  text: string;
+  [key: string]: any;
+}
+
 // Attempt to import native module, with graceful fallback
-let TextRecognition: any = null;
+let TextRecognition: { recognizeTextFromImage: (uri: string) => Promise<TextBlock[]> } | null = null;
 try {
   TextRecognition = require("expo-text-recognition");
 } catch (e) {
@@ -52,7 +58,7 @@ export async function extractReceiptText(imageUri: string): Promise<OCRResult> {
       };
     }
 
-    const fullText = result.map((block: any) => block.text).join("\n");
+    const fullText = result.map((block: TextBlock) => block.text).join("\n");
     const lines = fullText
       .split("\n")
       .map((line) => line.trim())

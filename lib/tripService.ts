@@ -157,7 +157,7 @@ export async function updateTrip(id: number, input: Partial<TripInput>): Promise
       totalExpenses,
       profit,
       updated.date,
-      updated.note,
+      updated.note ?? null,
       id,
     ]
   );

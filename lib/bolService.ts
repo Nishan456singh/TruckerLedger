@@ -222,7 +222,7 @@ export async function updateBOL(id: number, input: Partial<BOLInput>): Promise<v
       updated.date,
       updated.broker,
       updated.image_uri,
-      updated.ocr_text,
+      updated.ocr_text ?? null,
       id,
     ]
   );

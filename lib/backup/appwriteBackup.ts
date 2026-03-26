@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Account, Client, Databases, Storage } from 'react-native-appwrite';
+import type { Trip, Expense, BOLRecord } from '@/lib/types';
 
 const APPWRITE_ENDPOINT = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!;
 const APPWRITE_PROJECT_ID = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!;
@@ -23,9 +24,9 @@ export interface BackupStatus {
 }
 
 export interface BackupData {
-  trips: any[];
-  expenses: any[];
-  bols: any[];
+  trips: Trip[];
+  expenses: Expense[];
+  bols: BOLRecord[];
   timestamp: number;
   userId: string;
 }
@@ -60,9 +61,9 @@ export async function getCurrentUserId(): Promise<string | null> {
  * Create full backup of local data
  */
 export async function createBackup(
-  trips: any[],
-  expenses: any[],
-  bols: any[]
+  trips: Trip[],
+  expenses: Expense[],
+  bols: BOLRecord[]
 ): Promise<{ success: boolean; backup_id?: string; error?: string }> {
   try {
     const userId = await getCurrentUserId();
@@ -172,7 +173,7 @@ export async function getBackupsList(): Promise<
         size: doc.backup_size,
       }))
       .sort(
-        (a, b) =>
+        (a: { createdAt: string }, b: { createdAt: string }) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
   } catch (error) {
@@ -225,12 +226,21 @@ export async function uploadImage(
       return { success: false, error: 'Not authenticated' };
     }
 
-    // Upload to storage
-    const fileId = `${userId}/${fileName}`;
+    // Create file ID with user namespace
+    const fileId = `${userId}/${Date.now()}-${fileName}`;
 
-    // Note: In production, you'd use FormData to upload the actual file
-    // This is a simplified version
-    await storage.createFile(APPWRITE_STORAGE_BUCKET, fileId, imageUri as any);
+    // Note: This requires proper file handling implementation
+    // For now, we'll accept base64 encoded strings or URIs
+    // In production, convert imageUri to File/Blob using react-native-fs or similar
+    try {
+      await storage.createFile(APPWRITE_STORAGE_BUCKET, fileId, imageUri as any);
+    } catch (uploadError) {
+      console.error('File upload to Appwrite failed:', uploadError);
+      return {
+        success: false,
+        error: 'Unable to upload file to cloud storage',
+      };
+    }
 
     const url = `${APPWRITE_ENDPOINT}/v1/storage/buckets/${APPWRITE_STORAGE_BUCKET}/files/${fileId}/preview?project=${APPWRITE_PROJECT_ID}`;
 
