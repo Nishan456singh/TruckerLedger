@@ -4,6 +4,7 @@ import InsightCard from "@/components/InsightCard";
 import QuickActionButton from "@/components/QuickActionButton";
 import SnapshotCard from "@/components/SnapshotCard";
 import StatCard from "@/components/StatCard";
+import FuelEfficiencyCard from "@/components/FuelEfficiencyCard";
 import {
     Colors,
     FontSize,
@@ -17,7 +18,7 @@ import {
     getMonthlyTotal,
 } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
-import { getWeeklyTripSnapshot, getMonthlyTripSnapshot, getMonthlyInsights } from "@/lib/tripService";
+import { getWeeklyTripSnapshot, getMonthlyTripSnapshot, getMonthlyInsights, getFuelEfficiencyData, type FuelEfficiencyData } from "@/lib/tripService";
 import type { DashboardStats, Expense } from "@/lib/types";
 import { router, useFocusEffect, type Href } from "expo-router";
 import React, { useCallback, useState } from "react";
@@ -31,18 +32,58 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+export default function DashboardScreen() {
+  const { user } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
+  const [stats, setStats] = useState<DashboardStats>({
+    todayTotal: 0,
+    weekTotal: 0,
+    monthTotal: 0,
+    todayCount: 0,
+    weekCount: 0,
+    monthCount: 0,
+  });
+  const [weeklySnapshot, setWeeklySnapshot] = useState({
+    income: 0,
+    fuel: 0,
+    otherExpenses: 0,
+    profit: 0,
+  });
+  const [monthlySnapshot, setMonthlySnapshot] = useState({
+    income: 0,
+    fuel: 0,
+    otherExpenses: 0,
+    profit: 0,
+    tripCount: 0,
+  });
+  const [monthlyInsights, setMonthlyInsights] = useState({
+    bestTripProfit: 0,
+    profitableTripsCount: 0,
+    totalTripsCount: 0,
+    averageTripProfit: 0,
+  });
+  const [fuelEfficiency, setFuelEfficiency] = useState<FuelEfficiencyData>({
+    monthlyFuelCost: 0,
+    monthlyIncome: 0,
+    tripCount: 0,
+    averageFuelPerTrip: 0,
+    fuelAsPercentage: 0,
+  });
+  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
+  const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
 
   const firstName = user?.name?.split(" ")[0] ?? "Driver";
 
   const loadDashboard = useCallback(async () => {
     const now = new Date();
 
-    const [dashboardStats, allExpenses, weeklyTripData, monthlyTripData, monthlyInsightsData, monthlyTotal] = await Promise.all([
+    const [dashboardStats, allExpenses, weeklyTripData, monthlyTripData, monthlyInsightsData, fuelData, monthlyTotal] = await Promise.all([
       getDashboardStats(),
       getAllExpenses(),
       getWeeklyTripSnapshot(),
       getMonthlyTripSnapshot(),
       getMonthlyInsights(),
+      getFuelEfficiencyData(),
       getMonthlyTotal(now.getMonth() + 1, now.getFullYear()),
     ]);
 
@@ -50,6 +91,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
     setWeeklySnapshot(weeklyTripData);
     setMonthlySnapshot(monthlyTripData);
     setMonthlyInsights(monthlyInsightsData);
+    setFuelEfficiency(fuelData);
     setMonthlyExpenses(monthlyTotal);
     setRecentExpenses(allExpenses.slice(0, 6));
   }, []);
@@ -197,6 +239,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
           />
         )}
 
+        {/* ─── Fuel Efficiency ─────────────────────────── */}
+        {fuelEfficiency.tripCount > 0 && (
+          <FuelEfficiencyCard
+            monthlyFuelCost={fuelEfficiency.monthlyFuelCost}
+            monthlyIncome={fuelEfficiency.monthlyIncome}
+            tripCount={fuelEfficiency.tripCount}
+            averageFuelPerTrip={fuelEfficiency.averageFuelPerTrip}
+            fuelAsPercentage={fuelEfficiency.fuelAsPercentage}
+          />
+        )}
+
         {/* ─── Quick Actions ─────────────────────────── */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionGrid}>
@@ -235,6 +288,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
             label="History"
             icon="📚"
             onPress={() => router.push("/expense-history")}
+          />
+        </View>
+
+        <View style={styles.actionGrid}>
+          <QuickActionButton
+            label="Analytics"
+            icon="📊"
+            onPress={() => router.push("/analytics")}
           />
         </View>
 
