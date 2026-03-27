@@ -108,12 +108,13 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.card,
+    backgroundColor: "rgba(0, 0, 0, 0.02)",
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     gap: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: "rgba(0, 0, 0, 0.06)",
+    overflow: 'hidden',
     ...Shadow.card,
   },
   iconBadge: {

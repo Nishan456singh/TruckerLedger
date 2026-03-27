@@ -67,9 +67,14 @@ export default function CloudSettingsScreen() {
       const result = await createBackup(trips, expenses, bols);
 
       if (result.success) {
+        // Get fresh backup status
+        const freshStatus = await getBackupStatus();
+        setBackupStatus(freshStatus);
+
+        const itemCount = trips.length + expenses.length + bols.length;
         Alert.alert(
           'Backup Complete',
-          `Backed up ${backupStatus.itemsBackedUp} items (${formatBytes(backupStatus.backupSize)})`
+          `Backed up ${itemCount} items (${formatBytes(freshStatus.backupSize)})`
         );
       } else {
         Alert.alert('Backup Failed', result.error || 'Unknown error');
@@ -79,7 +84,7 @@ export default function CloudSettingsScreen() {
     } finally {
       setIsBackingUp(false);
     }
-  }, [cloudConnected, backupStatus]);
+  }, [cloudConnected]); // Remove backupStatus dependency
 
   const handleLogout = useCallback(async () => {
     Alert.alert(

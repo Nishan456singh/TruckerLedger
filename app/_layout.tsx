@@ -3,11 +3,12 @@ import { AuthProvider, useAuth } from "@/lib/auth/AuthContext";
 import { initDatabase } from "@/lib/db";
 import { hasCompletedOnboarding } from "@/lib/onboardingStorage";
 import { Stack, router, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
+import Animated, { FadeOut } from "react-native-reanimated";
 
 export const unstable_settings = {
   anchor: "(tabs)",
@@ -20,7 +21,9 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
   const segments = useSegments();
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
   const [completedOnboarding, setCompletedOnboarding] = useState(false);
+  const [routedOnce, setRoutedOnce] = useState(false);
 
+  // Check onboarding status when user changes
   useEffect(() => {
     async function checkOnboarding() {
       if (!user) {
@@ -33,6 +36,7 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
         setCompletedOnboarding(completed);
       } catch (err) {
         console.error("Error checking onboarding:", err);
+        setCompletedOnboarding(false);
       } finally {
         setOnboardingLoaded(true);
       }
@@ -41,31 +45,52 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
     checkOnboarding();
   }, [user]);
 
+  // Handle routing based on auth and onboarding state
   useEffect(() => {
-    if (!dbReady || authLoading || !onboardingLoaded) return;
-
-    const segment = segments?.[0];
-    const onLoginScreen = segment === "login";
-    const onOnboardingScreen = segment === "onboarding-welcome";
-
-    if (!user && !onLoginScreen) {
-      router.replace("/login");
+    // Wait for all data to load before routing
+    if (!dbReady || authLoading || !onboardingLoaded || routedOnce) {
       return;
     }
 
-    if (user && onLoginScreen) {
+    const currentSegment = segments?.[0];
+
+    // No user: should be on login
+    if (!user) {
+      if (currentSegment !== "login") {
+        router.replace("/login");
+        setRoutedOnce(true);
+      }
+      return;
+    }
+
+    // User exists and on login screen: navigate away
+    if (currentSegment === "login") {
       if (completedOnboarding) {
         router.replace("/");
       } else {
         router.replace("/onboarding-welcome");
       }
+      setRoutedOnce(true);
       return;
     }
 
-    if (user && !completedOnboarding && !onOnboardingScreen) {
+    // User exists but hasn't completed onboarding
+    if (!completedOnboarding && currentSegment !== "onboarding-welcome") {
       router.replace("/onboarding-welcome");
+      setRoutedOnce(true);
+      return;
     }
-  }, [user, authLoading, dbReady, segments, onboardingLoaded, completedOnboarding]);
+
+    // User exists, completed onboarding, and not on main tabs
+    if (completedOnboarding && currentSegment !== "(tabs)") {
+      router.replace("/");
+      setRoutedOnce(true);
+      return;
+    }
+
+    // All conditions met, routing is correct
+    setRoutedOnce(true);
+  }, [dbReady, authLoading, onboardingLoaded, user, completedOnboarding, segments, routedOnce]);
 
   return null;
 }
@@ -74,14 +99,26 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
 
 function RootLayoutInner() {
   const [dbReady, setDbReady] = useState(false);
+  const [splashVisible, setSplashVisible] = useState(true);
 
   useEffect(() => {
     async function setup() {
       try {
         await initDatabase();
+        await SplashScreen.hideAsync();
+        // Keep splash visible briefly for smooth transition
+        await new Promise(resolve => setTimeout(resolve, 400));
       } catch (err) {
         console.error("DB init failed:", err);
+        // Hide splash even on error
+        try {
+          await SplashScreen.hideAsync();
+        } catch (e) {
+          console.error("Failed to hide splash screen:", e);
+        }
       } finally {
+        setSplashVisible(false);
+        // Set dbReady last to allow Stack Navigator to render
         setDbReady(true);
       }
     }
@@ -89,33 +126,60 @@ function RootLayoutInner() {
     setup();
   }, []);
 
-  if (!dbReady) {
-    return (
-      <View style={{ flex: 1, backgroundColor: Colors.background }}>
-        <StatusBar style="light" />
-      </View>
-    );
-  }
-
   return (
     <GestureHandlerRootView
       style={{ flex: 1, backgroundColor: Colors.background }}
     >
-      <StatusBar style="light" />
+      {/* Animated Splash Screen */}
+      {splashVisible && (
+        <Animated.View
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999,
+            backgroundColor: Colors.background,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          exiting={FadeOut.duration(600)}
+        >
+          <Animated.Image
+            source={require("../assets/images/splash.png")}
+            style={{
+              width: 200,
+              height: 200,
+              resizeMode: "contain",
+            }}
+          />
+        </Animated.View>
+      )}
 
-      <AuthGate dbReady={dbReady} />
+      <StatusBar style="dark" />
 
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
-          animation: "slide_from_right",
-        }}
-      >
+      {dbReady && (
+        <>
+          <AuthGate dbReady={dbReady} />
+
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: Colors.background },
+              animation: "slide_from_right",
+            }}
+            initialRouteName="login"
+          >
         <Stack.Screen name="(tabs)" />
 
         <Stack.Screen
           name="login"
+          options={{ animation: "fade" }}
+        />
+
+        <Stack.Screen
+          name="onboarding-welcome"
           options={{ animation: "fade" }}
         />
 
@@ -159,6 +223,8 @@ function RootLayoutInner() {
           options={{ animation: "none" }}
         />
       </Stack>
+        </>
+      )}
     </GestureHandlerRootView>
   );
 }

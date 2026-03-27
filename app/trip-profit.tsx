@@ -1,4 +1,5 @@
 import HighContrastCard from "@/components/HighContrastCard";
+import PrimaryButton from "@/components/PrimaryButton";
 import {
     BorderRadius,
     Colors,
@@ -10,17 +11,15 @@ import { calculateTripProfit, createTrip } from "@/lib/tripService";
 import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-    ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
     Platform,
-    Pressable,
     ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -43,14 +42,19 @@ function Field({
   label,
   value,
   onChangeText,
+  icon,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
+  icon?: string;
 }) {
   return (
     <View style={styles.fieldWrap}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.labelRow}>
+        {icon && <Text style={styles.fieldIcon}>{icon}</Text>}
+        <Text style={styles.fieldLabel}>{label}</Text>
+      </View>
       <View style={styles.inputWrap}>
         <Text style={styles.inputPrefix}>$</Text>
         <TextInput
@@ -133,41 +137,46 @@ export default function TripProfitScreen() {
               <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
 
-            <Text style={styles.title}>Trip Profit</Text>
+            <Text style={styles.title}>🚚 Trip Profit</Text>
             <View style={{ width: 36 }} />
           </View>
 
-          <Field label="Load Income" value={income} onChangeText={setIncome} />
-          <Field label="Fuel" value={fuel} onChangeText={setFuel} />
-          <Field label="Tolls" value={tolls} onChangeText={setTolls} />
-          <Field label="Food" value={food} onChangeText={setFood} />
-          <Field label="Parking" value={parking} onChangeText={setParking} />
-          <Field label="Repairs" value={repairs} onChangeText={setRepairs} />
+          <Text style={styles.sectionLabel}>Trip Expenses</Text>
+
+          <Field label="Load Income" value={income} onChangeText={setIncome} icon="💰" />
+          <Field label="Fuel" value={fuel} onChangeText={setFuel} icon="⛽" />
+          <Field label="Tolls" value={tolls} onChangeText={setTolls} icon="🛣️" />
+          <Field label="Food" value={food} onChangeText={setFood} icon="🍔" />
+          <Field label="Parking" value={parking} onChangeText={setParking} icon="🅿️" />
+          <Field label="Repairs" value={repairs} onChangeText={setRepairs} icon="🔧" />
           <Field
             label="Other Expenses"
             value={otherExpenses}
             onChangeText={setOtherExpenses}
+            icon="📦"
           />
 
           <HighContrastCard style={styles.resultCard}>
+            <Text style={styles.resultTitle}>📊 Trip Summary</Text>
+
             <View style={styles.resultRow}>
               <Text style={styles.resultLabel}>Income</Text>
-              <Text style={styles.resultValue}>{formatCurrency(parsed.income)}</Text>
+              <Text style={[styles.resultValue, { color: Colors.primary }]}>{formatCurrency(parsed.income)}</Text>
             </View>
 
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>Expenses</Text>
-              <Text style={styles.resultValue}>{formatCurrency(totalExpenses)}</Text>
+              <Text style={styles.resultLabel}>Total Expenses</Text>
+              <Text style={[styles.resultValue, { color: Colors.danger }]}>{formatCurrency(totalExpenses)}</Text>
             </View>
 
             <View style={styles.divider} />
 
             <View style={styles.resultRow}>
-              <Text style={styles.profitLabel}>Profit</Text>
+              <Text style={styles.profitLabel}>Net Profit</Text>
               <Text
                 style={[
                   styles.profitValue,
-                  { color: profit >= 0 ? Colors.accent : Colors.danger },
+                  { color: profit >= 0 ? Colors.primary : Colors.danger },
                 ]}
               >
                 {formatCurrency(profit)}
@@ -175,21 +184,13 @@ export default function TripProfitScreen() {
             </View>
           </HighContrastCard>
 
-          <Pressable
+          <PrimaryButton
+            label="💾 Save Trip"
             onPress={handleSaveTrip}
+            loading={saving}
             disabled={saving}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              pressed && { opacity: 0.85 },
-              saving && { opacity: 0.7 },
-            ]}
-          >
-            {saving ? (
-              <ActivityIndicator color={Colors.textPrimary} />
-            ) : (
-              <Text style={styles.saveBtnText}>Save Trip</Text>
-            )}
-          </Pressable>
+            size="lg"
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -203,13 +204,14 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.xl,
-    gap: Spacing.md,
+    gap: Spacing.lg,
+    paddingBottom: Spacing.xxl,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
   backBtn: {
     width: 36,
@@ -230,10 +232,26 @@ const styles = StyleSheet.create({
   fieldWrap: {
     gap: Spacing.xs,
   },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+  },
   fieldLabel: {
     color: Colors.textSecondary,
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
+  },
+  fieldIcon: {
+    fontSize: 16,
+  },
+  sectionLabel: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.bold,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.xs,
+    textTransform: "uppercase",
   },
   inputWrap: {
     flexDirection: "row",
@@ -257,8 +275,14 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
   },
   resultCard: {
-    marginTop: Spacing.sm,
-    gap: Spacing.sm,
+    marginTop: Spacing.lg,
+    gap: Spacing.lg,
+  },
+  resultTitle: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.sm,
   },
   resultRow: {
     flexDirection: "row",
@@ -277,28 +301,15 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: Colors.border,
-    marginVertical: Spacing.xs,
+    marginVertical: Spacing.lg,
   },
   profitLabel: {
-    fontSize: FontSize.section,
+    fontSize: FontSize.section + 2,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
-  },
-  profitValue: {
-    fontSize: FontSize.section,
     fontWeight: FontWeight.extrabold,
   },
-  saveBtn: {
-    marginTop: Spacing.md,
-    backgroundColor: Colors.primary,
-    minHeight: 58,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  saveBtnText: {
-    color: Colors.background,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+  profitValue: {
+    fontSize: FontSize.section + 4,
+    fontWeight: FontWeight.extrabold,
   },
 });

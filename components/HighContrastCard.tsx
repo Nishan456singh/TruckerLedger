@@ -1,4 +1,4 @@
-import { BorderRadius, Colors, Shadow, Spacing } from '@/constants/theme';
+import { BorderRadius, Shadow, Spacing } from '@/constants/theme';
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
@@ -18,10 +18,11 @@ export default function HighContrastCard({
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: Colors.card,
+    backgroundColor: "rgba(0, 0, 0, 0.03)",
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: "rgba(0, 0, 0, 0.08)",
     borderRadius: BorderRadius.lg,
+    overflow: "hidden",
     ...Shadow.card,
   },
   padded: {

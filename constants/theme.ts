@@ -2,18 +2,18 @@
 
 export const Colors = {
   primary: '#22C55E',
-  background: '#0B1220',
-  card: '#111827',
-  cardAlt: '#1A2233',
-  cardStrong: '#0F172A',
+  background: '#FFFFFF',
+  card: '#F8F9FA',
+  cardAlt: '#F0F3F7',
+  cardStrong: '#E8EBF0',
   accent: '#38BDF8',
   danger: '#FF5A5F',
   warning: '#FFB84C',
-  textPrimary: '#F8FAFC',
-  textSecondary: '#94A3B8',
-  textMuted: '#64748B',
-  border: '#1E293B',
-  overlay: 'rgba(11, 18, 32, 0.85)',
+  textPrimary: '#0B1220',
+  textSecondary: '#64748B',
+  textMuted: '#94A3B8',
+  border: '#E2E8F0',
+  overlay: 'rgba(255, 255, 255, 0.85)',
 
   // Category colors
   fuel: '#FF8C42',

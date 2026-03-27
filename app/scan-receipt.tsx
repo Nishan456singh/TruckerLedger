@@ -1,4 +1,5 @@
 import HighContrastCard from "@/components/HighContrastCard";
+import PrimaryButton from "@/components/PrimaryButton";
 import {
     BorderRadius,
     Colors,
@@ -179,19 +180,19 @@ export default function ScanReceiptScreen() {
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-            <View style={styles.header}>
-              <TouchableOpacity
-                onPress={() => {
-                  setImageUri(null);
-                  setOcrStatus("");
-                }}
-                disabled={isOCRing}
-              >
-                <Text style={styles.backText}>‹</Text>
-              </TouchableOpacity>
-              <Text style={styles.title}>Receipt Details</Text>
-              <View style={{ width: 36 }} />
-            </View>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => {
+                setImageUri(null);
+                setOcrStatus("");
+              }}
+              disabled={isOCRing}
+            >
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>📸 Receipt Details</Text>
+            <View style={{ width: 36 }} />
+          </View>
 
             {isOCRing && (
               <HighContrastCard style={[styles.card, styles.ocrCard]}>
@@ -264,7 +265,7 @@ export default function ScanReceiptScreen() {
               {isSaving ? (
                 <ActivityIndicator color={Colors.textPrimary} />
               ) : (
-                <Text style={styles.saveBtnText}>Save Receipt</Text>
+                <Text style={styles.saveBtnText}>💾 Save Receipt</Text>
               )}
             </Pressable>
           </ScrollView>
@@ -284,27 +285,28 @@ export default function ScanReceiptScreen() {
             <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.backText}>‹</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Scan Receipt</Text>
+            <Text style={styles.title}>📸 Scan Receipt</Text>
             <View style={{ width: 36 }} />
           </View>
 
-          <View style={styles.cameraWrap}>
-            <CameraView ref={cameraRef} style={styles.camera} facing="back" mode="picture" />
+          {/* Camera Preview */}
+          <View style={styles.cameraSection}>
+            <View style={styles.cameraWrap}>
+              <CameraView ref={cameraRef} style={styles.camera} facing="back" mode="picture" />
+            </View>
+
+            <View style={styles.captureHint}>
+              <Text style={styles.hintText}>✓ Position receipt in frame</Text>
+            </View>
           </View>
 
-          <Pressable
+          <PrimaryButton
+            label="📸 Capture Receipt"
             onPress={handleCapture}
+            loading={isCapturing}
             disabled={isCapturing}
-            style={({ pressed }) => [
-              styles.primaryBtn,
-              pressed && { opacity: 0.85 },
-              isCapturing && { opacity: 0.7 },
-            ]}
-          >
-            <Text style={styles.primaryBtnText}>
-              {isCapturing ? "Capturing..." : "Capture Receipt"}
-            </Text>
-          </Pressable>
+            size="lg"
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -318,7 +320,8 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.xl,
-    gap: Spacing.md,
+    gap: Spacing.lg,
+    paddingBottom: Spacing.xl * 2,
   },
   centerWrap: {
     flex: 1,
@@ -348,12 +351,29 @@ const styles = StyleSheet.create({
     fontSize: FontSize.body,
   },
   cameraWrap: {
-    height: 280,
+    height: 360,
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 2,
+    borderColor: Colors.primary,
     backgroundColor: Colors.card,
+  },
+  cameraSection: {
+    gap: Spacing.md,
+    marginVertical: Spacing.md,
+  },
+  captureHint: {
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.cardAlt,
+    borderRadius: BorderRadius.md,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.primary,
+  },
+  hintText: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
   },
   camera: {
     flex: 1,
@@ -426,7 +446,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   primaryBtnText: {
-    color: Colors.textPrimary,
+    color: Colors.background,
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },

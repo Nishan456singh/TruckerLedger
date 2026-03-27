@@ -1,4 +1,3 @@
-import CategorySelector from "@/components/CategorySelector";
 import PrimaryButton from "@/components/PrimaryButton";
 
 import {
@@ -254,10 +253,11 @@ export default function AddExpenseScreen() {
 
         <Animated.View entering={FadeInUp} style={styles.footer}>
           <PrimaryButton
-            label="Save Expense"
+            label="💾 Save Expense"
             onPress={handleSave}
             loading={saving}
             disabled={!amount || saving}
+            size="lg"
           />
           <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
             <Text style={styles.cancelBtnText}>Cancel</Text>
@@ -303,21 +303,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: Colors.primary,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    gap: Spacing.md,
+    padding: Spacing.xl,
+    gap: Spacing.lg,
+    marginBottom: Spacing.lg,
   },
 
   currencySign: {
-    fontSize: 32,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
+    fontSize: 36,
+    color: Colors.background,
+    fontWeight: FontWeight.extrabold,
   },
 
   amountInput: {
     flex: 1,
-    fontSize: 32,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
+    fontSize: 36,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.background,
   },
 
   fieldLabel: {
@@ -329,26 +330,26 @@ const styles = StyleSheet.create({
 
   quickAmounts: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: Spacing.md,
     flexWrap: "wrap",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
 
   quickAmountBtn: {
     flex: 1,
     minWidth: "22%",
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.md + 2,
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     alignItems: "center",
     backgroundColor: Colors.card,
   },
 
   quickAmountText: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.body + 1,
     fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
+    color: Colors.primary,
   },
 
   categoryGrid: {
@@ -448,7 +449,8 @@ const styles = StyleSheet.create({
 
   footer: {
     padding: Spacing.xl,
-    gap: Spacing.sm,
+    paddingBottom: Spacing.xl * 2,
+    gap: Spacing.md,
   },
 
   cancelBtn: {

@@ -1,6 +1,6 @@
+import type { BOLRecord, Expense, Trip } from '@/lib/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Account, Client, Databases, Storage } from 'appwrite';
-import type { Trip, Expense, BOLRecord } from '@/lib/types';
 
 const APPWRITE_ENDPOINT = process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT || 'https://sfo.cloud.appwrite.io/v1';
 const APPWRITE_PROJECT_ID = process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID;
@@ -92,7 +92,11 @@ export async function createBackup(
     };
 
     // Save to database
-    const backupId = `backup_${userId}_${Date.now()}`;
+    // Generate a short backup ID (max 36 chars for Appwrite)
+    // Format: b_{timestamp_hex}_{random}
+    const timestamp = Date.now().toString(36); // Convert to base36 for shorter string
+    const random = Math.random().toString(36).substring(2, 8); // 6 random chars
+    const backupId = `b_${timestamp}_${random}`;
 
     await databases.createDocument(
       APPWRITE_DATABASE_ID,
@@ -118,9 +122,20 @@ export async function createBackup(
     return { success: true, backup_id: backupId };
   } catch (error) {
     console.error('Backup failed:', error);
+
+    // Provide helpful error messages for common issues
+    let errorMessage = 'Backup failed';
+    if (error instanceof Error) {
+      if (error.message.includes('could not be found')) {
+        errorMessage = 'Cloud backup not set up. Please create a "backups" collection in your Appwrite database.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
     };
   }
 }
@@ -155,9 +170,19 @@ export async function restoreBackup(
     return { success: true, backup };
   } catch (error) {
     console.error('Restore failed:', error);
+
+    let errorMessage = 'Restore failed';
+    if (error instanceof Error) {
+      if (error.message.includes('could not be found')) {
+        errorMessage = 'Cloud backup not set up properly.';
+      } else {
+        errorMessage = error.message;
+      }
+    }
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
     };
   }
 }
