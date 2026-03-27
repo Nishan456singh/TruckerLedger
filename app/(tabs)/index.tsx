@@ -1,10 +1,7 @@
 import ExpenseCard from "@/components/ExpenseCard";
 import HighContrastCard from "@/components/HighContrastCard";
-import InsightCard from "@/components/InsightCard";
 import QuickActionButton from "@/components/QuickActionButton";
 import SnapshotCard from "@/components/SnapshotCard";
-import StatCard from "@/components/StatCard";
-import FuelEfficiencyCard from "@/components/FuelEfficiencyCard";
 import {
     Colors,
     FontSize,
@@ -12,15 +9,13 @@ import {
     Spacing,
 } from "@/constants/theme";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { getBackupStatus, formatBytes } from "@/lib/backup/appwriteBackup";
 import {
     getAllExpenses,
-    getDashboardStats,
-    getMonthlyTotal,
+    getMonthlyTotal
 } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
-import { getWeeklyTripSnapshot, getMonthlyTripSnapshot, getMonthlyInsights, getFuelEfficiencyData, type FuelEfficiencyData } from "@/lib/tripService";
-import type { DashboardStats, Expense } from "@/lib/types";
+import { getMonthlyTripSnapshot, getWeeklyTripSnapshot } from "@/lib/tripService";
+import type { Expense } from "@/lib/types";
 import { router, useFocusEffect, type Href } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -36,14 +31,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function DashboardScreen() {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState<DashboardStats>({
-    todayTotal: 0,
-    weekTotal: 0,
-    monthTotal: 0,
-    todayCount: 0,
-    weekCount: 0,
-    monthCount: 0,
-  });
   const [weeklySnapshot, setWeeklySnapshot] = useState({
     income: 0,
     fuel: 0,
@@ -57,20 +44,6 @@ export default function DashboardScreen() {
     profit: 0,
     tripCount: 0,
   });
-  const [monthlyInsights, setMonthlyInsights] = useState({
-    bestTripProfit: 0,
-    profitableTripsCount: 0,
-    totalTripsCount: 0,
-    averageTripProfit: 0,
-  });
-  const [fuelEfficiency, setFuelEfficiency] = useState<FuelEfficiencyData>({
-    monthlyFuelCost: 0,
-    monthlyIncome: 0,
-    tripCount: 0,
-    averageFuelPerTrip: 0,
-    fuelAsPercentage: 0,
-  });
-  const [monthlyExpenses, setMonthlyExpenses] = useState(0);
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
 
   const firstName = user?.name?.split(" ")[0] ?? "Driver";
@@ -78,23 +51,16 @@ export default function DashboardScreen() {
   const loadDashboard = useCallback(async () => {
     const now = new Date();
 
-    const [dashboardStats, allExpenses, weeklyTripData, monthlyTripData, monthlyInsightsData, fuelData, monthlyTotal] = await Promise.all([
-      getDashboardStats(),
-      getAllExpenses(),
+    const [weeklyTripData, monthlyTripData, allExpenses, monthlyTotal] = await Promise.all([
       getWeeklyTripSnapshot(),
       getMonthlyTripSnapshot(),
-      getMonthlyInsights(),
-      getFuelEfficiencyData(),
+      getAllExpenses(),
       getMonthlyTotal(now.getMonth() + 1, now.getFullYear()),
     ]);
 
-    setStats(dashboardStats);
     setWeeklySnapshot(weeklyTripData);
     setMonthlySnapshot(monthlyTripData);
-    setMonthlyInsights(monthlyInsightsData);
-    setFuelEfficiency(fuelData);
-    setMonthlyExpenses(monthlyTotal);
-    setRecentExpenses(allExpenses.slice(0, 6));
+    setRecentExpenses(allExpenses.slice(0, 4));
   }, []);
 
   useFocusEffect(
@@ -125,14 +91,57 @@ export default function DashboardScreen() {
       >
         {/* ─── Header ─────────────────────────── */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>👋 Hello, {firstName}</Text>
-            <Text style={styles.subtitle}>Keep your truck running profitable.</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.greeting}>👋 {firstName}</Text>
+            <Text style={styles.subtitle}>Track your trips & earnings</Text>
           </View>
-
           <TouchableOpacity onPress={() => router.push("/profile")} style={styles.profileBtn}>
             <Text style={styles.profileBtnText}>{firstName.slice(0, 1).toUpperCase()}</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* ─── Quick Actions ─────────────────────────── */}
+        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <View style={styles.actionGrid}>
+          <QuickActionButton
+            label="Add Expense"
+            icon="➕"
+            variant="primary"
+            onPress={() => router.push("/add-expense")}
+          />
+          <QuickActionButton
+            label="Scan Receipt"
+            icon="🧾"
+            variant="secondary"
+            onPress={() => router.push("/scan-receipt")}
+          />
+          <QuickActionButton
+            label="Trip Profit"
+            icon="🚚"
+            variant="fuel"
+            onPress={() => router.push("/trip-profit")}
+          />
+        </View>
+
+        <View style={styles.actionGrid}>
+          <QuickActionButton
+            label="Analytics"
+            icon="📊"
+            variant="accent"
+            onPress={() => router.push("/analytics")}
+          />
+          <QuickActionButton
+            label="Reports"
+            icon="📈"
+            variant="food"
+            onPress={() => router.push("/monthly-report" as Href)}
+          />
+          <QuickActionButton
+            label="Settings"
+            icon="⚙️"
+            variant="default"
+            onPress={() => router.push("/cloud-settings")}
+          />
         </View>
 
         {/* ─── Weekly Snapshot ─────────────────────────── */}
@@ -153,12 +162,12 @@ export default function DashboardScreen() {
               color: Colors.fuel,
             },
             {
-              label: "Other Expenses",
+              label: "Expenses",
               value: formatCurrency(weeklySnapshot.otherExpenses),
               icon: "💸",
             },
             {
-              label: "Net Profit",
+              label: "Profit",
               value: formatCurrency(weeklySnapshot.profit),
               icon: "📈",
               color: weeklySnapshot.profit >= 0 ? Colors.primary : Colors.danger,
@@ -166,21 +175,7 @@ export default function DashboardScreen() {
           ]}
         />
 
-        {/* ─── Summary Cards ─────────────────────────── */}
-        <View style={styles.summaryRow}>
-          <StatCard
-            value={formatCurrency(stats.todayTotal)}
-            label="Today"
-            color={Colors.danger}
-          />
-          <StatCard
-            value={formatCurrency(monthlyExpenses)}
-            label="This Month"
-            color={Colors.textSecondary}
-          />
-        </View>
-
-        {/* ─── Monthly Business ─────────────────────────── */}
+        {/* ─── Monthly Snapshot ─────────────────────────── */}
         <SnapshotCard
           title="This Month"
           icon="💼"
@@ -198,12 +193,12 @@ export default function DashboardScreen() {
               color: Colors.fuel,
             },
             {
-              label: "Other Expenses",
+              label: "Expenses",
               value: formatCurrency(monthlySnapshot.otherExpenses),
               icon: "💸",
             },
             {
-              label: "Net Profit",
+              label: "Profit",
               value: formatCurrency(monthlySnapshot.profit),
               icon: "📈",
               color: monthlySnapshot.profit >= 0 ? Colors.primary : Colors.danger,
@@ -211,102 +206,8 @@ export default function DashboardScreen() {
           ]}
         />
 
-        {/* ─── Monthly Insights ─────────────────────────── */}
-        {monthlyInsights.totalTripsCount > 0 && (
-          <InsightCard
-            insight1={{
-              label: "Best Trip",
-              value: formatCurrency(monthlyInsights.bestTripProfit),
-              icon: "🏆",
-              color: Colors.primary,
-            }}
-            insight2={{
-              label: "Profitable",
-              value: `${monthlyInsights.profitableTripsCount}/${monthlyInsights.totalTripsCount}`,
-              icon: "✅",
-              color: Colors.primary,
-            }}
-            insight3={{
-              label: "Trips",
-              value: monthlyInsights.totalTripsCount.toString(),
-              icon: "🚚",
-            }}
-            insight4={{
-              label: "Avg Profit",
-              value: formatCurrency(monthlyInsights.averageTripProfit),
-              icon: "📊",
-              color: monthlyInsights.averageTripProfit >= 0 ? Colors.primary : Colors.danger,
-            }}
-          />
-        )}
-
-        {/* ─── Fuel Efficiency ─────────────────────────── */}
-        {fuelEfficiency.tripCount > 0 && (
-          <FuelEfficiencyCard
-            monthlyFuelCost={fuelEfficiency.monthlyFuelCost}
-            monthlyIncome={fuelEfficiency.monthlyIncome}
-            tripCount={fuelEfficiency.tripCount}
-            averageFuelPerTrip={fuelEfficiency.averageFuelPerTrip}
-            fuelAsPercentage={fuelEfficiency.fuelAsPercentage}
-          />
-        )}
-
-        {/* ─── Quick Actions ─────────────────────────── */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionGrid}>
-          <QuickActionButton
-            label="Add Expense"
-            icon="➕"
-            onPress={() => router.push("/add-expense")}
-          />
-          <QuickActionButton
-            label="Scan Receipt"
-            icon="🧾"
-            onPress={() => router.push("/scan-receipt")}
-          />
-        </View>
-
-        <View style={styles.actionGrid}>
-          <QuickActionButton
-            label="Trip Profit"
-            icon="🚚"
-            onPress={() => router.push("/trip-profit")}
-          />
-          <QuickActionButton
-            label="Scan BOL"
-            icon="📄"
-            onPress={() => router.push("/scan-bol" as Href)}
-          />
-        </View>
-
-        <View style={styles.actionGrid}>
-          <QuickActionButton
-            label="Reports"
-            icon="📈"
-            onPress={() => router.push("/monthly-report" as Href)}
-          />
-          <QuickActionButton
-            label="History"
-            icon="📚"
-            onPress={() => router.push("/expense-history")}
-          />
-        </View>
-
-        <View style={styles.actionGrid}>
-          <QuickActionButton
-            label="Analytics"
-            icon="📊"
-            onPress={() => router.push("/analytics")}
-          />
-          <QuickActionButton
-            label="Settings"
-            icon="⚙️"
-            onPress={() => router.push("/cloud-settings")}
-          />
-        </View>
-
         {/* ─── Recent Activity ─────────────────────────── */}
-        <Text style={styles.sectionTitle}>Recent Activity</Text>
+        <Text style={styles.sectionTitle}>Recent</Text>
 
         {recentExpenses.length === 0 ? (
           <HighContrastCard style={styles.emptyCard}>
@@ -336,7 +237,7 @@ export default function DashboardScreen() {
               onPress={() => router.push("/expense-history")}
               activeOpacity={0.85}
             >
-              <Text style={styles.historyBtnText}>📚 View Full History</Text>
+              <Text style={styles.historyBtnText}>📚 View All</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -351,7 +252,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   content: {
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     paddingBottom: Spacing.xxxl,
     gap: Spacing.lg,
   },
@@ -359,7 +260,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(0, 0, 0, 0.05)",
   },
   greeting: {
     color: Colors.textPrimary,
@@ -373,12 +277,12 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
   },
   profileBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.card,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(34, 197, 94, 0.08)",
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: "rgba(34, 197, 94, 0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -387,19 +291,17 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
     fontSize: FontSize.section,
   },
-  summaryRow: {
-    flexDirection: "row",
-    gap: Spacing.lg,
-  },
   actionGrid: {
     flexDirection: "row",
-    gap: Spacing.lg,
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   sectionTitle: {
     color: Colors.textPrimary,
-    fontSize: FontSize.section,
+    fontSize: FontSize.body + 2,
     fontWeight: FontWeight.bold,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   emptyIcon: {
     fontSize: 48,
@@ -408,8 +310,12 @@ const styles = StyleSheet.create({
   emptyCard: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing.lg,
     gap: Spacing.xs,
+    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    borderWidth: 1.5,
+    borderColor: "rgba(0, 0, 0, 0.06)",
+    borderRadius: 16,
   },
   emptyTitle: {
     color: Colors.textPrimary,
@@ -421,10 +327,10 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
   },
   expensesList: {
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   historyBtn: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm,
     paddingVertical: Spacing.md,
     borderRadius: 12,
     backgroundColor: Colors.primary,

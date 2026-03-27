@@ -71,9 +71,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     marginBottom: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: "rgba(0, 0, 0, 0.08)",
   },
   headerIcon: {
     fontSize: FontSize.headerIcon,
@@ -84,13 +84,15 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   statsGrid: {
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
   statRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0, 0, 0, 0.04)',
   },
   statIcon: {
     fontSize: FontSize.statIcon,
@@ -105,8 +107,8 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   statValue: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    fontSize: FontSize.section + 2,
+    fontWeight: FontWeight.extrabold,
     color: Colors.textPrimary,
   },
 });

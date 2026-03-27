@@ -1,7 +1,7 @@
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
-import { pressHaptic } from '@/lib/hapticUtils';
 import { SCALE_VALUES, SPRING_CONFIGS } from '@/lib/animationUtils';
-import React, { useMemo, useCallback } from 'react';
+import { pressHaptic } from '@/lib/hapticUtils';
+import React, { useCallback, useMemo } from 'react';
 import {
     ActivityIndicator,
     StyleSheet,
@@ -17,6 +17,17 @@ import Animated, {
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
+type ButtonVariant = 'primary' | 'secondary' | 'fuel' | 'accent' | 'food' | 'default';
+
+const VARIANT_COLORS: Record<ButtonVariant, { bg: string; border: string; indicator: string }> = {
+  primary: { bg: 'rgba(34, 197, 94, 0.08)', border: 'rgba(34, 197, 94, 0.15)', indicator: Colors.primary },
+  secondary: { bg: 'rgba(56, 189, 248, 0.08)', border: 'rgba(56, 189, 248, 0.15)', indicator: Colors.accent },
+  fuel: { bg: 'rgba(255, 140, 66, 0.08)', border: 'rgba(255, 140, 66, 0.15)', indicator: Colors.fuel },
+  accent: { bg: 'rgba(167, 139, 250, 0.08)', border: 'rgba(167, 139, 250, 0.15)', indicator: Colors.parking },
+  food: { bg: 'rgba(0, 208, 158, 0.08)', border: 'rgba(0, 208, 158, 0.15)', indicator: Colors.food },
+  default: { bg: 'rgba(154, 160, 170, 0.08)', border: 'rgba(154, 160, 170, 0.15)', indicator: Colors.other },
+};
+
 interface QuickActionButtonProps {
   label: string;
   icon: string; // Emoji icon
@@ -24,6 +35,7 @@ interface QuickActionButtonProps {
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
+  variant?: ButtonVariant;
 }
 
 export default function QuickActionButton({
@@ -33,8 +45,9 @@ export default function QuickActionButton({
   loading = false,
   disabled = false,
   style,
+  variant = 'primary',
 }: QuickActionButtonProps) {
-  const scale = useMemo(() => useSharedValue(1), []);
+  const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -54,6 +67,20 @@ export default function QuickActionButton({
     onPress();
   }, [disabled, loading, onPress]);
 
+  const buttonStyle = useMemo(() => {
+    const colors = VARIANT_COLORS[variant];
+    return [
+      styles.button,
+      {
+        backgroundColor: colors.bg,
+        borderColor: colors.border,
+      },
+      disabled && styles.disabled,
+    ];
+  }, [variant, disabled]);
+
+  const indicatorColor = useMemo(() => VARIANT_COLORS[variant].indicator, [variant]);
+
   return (
     <Animated.View style={[animatedStyle, style]}>
       <TouchableOpacity
@@ -62,10 +89,10 @@ export default function QuickActionButton({
         onPressOut={handlePressOut}
         activeOpacity={1}
         disabled={disabled || loading}
-        style={[styles.button, disabled && styles.disabled]}
+        style={buttonStyle}
       >
         {loading ? (
-          <ActivityIndicator color={Colors.primary} size="small" />
+          <ActivityIndicator color={indicatorColor} size="small" />
         ) : (
           <>
             <Text style={styles.icon}>{icon}</Text>
@@ -80,15 +107,14 @@ export default function QuickActionButton({
 const styles = StyleSheet.create({
   button: {
     flex: 1,
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
+    borderWidth: 1.5,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.md,
-    minHeight: 120,
+    gap: Spacing.sm,
+    minHeight: 100,
+    overflow: 'hidden',
   },
   disabled: {
     opacity: 0.5,
@@ -97,7 +123,7 @@ const styles = StyleSheet.create({
     fontSize: FontSize.largeIcon,
   },
   label: {
-    fontSize: FontSize.body - 1,
+    fontSize: FontSize.caption + 1,
     fontWeight: FontWeight.semibold,
     color: Colors.textPrimary,
     textAlign: 'center',
