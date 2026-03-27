@@ -8,6 +8,7 @@ import {
     type Category,
 } from "@/constants/theme";
 import { getCurrentMonthCategoryTotals } from "@/lib/expenseService";
+import ScreenBackground from "@/components/ScreenBackground";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -82,6 +83,7 @@ export default function MonthlySummaryScreen() {
   );
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <Animated.View entering={FadeInDown.springify()} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -133,13 +135,14 @@ export default function MonthlySummaryScreen() {
         </ScrollView>
       )}
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   header: {
     flexDirection: "row",

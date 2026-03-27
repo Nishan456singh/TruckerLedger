@@ -1,4 +1,5 @@
 import HighContrastCard from "@/components/HighContrastCard";
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
@@ -64,6 +65,7 @@ export default function FuelStatsScreen() {
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <View style={styles.content}>
         <View style={styles.header}>
@@ -126,13 +128,14 @@ export default function FuelStatsScreen() {
         </HighContrastCard>
       </View>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   content: {
     padding: Spacing.xl,

@@ -1,4 +1,5 @@
 import HighContrastCard from "@/components/HighContrastCard";
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
@@ -143,17 +144,20 @@ export default function ScanBOLScreen() {
 
   if (!permission) {
     return (
+      <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerWrap}>
           <ActivityIndicator color={Colors.primary} />
           <Text style={styles.helperText}>Loading camera...</Text>
         </View>
       </SafeAreaView>
+    </ScreenBackground>
     );
   }
 
   if (!permission.granted) {
     return (
+      <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerWrap}>
           <Text style={styles.title}>Camera access required</Text>
@@ -164,11 +168,13 @@ export default function ScanBOLScreen() {
           </Pressable>
         </View>
       </SafeAreaView>
+    </ScreenBackground>
     );
   }
 
   if (imageUri) {
     return (
+      <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -265,10 +271,12 @@ export default function ScanBOLScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+    </ScreenBackground>
     );
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -303,13 +311,14 @@ export default function ScanBOLScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   content: {
     padding: Spacing.xl,

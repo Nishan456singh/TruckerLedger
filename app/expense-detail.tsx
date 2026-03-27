@@ -1,4 +1,5 @@
 import CategorySelector from "@/components/CategorySelector";
+import ScreenBackground from "@/components/ScreenBackground";
 import PrimaryButton from "@/components/PrimaryButton";
 import ReceiptPreview from "@/components/ReceiptPreview";
 
@@ -214,9 +215,11 @@ export default function ExpenseDetailScreen() {
 
   if (!expense) {
     return (
-      <SafeAreaView style={styles.center}>
-        <Text style={styles.loadingText}>Loading…</Text>
-      </SafeAreaView>
+      <ScreenBackground>
+        <SafeAreaView style={styles.center}>
+          <Text style={styles.loadingText}>Loading…</Text>
+        </SafeAreaView>
+      </ScreenBackground>
     );
   }
 
@@ -231,6 +234,7 @@ export default function ExpenseDetailScreen() {
 
   if (!editing) {
     return (
+      <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <ScrollView contentContainerStyle={styles.viewContent}>
           <Animated.View entering={FadeInDown.springify()} style={styles.viewHeader}>
@@ -289,10 +293,12 @@ export default function ExpenseDetailScreen() {
           </Modal>
         )}
       </SafeAreaView>
+    </ScreenBackground>
     );
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -361,11 +367,12 @@ export default function ExpenseDetailScreen() {
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
+  safe: { flex: 1, backgroundColor: "transparent" },
 
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 

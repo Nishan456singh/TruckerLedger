@@ -1,4 +1,5 @@
 import HighContrastCard from "@/components/HighContrastCard";
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
@@ -177,17 +178,20 @@ export default function TripDetailScreen() {
 
   if (isLoading) {
     return (
+      <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerWrap}>
           <ActivityIndicator color={Colors.primary} size="large" />
           <Text style={styles.helperText}>Loading trip...</Text>
         </View>
       </SafeAreaView>
+    </ScreenBackground>
     );
   }
 
   if (!trip) {
     return (
+      <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <View style={styles.centerWrap}>
           <Text style={styles.title}>Trip Not Found</Text>
@@ -197,10 +201,12 @@ export default function TripDetailScreen() {
           </Pressable>
         </View>
       </SafeAreaView>
+    </ScreenBackground>
     );
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -369,13 +375,14 @@ export default function TripDetailScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   content: {
     padding: Spacing.xl,

@@ -1,4 +1,5 @@
 import HighContrastCard from '@/components/HighContrastCard';
+import ScreenBackground from '@/components/ScreenBackground';
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import { formatCurrency } from '@/lib/formatUtils';
 import { getCategoryAnalysis, getDailyStats, getProfitTrend, type CategoryAnalysis } from '@/lib/tripService';
@@ -164,13 +165,16 @@ export default function AnalyticsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <Text style={styles.loadingText}>Loading analytics...</Text>
-      </SafeAreaView>
+      <ScreenBackground>
+        <SafeAreaView style={styles.safe}>
+          <Text style={styles.loadingText}>Loading analytics...</Text>
+        </SafeAreaView>
+      </ScreenBackground>
     );
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -309,13 +313,14 @@ export default function AnalyticsScreen() {
         <View style={{ height: Spacing.xxxl }} />
       </ScrollView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   header: {
     flexDirection: 'row',

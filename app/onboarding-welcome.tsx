@@ -1,4 +1,5 @@
 import PrimaryButton from '@/components/PrimaryButton';
+import ScreenBackground from "@/components/ScreenBackground";
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import { markOnboardingCompleted } from '@/lib/onboardingStorage';
 import { router } from 'expo-router';
@@ -63,6 +64,7 @@ export default function WelcomeScreen() {
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
         {/* Progress */}
@@ -99,13 +101,14 @@ export default function WelcomeScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   container: {
     flexGrow: 1,

@@ -1,4 +1,5 @@
 import ExpenseCard from "@/components/ExpenseCard";
+import ScreenBackground from "@/components/ScreenBackground";
 
 import {
     BorderRadius,
@@ -217,6 +218,7 @@ export default function ExpenseHistoryScreen() {
   ];
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <Animated.View entering={FadeInDown.springify()} style={styles.header}>
@@ -376,13 +378,14 @@ export default function ExpenseHistoryScreen() {
         />
       )}
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
 
   header: {

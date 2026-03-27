@@ -15,6 +15,7 @@ import {
     getReceiptCount,
 } from "@/lib/expenseService";
 import { router, useFocusEffect } from "expo-router";
+import ScreenBackground from "@/components/ScreenBackground";
 import React, { useCallback, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -129,6 +130,7 @@ export default function MonthlyReportScreen() {
       selectedMonth.getMonth() < now.getMonth());
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -228,13 +230,14 @@ export default function MonthlyReportScreen() {
         </ScrollView>
       )}
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   header: {
     flexDirection: "row",

@@ -1,6 +1,7 @@
 import ExpenseCard from "@/components/ExpenseCard";
 import HighContrastCard from "@/components/HighContrastCard";
 import QuickActionButton from "@/components/QuickActionButton";
+import ScreenBackground from "@/components/ScreenBackground";
 import SnapshotCard from "@/components/SnapshotCard";
 import {
     Colors,
@@ -76,6 +77,7 @@ export default function DashboardScreen() {
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <ScrollView
         style={{ flex: 1 }}
@@ -243,13 +245,14 @@ export default function DashboardScreen() {
         )}
       </ScrollView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   content: {
     padding: Spacing.lg,

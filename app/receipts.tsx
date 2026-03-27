@@ -6,6 +6,7 @@ import {
     Spacing,
 } from "@/constants/theme";
 import { getAllExpenses } from "@/lib/expenseService";
+import ScreenBackground from "@/components/ScreenBackground";
 import type { Expense } from "@/lib/types";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
@@ -59,6 +60,7 @@ export default function ReceiptsScreen() {
   );
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -85,13 +87,14 @@ export default function ReceiptsScreen() {
         />
       )}
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   header: {
     flexDirection: "row",

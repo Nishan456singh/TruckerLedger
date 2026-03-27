@@ -1,4 +1,5 @@
 import HighContrastCard from "@/components/HighContrastCard";
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
@@ -76,6 +77,7 @@ export default function BOLHistoryScreen() {
   };
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -165,13 +167,14 @@ export default function BOLHistoryScreen() {
         </ScrollView>
       )}
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   header: {
     flexDirection: "row",

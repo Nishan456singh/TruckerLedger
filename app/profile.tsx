@@ -6,6 +6,7 @@ import {
     Shadow,
     Spacing,
 } from "@/constants/theme";
+import ScreenBackground from "@/components/ScreenBackground";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { exportBOLs } from "@/lib/bolService";
 import {
@@ -248,6 +249,7 @@ export default function ProfileScreen() {
   if (!user) return null;
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -342,13 +344,14 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   header: {
     flexDirection: "row",

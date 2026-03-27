@@ -1,5 +1,6 @@
 import HighContrastCard from "@/components/HighContrastCard";
 import PrimaryButton from "@/components/PrimaryButton";
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
@@ -148,32 +149,37 @@ export default function ScanReceiptScreen() {
 
   if (!permission) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.centerWrap}>
-          <ActivityIndicator color={Colors.primary} />
-          <Text style={styles.helperText}>Loading camera...</Text>
-        </View>
-      </SafeAreaView>
+      <ScreenBackground>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.centerWrap}>
+            <ActivityIndicator color={Colors.primary} />
+            <Text style={styles.helperText}>Loading camera...</Text>
+          </View>
+        </SafeAreaView>
+      </ScreenBackground>
     );
   }
 
   if (!permission.granted) {
     return (
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.centerWrap}>
-          <Text style={styles.title}>Camera access required</Text>
-          <Text style={styles.helperText}>Grant permission to scan receipts.</Text>
+      <ScreenBackground>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.centerWrap}>
+            <Text style={styles.title}>Camera access required</Text>
+            <Text style={styles.helperText}>Grant permission to scan receipts.</Text>
 
-          <Pressable onPress={requestPermission} style={styles.primaryBtn}>
-            <Text style={styles.primaryBtnText}>Grant Access</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
+            <Pressable onPress={requestPermission} style={styles.primaryBtn}>
+              <Text style={styles.primaryBtnText}>Grant Access</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </ScreenBackground>
     );
   }
 
   if (imageUri) {
     return (
+      <ScreenBackground>
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
@@ -271,10 +277,12 @@ export default function ScanReceiptScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
+      </ScreenBackground>
     );
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -310,13 +318,14 @@ export default function ScanReceiptScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   content: {
     padding: Spacing.xl,

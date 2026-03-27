@@ -1,4 +1,5 @@
 import PrimaryButton from "@/components/PrimaryButton";
+import ScreenBackground from "@/components/ScreenBackground";
 
 import {
     BorderRadius,
@@ -136,6 +137,7 @@ export default function AddExpenseScreen() {
   const projectedTotal = todayTotal + parsedAmount;
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -265,13 +267,14 @@ export default function AddExpenseScreen() {
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
 
   scrollContent: {

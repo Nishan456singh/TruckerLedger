@@ -1,5 +1,6 @@
 import HighContrastCard from '@/components/HighContrastCard';
 import PrimaryButton from '@/components/PrimaryButton';
+import ScreenBackground from '@/components/ScreenBackground';
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthContext';
 import {
@@ -116,6 +117,7 @@ export default function CloudSettingsScreen() {
   };
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
@@ -252,13 +254,14 @@ export default function CloudSettingsScreen() {
         <View style={{ height: Spacing.xxxl }} />
       </ScrollView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   content: {
     paddingHorizontal: Spacing.xl,

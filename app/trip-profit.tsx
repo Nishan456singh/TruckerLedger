@@ -1,5 +1,6 @@
 import HighContrastCard from "@/components/HighContrastCard";
 import PrimaryButton from "@/components/PrimaryButton";
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
@@ -123,6 +124,7 @@ export default function TripProfitScreen() {
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -194,13 +196,14 @@ export default function TripProfitScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: "transparent",
   },
   content: {
     padding: Spacing.xl,
