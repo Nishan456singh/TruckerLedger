@@ -4,7 +4,9 @@ import {
     Colors,
     FontSize,
     FontWeight,
+    Shadow,
     Spacing,
+    TypographyScale,
 } from "@/constants/theme";
 import { getAllExpenses } from "@/lib/expenseService";
 import type { Expense } from "@/lib/types";
@@ -29,7 +31,10 @@ function ReceiptTile({ expense }: { expense: Expense }) {
           params: { id: expense.id },
         })
       }
-      style={({ pressed }) => [styles.tile, pressed && { opacity: 0.8 }]}
+      style={({ pressed }) => [
+        styles.tile,
+        pressed && styles.tilePressedState,
+      ]}
     >
       <Image
         source={{ uri: expense.receipt_uri }}
@@ -73,8 +78,8 @@ export default function ReceiptsScreen() {
       {receipts.length === 0 ? (
         <View style={styles.emptyWrap}>
           <Text style={styles.emptyIcon}>🧾</Text>
-          <Text style={styles.emptyTitle}>No receipts yet</Text>
-          <Text style={styles.emptyText}>Scan receipts to see them here.</Text>
+          <Text style={styles.emptyTitle}>No Receipts Yet</Text>
+          <Text style={styles.emptyText}>Scan receipts to see them here</Text>
         </View>
       ) : (
         <FlatList
@@ -100,14 +105,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: Spacing.xl,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   backBtn: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.surface,
+    ...Shadow.small,
   },
   backText: {
     fontSize: 28,
@@ -115,26 +124,30 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   title: {
-    fontSize: FontSize.section,
+    ...TypographyScale.title,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
   },
   grid: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
+    gap: Spacing.md,
   },
   row: {
     justifyContent: "space-between",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   tile: {
     width: "32%",
     aspectRatio: 1,
     borderRadius: BorderRadius.md,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 0,
     backgroundColor: Colors.card,
+    ...Shadow.card,
+  },
+  tilePressedState: {
+    opacity: 0.75,
+    ...Shadow.small,
   },
   tileImage: {
     width: "100%",
@@ -144,18 +157,20 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.sm,
+    gap: Spacing.lg,
   },
   emptyIcon: {
-    fontSize: 44,
+    fontSize: FontSize.largeIcon,
+    marginBottom: Spacing.sm,
   },
   emptyTitle: {
-    fontSize: FontSize.section,
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
+    textAlign: "center",
   },
   emptyText: {
-    fontSize: FontSize.body,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
+    textAlign: "center",
   },
 });

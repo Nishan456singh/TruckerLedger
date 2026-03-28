@@ -140,13 +140,15 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   content: {
-    padding: Spacing.xl,
-    gap: Spacing.md,
+    padding: Spacing.lg,
+    paddingBottom: 40,
+    gap: Spacing.xl,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    marginBottom: Spacing.md,
   },
   backBtn: {
     width: 36,
@@ -164,7 +166,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   card: {
-    gap: Spacing.md,
+    gap: Spacing.lg,
     ...Shadow.card,
   },
   label: {
@@ -172,14 +174,14 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   input: {
-    backgroundColor: Colors.cardAlt,
+    backgroundColor: Colors.surface,
     color: Colors.textPrimary,
     borderWidth: 1,
     borderColor: Colors.borderLight,
     borderRadius: BorderRadius.md,
     ...TypographyScale.body,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
+    paddingVertical: Spacing.md,
   },
   calculateBtn: {
     backgroundColor: Colors.accent,
@@ -187,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: Spacing.xs,
+    marginTop: Spacing.sm,
   },
   calculateBtnText: {
     ...TypographyScale.body,
@@ -197,7 +199,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },

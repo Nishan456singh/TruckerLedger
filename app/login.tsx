@@ -6,6 +6,7 @@ import {
     FontSize,
     FontWeight,
     Spacing,
+    TypographyScale,
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -216,11 +217,11 @@ const styles = StyleSheet.create({
   },
 
   tagline: {
-    fontSize: FontSize.body,
+    ...TypographyScale.subtitle,
     color: Colors.textInverse,
-    fontWeight: FontWeight.medium,
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
     textAlign: "center",
+    marginTop: Spacing.md,
   },
 
   pillRow: {
@@ -241,9 +242,8 @@ const styles = StyleSheet.create({
   },
 
   pillText: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.caption,
     color: Colors.textInverse,
-    fontWeight: FontWeight.medium,
   },
 
   ctaCard: {
@@ -273,10 +273,9 @@ const styles = StyleSheet.create({
   },
 
   errorText: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.danger,
     textAlign: "center",
-    fontWeight: FontWeight.semibold,
   },
 
   appleLoading: {
@@ -288,7 +287,7 @@ const styles = StyleSheet.create({
   },
 
   legal: {
-    fontSize: FontSize.small,
+    ...TypographyScale.caption,
     color: "#666666",
     textAlign: "center",
     lineHeight: 18,

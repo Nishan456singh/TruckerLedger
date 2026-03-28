@@ -1,4 +1,4 @@
-import { Colors, FontSize, FontWeight } from '@/constants/theme';
+import { Colors, Spacing, TypographyScale } from '@/constants/theme';
 import { markOnboardingCompleted } from '@/lib/onboardingStorage';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
@@ -11,6 +11,7 @@ import Animated, {
     withRepeat,
     withTiming
 } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function OnboardingWelcome() {
   const opacity = useSharedValue(1);
@@ -43,16 +44,26 @@ export default function OnboardingWelcome() {
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
-      <View style={styles.content}>
-        <Animated.View
-          entering={FadeInDown}
-          style={styles.textContainer}
-        >
-          <Animated.View style={animatedStyle}>
-            <Text style={styles.appName}>TruckerLedger</Text>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
+        <View style={styles.centerContent}>
+          <Animated.View
+            entering={FadeInDown.delay(100).springify()}
+            style={styles.textContainer}
+          >
+            <Animated.View style={animatedStyle}>
+              <Text style={styles.appName}>TruckerLedger</Text>
+            </Animated.View>
+
+            <Text style={styles.subtitle}>
+              Track Every Mile, Control Every Expense
+            </Text>
+
+            <Text style={styles.tagline}>
+              Your complete ledger for trucking operations
+            </Text>
           </Animated.View>
-        </Animated.View>
-      </View>
+        </View>
+      </SafeAreaView>
     </LinearGradient>
   );
 }
@@ -60,20 +71,38 @@ export default function OnboardingWelcome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  content: {
+  safe: {
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+  },
+  centerContent: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
   textContainer: {
     alignItems: 'center',
+    gap: Spacing.md,
   },
   appName: {
-    fontSize: FontSize.section + 16,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.headline,
     color: Colors.textInverse,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    textAlign: 'center',
+  },
+  subtitle: {
+    ...TypographyScale.title,
+    color: Colors.textInverse,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+    marginTop: Spacing.lg,
+  },
+  tagline: {
+    ...TypographyScale.body,
+    color: 'rgba(255, 255, 255, 0.85)',
+    textAlign: 'center',
+    letterSpacing: 0.2,
+    marginTop: Spacing.md,
   },
 });
