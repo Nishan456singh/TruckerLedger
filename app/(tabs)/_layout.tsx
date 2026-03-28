@@ -6,12 +6,23 @@ export default function TabsLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        animation: "slide_from_right",
-        gestureEnabled: true,
         contentStyle: {
           backgroundColor: Colors.background,
         },
       }}
-    />
+    >
+      <Stack.Screen
+        name="index"
+        options={{
+          animationEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="explore"
+        options={{
+          animationEnabled: false,
+        }}
+      />
+    </Stack>
   );
 }

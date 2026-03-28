@@ -14,6 +14,7 @@ import {
 import { formatCurrency } from "@/lib/formatUtils";
 import { getMonthlyTripSnapshot, getWeeklyTripSnapshot } from "@/lib/tripService";
 import type { Expense } from "@/lib/types";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
@@ -24,7 +25,6 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DashboardScreen() {

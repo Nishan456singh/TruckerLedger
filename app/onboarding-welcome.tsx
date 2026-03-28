@@ -5,11 +5,11 @@ import { router } from 'expo-router';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  FadeInDown,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming
+    FadeInDown,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withTiming
 } from 'react-native-reanimated';
 
 export default function OnboardingWelcome() {
@@ -46,9 +46,11 @@ export default function OnboardingWelcome() {
       <View style={styles.content}>
         <Animated.View
           entering={FadeInDown}
-          style={[styles.textContainer, animatedStyle]}
+          style={styles.textContainer}
         >
-          <Text style={styles.appName}>TruckerLedger</Text>
+          <Animated.View style={animatedStyle}>
+            <Text style={styles.appName}>TruckerLedger</Text>
+          </Animated.View>
         </Animated.View>
       </View>
     </LinearGradient>
