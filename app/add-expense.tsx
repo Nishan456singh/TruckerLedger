@@ -6,7 +6,9 @@ import {
     Colors,
     FontSize,
     FontWeight,
-    Spacing
+    Shadow,
+    Spacing,
+    TypographyScale
 } from "@/constants/theme";
 
 import { addExpense, getDashboardStats } from "@/lib/expenseService";
@@ -35,8 +37,8 @@ import Animated, {
     FadeInUp,
 } from "react-native-reanimated";
 
-import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Category_ = Category;
 
@@ -370,8 +372,7 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.title,
     color: Colors.textPrimary,
   },
 
@@ -383,9 +384,8 @@ const styles = StyleSheet.create({
   },
 
   heroAmountLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.small,
     color: "rgba(17, 17, 17, 0.6)",
-    fontWeight: FontWeight.medium,
   },
 
   heroAmountDisplay: {
@@ -396,23 +396,21 @@ const styles = StyleSheet.create({
   },
 
   heroAmountCurrency: {
-    fontSize: FontSize.hero + 2,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.display,
     color: Colors.textPrimary,
   },
 
   heroAmountInput: {
-    fontSize: FontSize.hero,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.display,
     color: Colors.textPrimary,
     minWidth: 150,
     textAlign: "center",
   },
 
   heroProjectedTotal: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: "rgba(17, 17, 17, 0.5)",
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
   },
 
   // ─── FLOATING CARD ──────────────────────────────────────────
@@ -422,15 +420,9 @@ const styles = StyleSheet.create({
     marginTop: -Spacing.lg,
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.card,
-    borderRadius: 32,
+    borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   cardContent: {
@@ -441,10 +433,9 @@ const styles = StyleSheet.create({
   },
 
   cardSectionTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
 
   // ─── QUICK AMOUNTS ──────────────────────────────────────────
@@ -458,17 +449,17 @@ const styles = StyleSheet.create({
   quickAmountBtn: {
     flex: 1,
     minWidth: "22%",
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.md,
     borderWidth: 1.5,
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
     alignItems: "center",
+    ...Shadow.small,
   },
 
   quickAmountText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.body,
     color: Colors.primary,
   },
 
@@ -476,36 +467,37 @@ const styles = StyleSheet.create({
 
   categoryGrid: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: Spacing.md,
     flexWrap: "wrap",
   },
 
   categoryBtn: {
     flex: 1,
     minWidth: "31%",
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
     alignItems: "center",
-    gap: Spacing.xs,
+    gap: Spacing.sm,
+    ...Shadow.small,
   },
 
   categoryBtnActive: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
+    ...Shadow.medium,
   },
 
   categoryIcon: {
-    fontSize: 24,
+    fontSize: FontSize.statIcon,
   },
 
   categoryLabel: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
   },
 
   categoryLabelActive: {
@@ -516,14 +508,13 @@ const styles = StyleSheet.create({
   // ─── FIELDS ─────────────────────────────────────────────────
 
   fieldGroup: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
 
   fieldLabel: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
 
   fieldInput: {
@@ -531,14 +522,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: BorderRadius.md,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: FontSize.body,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
+    ...Shadow.small,
   },
 
   notesInput: {
-    minHeight: 80,
+    minHeight: 100,
     textAlignVertical: "top",
   },
 
@@ -550,26 +542,25 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
+    ...Shadow.card,
   },
 
   summaryTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
 
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
   },
 
   summaryLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.small,
     color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
   },
 
   summaryLabelBold: {
@@ -578,20 +569,19 @@ const styles = StyleSheet.create({
   },
 
   summaryValue: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
   },
 
   summaryValueBold: {
-    fontSize: FontSize.section,
+    ...TypographyScale.title,
     color: Colors.primary,
   },
 
   summaryDivider: {
     height: 1,
     backgroundColor: Colors.border,
-    marginVertical: Spacing.sm,
+    marginVertical: Spacing.md,
   },
 
   // ─── FOOTER ─────────────────────────────────────────────────
@@ -605,17 +595,18 @@ const styles = StyleSheet.create({
   },
 
   cancelBtn: {
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
+    backgroundColor: Colors.surface,
     alignItems: "center",
     justifyContent: "center",
+    ...Shadow.small,
   },
 
   cancelBtnText: {
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
   },
 });

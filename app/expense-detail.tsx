@@ -9,7 +9,9 @@ import {
     Colors,
     FontSize,
     FontWeight,
-    Spacing
+    Shadow,
+    Spacing,
+    TypographyScale
 } from "@/constants/theme";
 
 import type { Category, Expense } from "@/lib/types";
@@ -317,12 +319,14 @@ export default function ExpenseDetailScreen() {
                     <Text style={[styles.cardSectionTitle, { marginTop: Spacing.lg }]}>
                       📸 Receipt
                     </Text>
-                    <TouchableOpacity
-                      onPress={() => setShowReceiptFull(true)}
-                      activeOpacity={0.8}
-                    >
-                      <ReceiptPreview uri={receiptUri} />
-                    </TouchableOpacity>
+                    <View style={styles.receiptContainer}>
+                      <TouchableOpacity
+                        onPress={() => setShowReceiptFull(true)}
+                        activeOpacity={0.8}
+                      >
+                        <ReceiptPreview uri={receiptUri} />
+                      </TouchableOpacity>
+                    </View>
                   </Animated.View>
                 )}
               </ScrollView>
@@ -548,8 +552,9 @@ const styles = StyleSheet.create({
   },
 
   heroAmountValue: {
-    fontSize: FontSize.hero,
-    fontWeight: FontWeight.extrabold,
+    fontSize: TypographyScale.display.fontSize,
+    lineHeight: TypographyScale.display.lineHeight,
+    fontWeight: TypographyScale.display.fontWeight,
     color: Colors.textInverse,
   },
 
@@ -562,15 +567,16 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     borderRadius: BorderRadius.full,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderColor: "rgba(255, 255, 255, 0.4)",
+    ...Shadow.small,
   },
 
   heroCategoryLabel: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontSize: TypographyScale.subtitle.fontSize,
+    fontWeight: TypographyScale.subtitle.fontWeight,
     color: Colors.textInverse,
   },
 
@@ -583,13 +589,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 32,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   cardContent: {
@@ -600,8 +600,8 @@ const styles = StyleSheet.create({
   },
 
   cardSectionTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.extrabold,
+    fontSize: TypographyScale.subtitle.fontSize,
+    fontWeight: TypographyScale.subtitle.fontWeight,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
@@ -611,6 +611,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     gap: 0,
+    ...Shadow.small,
   },
 
   detailRow: {
@@ -621,20 +622,28 @@ const styles = StyleSheet.create({
   },
 
   detailLabel: {
-    fontSize: FontSize.body,
+    fontSize: TypographyScale.small.fontSize,
     color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
+    fontWeight: TypographyScale.small.fontWeight,
   },
 
   detailValue: {
-    fontSize: FontSize.body,
+    fontSize: TypographyScale.body.fontSize,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.semibold,
+    fontWeight: TypographyScale.body.fontWeight,
   },
 
   detailDivider: {
     height: 1,
     backgroundColor: Colors.border,
+  },
+
+  receiptContainer: {
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+    ...Shadow.medium,
+    backgroundColor: Colors.surface,
+    padding: Spacing.xs,
   },
 
   modalBg: {
@@ -650,7 +659,11 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
 
-  modalCloseText: { color: Colors.textPrimary, fontSize: 18 },
+  modalCloseText: {
+    color: Colors.textInverse,
+    fontSize: TypographyScale.title.fontSize,
+    fontWeight: FontWeight.bold,
+  },
 
   cardFooter: {
     paddingHorizontal: Spacing.lg,
@@ -699,12 +712,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "center",
     gap: Spacing.sm,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     borderRadius: BorderRadius.full,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderColor: "rgba(255, 255, 255, 0.4)",
+    ...Shadow.small,
   },
 
   editHeroIcon: {
@@ -712,8 +726,8 @@ const styles = StyleSheet.create({
   },
 
   editHeroCategoryName: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontSize: TypographyScale.subtitle.fontSize,
+    fontWeight: TypographyScale.subtitle.fontWeight,
     color: Colors.textInverse,
   },
 
@@ -726,13 +740,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 32,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   editCardContent: {
@@ -743,8 +751,8 @@ const styles = StyleSheet.create({
   },
 
   editSectionTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.extrabold,
+    fontSize: TypographyScale.subtitle.fontSize,
+    fontWeight: TypographyScale.subtitle.fontWeight,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
@@ -757,14 +765,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
+    ...Shadow.small,
   },
 
-  currencySign: { fontSize: FontSize.title, color: Colors.textMuted },
+  currencySign: {
+    fontSize: TypographyScale.headline.fontSize,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.bold,
+  },
 
   amountInput: {
     flex: 1,
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
+    fontSize: TypographyScale.display.fontSize,
+    fontWeight: TypographyScale.display.fontWeight,
     color: Colors.textPrimary,
     paddingVertical: Spacing.lg,
   },
@@ -774,8 +787,8 @@ const styles = StyleSheet.create({
   },
 
   editFieldLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    fontSize: TypographyScale.small.fontSize,
+    fontWeight: TypographyScale.small.fontWeight,
     color: Colors.textMuted,
     marginBottom: Spacing.sm,
   },
@@ -787,8 +800,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
-    fontSize: FontSize.body,
+    fontSize: TypographyScale.body.fontSize,
     color: Colors.textPrimary,
+    ...Shadow.small,
   },
 
   attachReceiptBtn: {
@@ -798,9 +812,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     borderWidth: 1.5,
-    borderColor: Colors.border + "30",
+    borderColor: Colors.border,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
+    ...Shadow.small,
   },
 
   attachReceiptIcon: {
@@ -812,13 +827,13 @@ const styles = StyleSheet.create({
   },
 
   attachReceiptLabel: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontSize: TypographyScale.body.fontSize,
+    fontWeight: TypographyScale.body.fontWeight,
     color: Colors.textPrimary,
   },
 
   attachReceiptStatus: {
-    fontSize: FontSize.caption,
+    fontSize: TypographyScale.small.fontSize,
     color: Colors.textMuted,
     marginTop: 2,
   },
@@ -838,11 +853,12 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     alignItems: "center",
     justifyContent: "center",
+    ...Shadow.small,
   },
 
   editCancelBtnText: {
-    fontSize: FontSize.body,
+    fontSize: TypographyScale.body.fontSize,
     color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
+    fontWeight: TypographyScale.body.fontWeight,
   },
 });

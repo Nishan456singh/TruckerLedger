@@ -6,28 +6,29 @@ import {
     Colors,
     FontSize,
     FontWeight,
+    Shadow,
     Spacing,
+    TypographyScale,
 } from "@/constants/theme";
-import type { Category, Expense } from "@/lib/types";
 import { exportExpenses, getAllExpenses } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
+import type { Category, Expense } from "@/lib/types";
 import { File, Paths } from "expo-file-system";
-import * as Sharing from "expo-sharing";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
+import * as Sharing from "expo-sharing";
 import React, { useCallback, useState } from "react";
 import {
     Alert,
-    RefreshControl,
     ScrollView,
     SectionList,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Section {
@@ -436,8 +437,7 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.headline,
     color: Colors.textInverse,
   },
 
@@ -449,14 +449,12 @@ const styles = StyleSheet.create({
   },
 
   heroTotalLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     color: "rgba(255, 255, 255, 0.7)",
-    fontWeight: FontWeight.medium,
   },
 
   heroTotalValue: {
-    fontSize: FontSize.hero,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.display,
     color: Colors.textInverse,
   },
 
@@ -474,21 +472,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 32,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   // ─── SEARCH ─────────────────────────────────────────────────
 
   searchRow: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
+    paddingVertical: Spacing.lg,
     paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
 
   searchContainer: {
@@ -500,7 +494,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
   },
 
   searchIcon: {
@@ -522,13 +516,14 @@ const styles = StyleSheet.create({
 
   filterSection: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
     gap: Spacing.sm,
   },
 
   filterLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    ...TypographyScale.small,
     color: Colors.textMuted,
     marginBottom: Spacing.xs,
   },
@@ -542,7 +537,9 @@ const styles = StyleSheet.create({
 
   actionRow: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
 
   exportBtn: {
@@ -562,8 +559,7 @@ const styles = StyleSheet.create({
   },
 
   exportBtnText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    ...TypographyScale.small,
     color: Colors.accent,
   },
 
@@ -572,17 +568,17 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: Spacing.xs,
     paddingVertical: Spacing.xs + 2,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.surface,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
 
   chipActive: {
-    backgroundColor: Colors.accent + "20",
+    backgroundColor: Colors.accent + "15",
     borderColor: Colors.accent,
   },
 
@@ -591,8 +587,7 @@ const styles = StyleSheet.create({
   },
 
   chipLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    ...TypographyScale.small,
     color: Colors.textMuted,
   },
 
@@ -604,6 +599,7 @@ const styles = StyleSheet.create({
 
   listContent: {
     paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
     paddingBottom: Spacing.xl,
   },
 
@@ -611,23 +607,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: Spacing.md,
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
   },
 
   sectionDate: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    ...TypographyScale.small,
     color: Colors.textMuted,
   },
 
   sectionTotal: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.small,
     color: Colors.accent,
   },
 
   expenseItem: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
 
   // ─── EMPTY STATE ────────────────────────────────────────────
@@ -635,24 +631,24 @@ const styles = StyleSheet.create({
   empty: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.xxl,
+    paddingVertical: Spacing.xxl + Spacing.lg,
+    paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
   },
 
   emptyIcon: {
-    fontSize: 52,
+    fontSize: 56,
+    marginBottom: Spacing.sm,
   },
 
   emptyTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.title,
     color: Colors.textPrimary,
   },
 
   emptyDesc: {
-    fontSize: FontSize.body,
+    ...TypographyScale.small,
     color: Colors.textMuted,
     textAlign: "center",
-    paddingHorizontal: Spacing.lg,
   },
 });

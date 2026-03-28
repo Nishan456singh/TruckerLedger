@@ -6,6 +6,8 @@ import {
     FontSize,
     FontWeight,
     Spacing,
+    Shadow,
+    TypographyScale,
 } from "@/constants/theme";
 import { getFuelStats } from "@/lib/fuelService";
 import { router } from "expo-router";
@@ -121,7 +123,7 @@ export default function FuelStatsScreen() {
             <Text style={styles.rowValue}>{formatCurrency(stats.fuelCostPerMile)}</Text>
           </View>
 
-          <View style={styles.row}>
+          <View style={[styles.row, styles.rowLast]}>
             <Text style={styles.rowLabel}>Fuel Cost Per Trip</Text>
             <Text style={styles.rowValue}>{formatCurrency(stats.fuelCostPerTrip)}</Text>
           </View>
@@ -158,25 +160,24 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   title: {
-    fontSize: FontSize.section,
+    ...TypographyScale.headline,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
   },
   card: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
+    ...Shadow.card,
   },
   label: {
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
   },
   input: {
     backgroundColor: Colors.cardAlt,
     color: Colors.textPrimary,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
     borderRadius: BorderRadius.md,
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm + 2,
   },
@@ -189,23 +190,26 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   calculateBtnText: {
+    ...TypographyScale.body,
     color: Colors.background,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: Spacing.xs,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
   rowLabel: {
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontSize: FontSize.body,
   },
   rowValue: {
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
   },
 });

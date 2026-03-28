@@ -1,6 +1,6 @@
 import HighContrastCard from '@/components/HighContrastCard';
 import ScreenBackground from '@/components/ScreenBackground';
-import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { Colors, FontSize, FontWeight, Spacing, Shadow, TypographyScale, BorderRadius } from '@/constants/theme';
 import { formatCurrency } from '@/lib/formatUtils';
 import { getCategoryAnalysis, getDailyStats, getProfitTrend, type CategoryAnalysis } from '@/lib/tripService';
 import { router, useFocusEffect } from 'expo-router';
@@ -341,8 +341,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   title: {
-    fontSize: FontSize.section + 2,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.headline,
     color: Colors.textPrimary,
   },
   section: {
@@ -350,8 +349,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
   },
   sectionTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.title,
     color: Colors.textPrimary,
     marginBottom: Spacing.lg,
   },
@@ -362,38 +360,39 @@ const styles = StyleSheet.create({
   },
   statBox: {
     flex: 1,
-    backgroundColor: Colors.cardAlt,
-    borderRadius: 12,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     gap: Spacing.xs,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
+    ...Shadow.card,
   },
   statLabel: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontWeight: FontWeight.medium,
   },
   statValue: {
-    fontSize: FontSize.body + 2,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.subtitle,
     color: Colors.primary,
   },
   statDate: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.caption,
     color: Colors.textMuted,
   },
   chartContainer: {
     gap: Spacing.lg,
-    backgroundColor: Colors.cardAlt,
+    backgroundColor: Colors.card,
     padding: Spacing.lg,
-    borderRadius: 12,
+    borderRadius: BorderRadius.md,
     marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    ...Shadow.card,
   },
   chartTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
@@ -401,27 +400,28 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   chartLabel: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontWeight: FontWeight.medium,
   },
   barBackground: {
     height: 24,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.surface,
     borderRadius: 4,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
   bar: {
     height: '100%',
     borderRadius: 4,
   },
   chartValue: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
   },
   pieContainer: {
     gap: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   pieRow: {
     flexDirection: 'row',
@@ -438,30 +438,29 @@ const styles = StyleSheet.create({
     width: 80,
   },
   pieLabelText: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontWeight: FontWeight.medium,
   },
   pieLabelValue: {
-    fontSize: FontSize.body - 2,
+    ...TypographyScale.body,
     color: Colors.primary,
-    fontWeight: FontWeight.bold,
   },
   pieBar: {
     flex: 1,
     height: 16,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.surface,
     borderRadius: 4,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
   pieBarFill: {
     height: '100%',
     borderRadius: 4,
   },
   pieAmount: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
     width: 70,
     textAlign: 'right',
   },
@@ -470,11 +469,10 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     paddingTop: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
   },
   categoryListTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
   },
   categoryItem: {
@@ -492,22 +490,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoryName: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
   },
   categoryStats: {
-    fontSize: FontSize.caption - 2,
+    ...TypographyScale.caption,
     color: Colors.textMuted,
   },
   categoryAmount: {
-    fontSize: FontSize.body - 1,
+    ...TypographyScale.body,
     color: Colors.primary,
-    fontWeight: FontWeight.bold,
   },
   loadingText: {
+    ...TypographyScale.body,
     color: Colors.textPrimary,
-    fontSize: FontSize.body,
     textAlign: 'center',
     marginTop: Spacing.xxxl,
   },
@@ -521,12 +517,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   emptyTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
   },
   emptySubtitle: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
     marginTop: Spacing.xs,
   },
