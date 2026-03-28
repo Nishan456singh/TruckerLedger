@@ -1,179 +1,77 @@
-import PrimaryButton from '@/components/PrimaryButton';
-import ScreenBackground from "@/components/ScreenBackground";
-import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { Colors, FontSize, FontWeight } from '@/constants/theme';
 import { markOnboardingCompleted } from '@/lib/onboardingStorage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming
+} from 'react-native-reanimated';
 
-const { height } = Dimensions.get('window');
+export default function OnboardingWelcome() {
+  const opacity = useSharedValue(1);
 
-interface OnboardingStep {
-  icon: string;
-  title: string;
-  description: string;
-}
+  useEffect(() => {
+    // Pulsing animation for the text
+    opacity.value = withRepeat(
+      withTiming(0.4, { duration: 1000 }),
+      -1,
+      true
+    );
 
-const steps: OnboardingStep[] = [
-  {
-    icon: '🧾',
-    title: 'Scan Receipts',
-    description: 'Use OCR to automatically capture expense data from your receipts. No manual typing needed.',
-  },
-  {
-    icon: '🚚',
-    title: 'Track Trip Profit',
-    description: 'Log each trip with income and expenses. See your profitability at a glance.',
-  },
-  {
-    icon: '📊',
-    title: 'View Insights',
-    description: 'Get monthly analytics including best trips, profitability rates, and spending trends.',
-  },
-  {
-    icon: '📄',
-    title: 'Scan BOLs',
-    description: 'Capture pickup/delivery locations and load amounts automatically with OCR.',
-  },
-];
-
-interface WelcomeScreenProps {
-  onComplete: () => void;
-}
-
-export default function WelcomeScreen() {
-  const [currentStep, setCurrentStep] = React.useState(0);
-
-  const handleNext = async () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
+    // Auto-advance after 3 seconds
+    const timer = setTimeout(async () => {
       await markOnboardingCompleted();
       router.replace('/');
-    }
-  };
+    }, 3000);
 
-  const handleSkip = async () => {
-    await markOnboardingCompleted();
-    router.replace('/');
-  };
+    return () => clearTimeout(timer);
+  }, [opacity]);
 
-  const step = steps[currentStep];
-  const progress = ((currentStep + 1) / steps.length) * 100;
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
 
   return (
-    <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Progress */}
-        <View style={styles.progressContainer}>
-          <View style={[styles.progressBar, { width: `${progress}%` }]} />
-        </View>
-
-        {/* Step Content */}
-        <Animated.View entering={FadeInDown.springify().delay(100)} style={styles.content}>
-          <Text style={styles.stepIcon}>{step.icon}</Text>
-          <Text style={styles.stepTitle}>{step.title}</Text>
-          <Text style={styles.stepDescription}>{step.description}</Text>
+    <LinearGradient
+      colors={['#C3224E', '#A01B3A']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <View style={styles.content}>
+        <Animated.View
+          entering={FadeInDown}
+          style={[styles.textContainer, animatedStyle]}
+        >
+          <Text style={styles.appName}>TruckerLedger</Text>
         </Animated.View>
-
-        {/* Indicators */}
-        <View style={styles.indicators}>
-          {steps.map((_, idx) => (
-            <View
-              key={idx}
-              style={[
-                styles.indicator,
-                idx === currentStep && styles.indicatorActive,
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Buttons */}
-        <View style={styles.buttonsContainer}>
-          <PrimaryButton label="Next →" onPress={handleNext} />
-          <Text style={styles.skipButton} onPress={handleSkip}>
-            Skip for now
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-    </ScreenBackground>
+      </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "transparent",
-  },
   container: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    justifyContent: 'space-between',
-  },
-  progressContainer: {
-    height: 4,
-    backgroundColor: Colors.card,
-    borderRadius: 2,
-    overflow: 'hidden',
-    marginBottom: Spacing.xxxl,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: Colors.primary,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: height * 0.35,
-    gap: Spacing.lg,
   },
-  stepIcon: {
-    fontSize: 72,
-    marginBottom: Spacing.md,
+  textContainer: {
+    alignItems: 'center',
   },
-  stepTitle: {
-    fontSize: FontSize.section + 4,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    textAlign: 'center',
-  },
-  stepDescription: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.medium,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  indicators: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.md,
-    marginVertical: Spacing.xxxl,
-  },
-  indicator: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.card,
-  },
-  indicatorActive: {
-    backgroundColor: Colors.primary,
-    width: 28,
-  },
-  buttonsContainer: {
-    gap: Spacing.lg,
-  },
-  skipButton: {
-    textAlign: 'center',
-    color: Colors.textSecondary,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-    padding: Spacing.md,
+  appName: {
+    fontSize: FontSize.section + 16,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textInverse,
+    letterSpacing: 1,
   },
 });
