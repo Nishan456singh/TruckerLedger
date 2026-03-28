@@ -21,13 +21,13 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
   const segments = useSegments();
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
   const [completedOnboarding, setCompletedOnboarding] = useState(false);
-  const [routedOnce, setRoutedOnce] = useState(false);
 
   // Check onboarding status when user changes
   useEffect(() => {
     async function checkOnboarding() {
       if (!user) {
         setOnboardingLoaded(true);
+        setCompletedOnboarding(false);
         return;
       }
 
@@ -48,7 +48,7 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
   // Handle routing based on auth and onboarding state
   useEffect(() => {
     // Wait for all data to load before routing
-    if (!dbReady || authLoading || !onboardingLoaded || routedOnce) {
+    if (!dbReady || authLoading || !onboardingLoaded) {
       return;
     }
 
@@ -58,7 +58,6 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
     if (!user) {
       if (currentSegment !== "login") {
         router.replace("/login");
-        setRoutedOnce(true);
       }
       return;
     }
@@ -70,27 +69,21 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
       } else {
         router.replace("/onboarding-welcome");
       }
-      setRoutedOnce(true);
       return;
     }
 
     // User exists but hasn't completed onboarding
     if (!completedOnboarding && currentSegment !== "onboarding-welcome") {
       router.replace("/onboarding-welcome");
-      setRoutedOnce(true);
       return;
     }
 
     // User exists, completed onboarding, and not on main tabs
     if (completedOnboarding && currentSegment !== "(tabs)") {
       router.replace("/");
-      setRoutedOnce(true);
       return;
     }
-
-    // All conditions met, routing is correct
-    setRoutedOnce(true);
-  }, [dbReady, authLoading, onboardingLoaded, user, completedOnboarding, segments, routedOnce]);
+  }, [dbReady, authLoading, onboardingLoaded, user, completedOnboarding, segments]);
 
   return null;
 }
