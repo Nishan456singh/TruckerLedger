@@ -1,12 +1,12 @@
+import { BorderRadius, Colors, FontSize, Spacing } from '@/constants/theme';
 import React, { useCallback } from 'react';
 import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import { BorderRadius, Colors, FontSize, Spacing } from '@/constants/theme';
 
 interface SearchBarProps {
   placeholder: string;

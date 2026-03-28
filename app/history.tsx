@@ -1,35 +1,34 @@
+import { LinearGradient } from "expo-linear-gradient";
+import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
-  SectionList,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    SectionList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import { router, useFocusEffect } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
 
+import BOLCard from "@/components/BOLCard";
+import ExpenseCard from "@/components/ExpenseCard";
+import HistoryFilterPills, { type FilterType } from "@/components/HistoryFilterPills";
 import ScreenBackground from "@/components/ScreenBackground";
 import SearchBar from "@/components/SearchBar";
-import HistoryFilterPills, { type FilterType } from "@/components/HistoryFilterPills";
-import ExpenseCard from "@/components/ExpenseCard";
-import BOLCard from "@/components/BOLCard";
 import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Spacing,
+    Colors,
+    FontSize,
+    FontWeight,
+    Spacing
 } from "@/constants/theme";
-import { getAllExpenses } from "@/lib/expenseService";
 import { getBOLHistory } from "@/lib/bolService";
+import { getAllExpenses } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
-import type { Expense, BOLRecord } from "@/lib/types";
+import type { BOLRecord, Expense } from "@/lib/types";
 
 type HistoryItem =
   | { type: 'expense'; id: string; date: string; data: Expense }

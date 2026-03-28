@@ -1,23 +1,23 @@
 import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Spacing,
-  Shadow,
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
 } from '@/constants/theme';
 import type { BOLRecord } from '@/lib/types';
 import React from 'react';
 import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
+    useAnimatedStyle,
+    useSharedValue,
+    withSpring,
 } from 'react-native-reanimated';
 
 interface BOLCardProps {

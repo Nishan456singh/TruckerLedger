@@ -1,12 +1,12 @@
+import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import React, { useCallback, useMemo } from 'react';
 import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 
 export type FilterType = 'all' | 'receipts' | 'bols';
 

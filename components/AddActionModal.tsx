@@ -1,23 +1,22 @@
-import React, { useCallback } from 'react';
 import {
-  Modal,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Dimensions,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Spacing,
-  Shadow,
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
 } from '@/constants/theme';
 import { pressHaptic } from '@/lib/hapticUtils';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback } from 'react';
+import {
+    Modal,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 interface AddActionModalProps {
   visible: boolean;

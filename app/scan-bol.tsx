@@ -145,7 +145,7 @@ export default function ScanBOLScreen() {
   if (!permission) {
     return (
       <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <View style={styles.centerWrap}>
           <ActivityIndicator color={Colors.primary} />
           <Text style={styles.helperText}>Loading camera...</Text>
@@ -158,7 +158,7 @@ export default function ScanBOLScreen() {
   if (!permission.granted) {
     return (
       <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <View style={styles.centerWrap}>
           <Text style={styles.title}>Camera access required</Text>
           <Text style={styles.helperText}>Grant permission to scan BOLs.</Text>
@@ -175,7 +175,7 @@ export default function ScanBOLScreen() {
   if (imageUri) {
     return (
       <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -277,7 +277,7 @@ export default function ScanBOLScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -321,14 +321,14 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   content: {
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     gap: Spacing.md,
   },
   centerWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    padding: Spacing.xl,
+    padding: Spacing.lg,
     gap: Spacing.sm,
   },
   header: {
