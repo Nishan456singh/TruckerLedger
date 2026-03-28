@@ -204,6 +204,8 @@ function RootLayoutInner() {
 
         <Stack.Screen name="bol-history" />
 
+        <Stack.Screen name="history" />
+
         <Stack.Screen name="expense-detail" />
 
         <Stack.Screen

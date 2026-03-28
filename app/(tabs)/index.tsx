@@ -1,3 +1,4 @@
+import AddActionModal from "@/components/AddActionModal";
 import ExpenseCard from "@/components/ExpenseCard";
 import ScreenBackground from "@/components/ScreenBackground";
 import {
@@ -30,6 +31,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function DashboardScreen() {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
+  const [addModalVisible, setAddModalVisible] = useState(false);
   const [weeklySnapshot, setWeeklySnapshot] = useState({
     income: 0,
     fuel: 0,
@@ -77,9 +79,25 @@ export default function DashboardScreen() {
   const profitColor = weeklySnapshot.profit >= 0 ? Colors.primary : Colors.danger;
   const profitEmoji = weeklySnapshot.profit >= 0 ? "📈" : "📉";
 
+  const handleAddReceipt = useCallback(() => {
+    router.push("/scan-receipt");
+  }, []);
+
+  const handleAddBOL = useCallback(() => {
+    router.push("/scan-bol");
+  }, []);
+
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        {/* Add Action Modal */}
+        <AddActionModal
+          visible={addModalVisible}
+          onClose={() => setAddModalVisible(false)}
+          onAddReceipt={handleAddReceipt}
+          onAddBOL={handleAddBOL}
+        />
+
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* REFERENCE DESIGN ARCHITECTURE: 50/50 LAYOUT                    */}
         {/* Hero background (50%) + Floating white card (50%) overlapping  */}
@@ -152,19 +170,19 @@ export default function DashboardScreen() {
                 <View style={styles.actionGrid}>
                   <TouchableOpacity
                     style={styles.actionTile}
-                    onPress={() => router.push("/add-expense")}
+                    onPress={() => setAddModalVisible(true)}
                     activeOpacity={0.85}
                   >
                     <Text style={styles.actionIcon}>➕</Text>
-                    <Text style={styles.actionLabel}>Add Expense</Text>
+                    <Text style={styles.actionLabel}>Add</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.actionTile}
-                    onPress={() => router.push("/scan-receipt")}
+                    onPress={() => router.push("/history")}
                     activeOpacity={0.85}
                   >
-                    <Text style={styles.actionIcon}>🧾</Text>
-                    <Text style={styles.actionLabel}>Scan</Text>
+                    <Text style={styles.actionIcon}>📋</Text>
+                    <Text style={styles.actionLabel}>History</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.actionTile}
@@ -172,7 +190,7 @@ export default function DashboardScreen() {
                     activeOpacity={0.85}
                   >
                     <Text style={styles.actionIcon}>🚚</Text>
-                    <Text style={styles.actionLabel}>Trip Profit</Text>
+                    <Text style={styles.actionLabel}>Trips</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -231,10 +249,10 @@ export default function DashboardScreen() {
 
                     <TouchableOpacity
                       style={styles.viewAllBtn}
-                      onPress={() => router.push("/expense-history")}
+                      onPress={() => router.push("/history")}
                       activeOpacity={0.85}
                     >
-                      <Text style={styles.viewAllBtnText}>View All Expenses →</Text>
+                      <Text style={styles.viewAllBtnText}>View All History →</Text>
                     </TouchableOpacity>
                   </View>
                 )}
