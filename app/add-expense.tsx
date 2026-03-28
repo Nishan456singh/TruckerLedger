@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.5,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl + Spacing.lg,
+    paddingTop: Spacing.xxl + Spacing.lg,
     paddingBottom: Spacing.md,
     justifyContent: "space-between",
   },
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
 
   floatingCardContainer: {
     flex: 0.55,
-    marginTop: -Spacing.xxxl,
+    marginTop: -Spacing.lg,
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.card,
     borderRadius: 32,
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
 
   cardContent: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl + Spacing.lg,
+    paddingTop: Spacing.xxl + Spacing.lg,
     paddingBottom: Spacing.md,
     gap: Spacing.lg,
   },
