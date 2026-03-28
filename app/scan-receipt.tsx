@@ -1,4 +1,3 @@
-import HighContrastCard from "@/components/HighContrastCard";
 import PrimaryButton from "@/components/PrimaryButton";
 import ScreenBackground from "@/components/ScreenBackground";
 import {
@@ -13,6 +12,7 @@ import { extractReceiptText } from "@/lib/receipt/ocrService";
 import { parseReceipt } from "@/lib/receipt/receiptParser";
 import type { Category } from "@/lib/types";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -28,6 +28,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function todayISO(): string {
@@ -180,144 +181,216 @@ export default function ScanReceiptScreen() {
   if (imageUri) {
     return (
       <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => {
-                setImageUri(null);
-                setOcrStatus("");
-              }}
-              disabled={isOCRing}
-            >
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
-            <Text style={styles.title}>📸 Receipt Details</Text>
-            <View style={{ width: 36 }} />
-          </View>
+        <SafeAreaView style={styles.safe}>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <View style={styles.container}>
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* HERO SECTION (30% - Red/Edit themed)                          */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
 
-            {isOCRing && (
-              <HighContrastCard style={[styles.card, styles.ocrCard]}>
-                <ActivityIndicator color={Colors.primary} size="small" />
-                <Text style={styles.ocrStatus}>{ocrStatus}</Text>
-              </HighContrastCard>
-            )}
-
-            {ocrStatus && !isOCRing && (
-              <HighContrastCard style={[styles.card, styles.ocrWarning]}>
-                <Text style={styles.ocrWarningText}>⚠️ {ocrStatus}</Text>
-              </HighContrastCard>
-            )}
-
-            <HighContrastCard style={styles.card}>
-              <Text style={styles.fieldLabel}>Amount</Text>
-              <TextInput
-                style={styles.input}
-                value={amount}
-                onChangeText={setAmount}
-                placeholder="0.00"
-                keyboardType="decimal-pad"
-                placeholderTextColor={Colors.textMuted}
-                editable={!isOCRing}
-              />
-
-              <Text style={styles.fieldLabel}>Category</Text>
-              <View style={styles.categoryGrid}>
-                {(["fuel", "food", "repair", "toll", "parking", "other"] as Category[]).map((cat) => (
+              <LinearGradient
+                colors={[Colors.accent, '#A01B3A']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.detailsHeroSection}
+              >
+                {/* Top Bar */}
+                <View style={styles.detailsHeroTopBar}>
                   <TouchableOpacity
-                    key={cat}
-                    style={[styles.categoryBtn, category === cat && styles.categoryBtnActive]}
-                    onPress={() => setCategory(cat)}
+                    onPress={() => {
+                      setImageUri(null);
+                      setOcrStatus("");
+                    }}
                     disabled={isOCRing}
                   >
-                    <Text style={styles.categoryEmoji}>{CATEGORY_EMOJIS[cat]}</Text>
+                    <Text style={styles.detailsHeroBackText}>✕</Text>
                   </TouchableOpacity>
-                ))}
+                  <Text style={styles.detailsHeroTitle}>Review & Edit</Text>
+                  <View style={{ width: 40 }} />
+                </View>
+              </LinearGradient>
+
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* FLOATING CARD (70%+ - Receipt Details & Form)                 */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
+
+              <View style={styles.detailsCardContainer}>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.detailsCardContent}
+                >
+                  {/* OCR Status */}
+                  {isOCRing && (
+                    <Animated.View entering={FadeInDown} style={styles.statusCard}>
+                      <ActivityIndicator color={Colors.accent} size="small" />
+                      <Text style={styles.statusText}>{ocrStatus}</Text>
+                    </Animated.View>
+                  )}
+
+                  {ocrStatus && !isOCRing && (
+                    <Animated.View entering={FadeInDown} style={styles.warningCard}>
+                      <Text style={styles.warningText}>⚠️ {ocrStatus}</Text>
+                    </Animated.View>
+                  )}
+
+                  {/* Amount Input */}
+                  <Animated.View entering={FadeInDown}>
+                    <Text style={styles.detailsFieldLabel}>💰 Amount</Text>
+                    <View style={styles.detailsAmountContainer}>
+                      <Text style={styles.detailsCurrencySign}>$</Text>
+                      <TextInput
+                        style={styles.detailsInput}
+                        value={amount}
+                        onChangeText={setAmount}
+                        placeholder="0.00"
+                        keyboardType="decimal-pad"
+                        placeholderTextColor={Colors.textMuted}
+                        editable={!isOCRing}
+                      />
+                    </View>
+                  </Animated.View>
+
+                  {/* Category Selector */}
+                  <Animated.View entering={FadeInDown.delay(50)}>
+                    <Text style={styles.detailsFieldLabel}>📁 Category</Text>
+                    <View style={styles.categoryGrid}>
+                      {(["fuel", "food", "repair", "toll", "parking", "other"] as Category[]).map((cat) => (
+                        <TouchableOpacity
+                          key={cat}
+                          style={[styles.categoryBtn, category === cat && styles.categoryBtnActive]}
+                          onPress={() => setCategory(cat)}
+                          disabled={isOCRing}
+                        >
+                          <Text style={styles.categoryEmoji}>{CATEGORY_EMOJIS[cat]}</Text>
+                          <Text style={styles.categoryName}>{cat}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </Animated.View>
+
+                  {/* Date & Note */}
+                  <Animated.View entering={FadeInDown.delay(100)} style={styles.fieldsBlock}>
+                    <View>
+                      <Text style={styles.detailsFieldLabel}>📅 Date</Text>
+                      <TextInput
+                        value={date}
+                        onChangeText={setDate}
+                        style={styles.detailsInput}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor={Colors.textMuted}
+                        editable={!isOCRing}
+                      />
+                    </View>
+
+                    <View>
+                      <Text style={styles.detailsFieldLabel}>📝 Note (Optional)</Text>
+                      <TextInput
+                        style={[styles.detailsInput, { height: 70, paddingTop: Spacing.md, textAlignVertical: "top" }]}
+                        value={note}
+                        onChangeText={setNote}
+                        placeholder="Optional note"
+                        placeholderTextColor={Colors.textMuted}
+                        multiline
+                        editable={!isOCRing}
+                      />
+                    </View>
+                  </Animated.View>
+                </ScrollView>
+
+                {/* Footer with Save/Cancel */}
+                <Animated.View entering={FadeInUp} style={styles.detailsCardFooter}>
+                  <PrimaryButton
+                    label="💾 Save Receipt"
+                    onPress={handleSave}
+                    loading={isSaving}
+                    disabled={isSaving || isOCRing || Number(amount) <= 0}
+                    fullWidth
+                  />
+                  <TouchableOpacity
+                    style={styles.detailsCancelBtn}
+                    onPress={() => {
+                      setImageUri(null);
+                      setOcrStatus("");
+                    }}
+                    disabled={isOCRing || isSaving}
+                  >
+                    <Text style={styles.detailsCancelBtnText}>Take Another Photo</Text>
+                  </TouchableOpacity>
+                </Animated.View>
               </View>
-
-              <Text style={styles.fieldLabel}>Date</Text>
-              <TextInput
-                value={date}
-                onChangeText={setDate}
-                style={styles.input}
-                editable={!isOCRing}
-              />
-
-              <Text style={styles.fieldLabel}>Note</Text>
-              <TextInput
-                style={[styles.input, { height: 60 }]}
-                value={note}
-                onChangeText={setNote}
-                placeholder="Optional note"
-                placeholderTextColor={Colors.textMuted}
-                multiline
-                editable={!isOCRing}
-              />
-            </HighContrastCard>
-
-            <Pressable
-              onPress={handleSave}
-              disabled={isSaving || isOCRing}
-              style={({ pressed }) => [
-                styles.saveBtn,
-                pressed && { opacity: 0.85 },
-                (isSaving || isOCRing) && { opacity: 0.7 },
-              ]}
-            >
-              {isSaving ? (
-                <ActivityIndicator color={Colors.textPrimary} />
-              ) : (
-                <Text style={styles.saveBtnText}>💾 Save Receipt</Text>
-              )}
-            </Pressable>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+            </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </ScreenBackground>
     );
   }
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
-            <Text style={styles.title}>📸 Scan Receipt</Text>
-            <View style={{ width: 36 }} />
-          </View>
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.container}>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HERO SECTION (35% - Red/Receipt themed)                        */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-          {/* Camera Preview */}
-          <View style={styles.cameraSection}>
-            <View style={styles.cameraWrap}>
-              <CameraView ref={cameraRef} style={styles.camera} facing="back" mode="picture" />
+            <LinearGradient
+              colors={[Colors.accent, '#A01B3A']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroSection}
+            >
+              {/* Top Bar */}
+              <View style={styles.heroTopBar}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.heroBackBtn}
+                >
+                  <Text style={styles.heroBackText}>✕</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroTitle}>Scan Receipt</Text>
+                <View style={{ width: 40 }} />
+              </View>
+
+              {/* Centered Message */}
+              <View style={styles.heroMessageCenter}>
+                <Text style={styles.heroEmoji}>📸</Text>
+                <Text style={styles.heroMessage}>Position receipt</Text>
+                <Text style={styles.heroSubMessage}>in frame to capture</Text>
+              </View>
+            </LinearGradient>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* CAMERA VIEW (65% - Floating Card Style)                        */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+
+            <View style={styles.cameraCardContainer}>
+              <View style={styles.cameraWrap}>
+                <CameraView ref={cameraRef} style={styles.camera} facing="back" mode="picture" />
+              </View>
+
+              {/* Capture Button & Hint */}
+              <Animated.View entering={FadeInUp} style={styles.captureButtonWrap}>
+                <Text style={styles.captureHint}>✓ Center your receipt for best results</Text>
+                <PrimaryButton
+                  label="📸 Capture Receipt"
+                  onPress={handleCapture}
+                  loading={isCapturing}
+                  disabled={isCapturing}
+                  size="large"
+                  fullWidth
+                />
+              </Animated.View>
             </View>
-
-            <View style={styles.captureHint}>
-              <Text style={styles.hintText}>✓ Position receipt in frame</Text>
-            </View>
           </View>
-
-          <PrimaryButton
-            label="📸 Capture Receipt"
-            onPress={handleCapture}
-            loading={isCapturing}
-            disabled={isCapturing}
-            size="lg"
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -327,11 +400,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  content: {
-    padding: Spacing.xl,
-    gap: Spacing.lg,
-    paddingBottom: Spacing.xl * 2,
+
+  container: {
+    flex: 1,
+    position: "relative",
   },
+
   centerWrap: {
     flex: 1,
     alignItems: "center",
@@ -339,78 +413,234 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     gap: Spacing.sm,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
+
+  // ─── CAMERA VIEW: HERO SECTION ──────────────────────────────────────
+
+  heroSection: {
+    flex: 0.35,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },
-  backText: {
-    fontSize: 28,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
+
+  heroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
-  title: {
+
+  heroBackBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  heroBackText: {
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  heroTitle: {
     fontSize: FontSize.section,
-    color: Colors.textPrimary,
     fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
   },
-  helperText: {
-    color: Colors.textSecondary,
-    textAlign: "center",
+
+  heroMessageCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+  },
+
+  heroEmoji: {
+    fontSize: FontSize.hero,
+  },
+
+  heroMessage: {
     fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textInverse,
   },
+
+  heroSubMessage: {
+    fontSize: FontSize.caption,
+    color: "rgba(255, 255, 255, 0.7)",
+  },
+
+  // ─── CAMERA VIEW: CAMERA CARD ───────────────────────────────────────
+
+  cameraCardContainer: {
+    flex: 0.65,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+  },
+
   cameraWrap: {
-    height: 360,
+    flex: 1,
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
+    margin: Spacing.lg,
+    backgroundColor: Colors.surface,
     borderWidth: 2,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.card,
+    borderColor: Colors.accent + "30",
   },
-  cameraSection: {
-    gap: Spacing.md,
-    marginVertical: Spacing.md,
-  },
-  captureHint: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    backgroundColor: Colors.cardAlt,
-    borderRadius: BorderRadius.md,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.primary,
-  },
-  hintText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.medium,
-  },
+
   camera: {
     flex: 1,
   },
-  card: {
-    gap: Spacing.xs,
+
+  captureButtonWrap: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
-  fieldLabel: {
-    color: Colors.textSecondary,
+
+  captureHint: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+    textAlign: "center",
+  },
+
+  // ─── RECEIPT DETAILS: HERO SECTION ──────────────────────────────────
+
+  detailsHeroSection: {
+    flex: 0.30,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
+    justifyContent: "center",
+  },
+
+  detailsHeroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  detailsHeroBackText: {
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  detailsHeroTitle: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  // ─── RECEIPT DETAILS: FLOATING CARD ─────────────────────────────────
+
+  detailsCardContainer: {
+    flex: 0.70,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+  },
+
+  detailsCardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
+    gap: Spacing.lg,
+  },
+
+  statusCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    backgroundColor: Colors.accent + "10",
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.accent + "30",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
+
+  statusText: {
+    color: Colors.accent,
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    marginTop: Spacing.xs,
   },
-  input: {
-    backgroundColor: Colors.cardAlt,
+
+  warningCard: {
+    backgroundColor: Colors.warning + "15",
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.warning + "50",
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+  },
+
+  warningText: {
+    color: Colors.warning,
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+  },
+
+  detailsFieldLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textMuted,
+    marginBottom: Spacing.sm,
+  },
+
+  detailsAmountContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    color: Colors.textPrimary,
-    fontSize: FontSize.body,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm + 2,
   },
+
+  detailsCurrencySign: {
+    fontSize: FontSize.title,
+    color: Colors.textMuted,
+    marginRight: Spacing.xs,
+  },
+
+  detailsInput: {
+    flex: 1,
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+    paddingVertical: Spacing.md,
+  },
+
   categoryGrid: {
     flexDirection: "row",
-    gap: Spacing.sm,
     flexWrap: "wrap",
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
+
   categoryBtn: {
     width: "31%",
     paddingVertical: Spacing.md,
@@ -418,56 +648,75 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: "center",
-    backgroundColor: Colors.card,
+    gap: Spacing.xs,
+    backgroundColor: Colors.surface,
   },
+
   categoryBtnActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: Colors.accent + "20",
+    borderColor: Colors.accent,
   },
+
   categoryEmoji: {
     fontSize: 20,
   },
-  ocrCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-    backgroundColor: Colors.cardAlt,
-  },
-  ocrStatus: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.caption,
-  },
-  ocrWarning: {
-    backgroundColor: "rgba(255, 152, 0, 0.1)",
-    borderWidth: 1,
-    borderColor: Colors.warning,
-  },
-  ocrWarningText: {
-    color: Colors.warning,
-    fontSize: FontSize.caption,
+
+  categoryName: {
+    fontSize: FontSize.tiny,
+    color: Colors.textMuted,
     fontWeight: FontWeight.semibold,
   },
+
+  fieldsBlock: {
+    gap: Spacing.lg,
+  },
+
+  detailsCardFooter: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+
+  detailsCancelBtn: {
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+  },
+
+  detailsCancelBtnText: {
+    fontSize: FontSize.body,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.semibold,
+  },
+
+  // ─── PERMISSION SCREENS ─────────────────────────────────────────────
+
+  title: {
+    fontSize: FontSize.section,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
+  },
+
+  helperText: {
+    color: Colors.textSecondary,
+    textAlign: "center",
+    fontSize: FontSize.body,
+  },
+
   primaryBtn: {
     minHeight: 52,
     borderRadius: BorderRadius.lg,
     backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: Spacing.xl,
   },
+
   primaryBtnText: {
-    color: Colors.background,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-  },
-  saveBtn: {
-    minHeight: 52,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: Spacing.lg,
-  },
-  saveBtnText: {
     color: Colors.background,
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,

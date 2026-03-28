@@ -1,12 +1,11 @@
-import HighContrastCard from "@/components/HighContrastCard";
-import PrimaryButton from "@/components/PrimaryButton";
+import PremiumButton from "@/components/PremiumButton";
 import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
     FontSize,
     FontWeight,
-    Spacing,
+    Spacing
 } from "@/constants/theme";
 import { calculateTripProfit, createTrip } from "@/lib/tripService";
 import { router } from "expo-router";
@@ -22,7 +21,12 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, {
+    FadeInDown,
+    FadeInUp,
+} from "react-native-reanimated";
 
 function parseAmount(value: string): number {
   if (!value.trim()) return 0;
@@ -37,38 +41,6 @@ function formatCurrency(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
-}
-
-function Field({
-  label,
-  value,
-  onChangeText,
-  icon,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (value: string) => void;
-  icon?: string;
-}) {
-  return (
-    <View style={styles.fieldWrap}>
-      <View style={styles.labelRow}>
-        {icon && <Text style={styles.fieldIcon}>{icon}</Text>}
-        <Text style={styles.fieldLabel}>{label}</Text>
-      </View>
-      <View style={styles.inputWrap}>
-        <Text style={styles.inputPrefix}>$</Text>
-        <TextInput
-          value={value}
-          onChangeText={onChangeText}
-          keyboardType="decimal-pad"
-          placeholder="0.00"
-          placeholderTextColor={Colors.textMuted}
-          style={styles.input}
-        />
-      </View>
-    </View>
-  );
 }
 
 export default function TripProfitScreen() {
@@ -123,79 +95,245 @@ export default function TripProfitScreen() {
     }
   }
 
+  const profitColor = profit >= 0 ? Colors.primary : Colors.danger;
+  const profitEmoji = profit >= 0 ? "📈" : "📉";
+
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
+          <View style={styles.container}>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HERO SECTION (50% - Yellow/Action themed)                      */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-            <Text style={styles.title}>🚚 Trip Profit</Text>
-            <View style={{ width: 36 }} />
-          </View>
+            <LinearGradient
+              colors={[Colors.primary, '#E8B107']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroSection}
+            >
+              {/* Top Bar */}
+              <View style={styles.heroTopBar}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.heroBackBtn}
+                >
+                  <Text style={styles.heroBackText}>✕</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroTitle}>Trip Profit</Text>
+                <View style={{ width: 40 }} />
+              </View>
 
-          <Text style={styles.sectionLabel}>Trip Expenses</Text>
+              {/* Centered Profit Display */}
+              <View style={styles.heroProfitCenter}>
+                <Text style={styles.heroProfitLabel}>Net Profit</Text>
+                <View style={styles.heroProfitDisplay}>
+                  <Text style={[styles.heroProfitValue, { color: profitColor }]}>
+                    {formatCurrency(profit)}
+                  </Text>
+                </View>
+                <Text style={styles.heroProfitEmoji}>{profitEmoji}</Text>
+              </View>
 
-          <Field label="Load Income" value={income} onChangeText={setIncome} icon="💰" />
-          <Field label="Fuel" value={fuel} onChangeText={setFuel} icon="⛽" />
-          <Field label="Tolls" value={tolls} onChangeText={setTolls} icon="🛣️" />
-          <Field label="Food" value={food} onChangeText={setFood} icon="🍔" />
-          <Field label="Parking" value={parking} onChangeText={setParking} icon="🅿️" />
-          <Field label="Repairs" value={repairs} onChangeText={setRepairs} icon="🔧" />
-          <Field
-            label="Other Expenses"
-            value={otherExpenses}
-            onChangeText={setOtherExpenses}
-            icon="📦"
-          />
+              {/* Metric Pills */}
+              <View style={styles.heroMetricPills}>
+                <View style={styles.metricPill}>
+                  <Text style={styles.metricPillLabel}>Income</Text>
+                  <Text style={styles.metricPillValue}>
+                    {formatCurrency(parsed.income)}
+                  </Text>
+                </View>
+                <View style={styles.metricPill}>
+                  <Text style={styles.metricPillLabel}>Expenses</Text>
+                  <Text style={styles.metricPillValue}>
+                    {formatCurrency(totalExpenses)}
+                  </Text>
+                </View>
+              </View>
+            </LinearGradient>
 
-          <HighContrastCard style={styles.resultCard}>
-            <Text style={styles.resultTitle}>📊 Trip Summary</Text>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* FLOATING CARD (50%+ - Form & Actions)                         */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-            <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>Income</Text>
-              <Text style={[styles.resultValue, { color: Colors.primary }]}>{formatCurrency(parsed.income)}</Text>
-            </View>
-
-            <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>Total Expenses</Text>
-              <Text style={[styles.resultValue, { color: Colors.danger }]}>{formatCurrency(totalExpenses)}</Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.resultRow}>
-              <Text style={styles.profitLabel}>Net Profit</Text>
-              <Text
-                style={[
-                  styles.profitValue,
-                  { color: profit >= 0 ? Colors.primary : Colors.danger },
-                ]}
+            <View style={styles.floatingCardContainer}>
+              <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
               >
-                {formatCurrency(profit)}
-              </Text>
-            </View>
-          </HighContrastCard>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.cardContent}
+                >
+                  {/* Trip Income */}
+                  <Animated.View entering={FadeInDown}>
+                    <Text style={styles.cardSectionTitle}>💰 Trip Income</Text>
+                    <View style={styles.inputWrap}>
+                      <Text style={styles.inputPrefix}>$</Text>
+                      <TextInput
+                        value={income}
+                        onChangeText={setIncome}
+                        keyboardType="decimal-pad"
+                        placeholder="0.00"
+                        placeholderTextColor={Colors.textMuted}
+                        style={styles.input}
+                      />
+                    </View>
+                  </Animated.View>
 
-          <PrimaryButton
-            label="💾 Save Trip"
-            onPress={handleSaveTrip}
-            loading={saving}
-            disabled={saving}
-            size="lg"
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+                  {/* Trip Expenses */}
+                  <Animated.View entering={FadeInDown.delay(50)}>
+                    <Text style={styles.cardSectionTitle}>💸 Trip Expenses</Text>
+                    <View style={styles.expenseGrid}>
+                      <View style={styles.expenseField}>
+                        <View style={styles.expenseLabelRow}>
+                          <Text style={styles.expenseIcon}>⛽</Text>
+                          <Text style={styles.expenseLabel}>Fuel</Text>
+                        </View>
+                        <View style={styles.inputWrap}>
+                          <Text style={styles.inputPrefix}>$</Text>
+                          <TextInput
+                            value={fuel}
+                            onChangeText={setFuel}
+                            keyboardType="decimal-pad"
+                            placeholder="0.00"
+                            placeholderTextColor={Colors.textMuted}
+                            style={styles.input}
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.expenseField}>
+                        <View style={styles.expenseLabelRow}>
+                          <Text style={styles.expenseIcon}>🛣️</Text>
+                          <Text style={styles.expenseLabel}>Tolls</Text>
+                        </View>
+                        <View style={styles.inputWrap}>
+                          <Text style={styles.inputPrefix}>$</Text>
+                          <TextInput
+                            value={tolls}
+                            onChangeText={setTolls}
+                            keyboardType="decimal-pad"
+                            placeholder="0.00"
+                            placeholderTextColor={Colors.textMuted}
+                            style={styles.input}
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.expenseField}>
+                        <View style={styles.expenseLabelRow}>
+                          <Text style={styles.expenseIcon}>🍔</Text>
+                          <Text style={styles.expenseLabel}>Food</Text>
+                        </View>
+                        <View style={styles.inputWrap}>
+                          <Text style={styles.inputPrefix}>$</Text>
+                          <TextInput
+                            value={food}
+                            onChangeText={setFood}
+                            keyboardType="decimal-pad"
+                            placeholder="0.00"
+                            placeholderTextColor={Colors.textMuted}
+                            style={styles.input}
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.expenseField}>
+                        <View style={styles.expenseLabelRow}>
+                          <Text style={styles.expenseIcon}>🅿️</Text>
+                          <Text style={styles.expenseLabel}>Parking</Text>
+                        </View>
+                        <View style={styles.inputWrap}>
+                          <Text style={styles.inputPrefix}>$</Text>
+                          <TextInput
+                            value={parking}
+                            onChangeText={setParking}
+                            keyboardType="decimal-pad"
+                            placeholder="0.00"
+                            placeholderTextColor={Colors.textMuted}
+                            style={styles.input}
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.expenseField}>
+                        <View style={styles.expenseLabelRow}>
+                          <Text style={styles.expenseIcon}>🔧</Text>
+                          <Text style={styles.expenseLabel}>Repairs</Text>
+                        </View>
+                        <View style={styles.inputWrap}>
+                          <Text style={styles.inputPrefix}>$</Text>
+                          <TextInput
+                            value={repairs}
+                            onChangeText={setRepairs}
+                            keyboardType="decimal-pad"
+                            placeholder="0.00"
+                            placeholderTextColor={Colors.textMuted}
+                            style={styles.input}
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.expenseField}>
+                        <View style={styles.expenseLabelRow}>
+                          <Text style={styles.expenseIcon}>📦</Text>
+                          <Text style={styles.expenseLabel}>Other</Text>
+                        </View>
+                        <View style={styles.inputWrap}>
+                          <Text style={styles.inputPrefix}>$</Text>
+                          <TextInput
+                            value={otherExpenses}
+                            onChangeText={setOtherExpenses}
+                            keyboardType="decimal-pad"
+                            placeholder="0.00"
+                            placeholderTextColor={Colors.textMuted}
+                            style={styles.input}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  </Animated.View>
+
+                  {/* Summary */}
+                  {parsed.income > 0 && (
+                    <Animated.View entering={FadeInDown.delay(100)} style={styles.summarySection}>
+                      <Text style={styles.summaryTitle}>Summary</Text>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Total Expenses</Text>
+                        <Text style={styles.summaryValue}>{formatCurrency(totalExpenses)}</Text>
+                      </View>
+                    </Animated.View>
+                  )}
+                </ScrollView>
+              </KeyboardAvoidingView>
+
+              {/* Bottom Action Buttons */}
+              <Animated.View entering={FadeInUp} style={styles.cardFooter}>
+                <PremiumButton
+                  label="💾 Save Trip"
+                  onPress={handleSaveTrip}
+                  loading={saving}
+                  disabled={!income || saving}
+                  size="large"
+                  fullWidth
+                />
+                <TouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => router.back()}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -205,71 +343,157 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  content: {
-    padding: Spacing.xl,
-    gap: Spacing.lg,
-    paddingBottom: Spacing.xxl,
+
+  container: {
+    flex: 1,
+    position: "relative",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
+
+  // ─── HERO SECTION ───────────────────────────────────────────
+
+  heroSection: {
+    flex: 0.5,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
-    marginBottom: Spacing.lg,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
+
+  heroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  heroBackBtn: {
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
   },
-  backText: {
-    fontSize: 28,
-    color: Colors.textPrimary,
+
+  heroBackText: {
+    fontSize: 24,
     fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
   },
-  title: {
+
+  heroTitle: {
     fontSize: FontSize.section,
-    color: Colors.textPrimary,
     fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
   },
-  fieldWrap: {
-    gap: Spacing.xs,
-  },
-  labelRow: {
-    flexDirection: "row",
+
+  heroProfitCenter: {
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.sm,
   },
-  fieldLabel: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+
+  heroProfitLabel: {
+    fontSize: FontSize.body,
+    color: "rgba(17, 17, 17, 0.6)",
+    fontWeight: FontWeight.medium,
   },
-  fieldIcon: {
-    fontSize: 16,
+
+  heroProfitDisplay: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  sectionLabel: {
-    color: Colors.textSecondary,
+
+  heroProfitValue: {
+    fontSize: FontSize.hero,
+    fontWeight: FontWeight.extrabold,
+  },
+
+  heroProfitEmoji: {
+    fontSize: FontSize.largeIcon,
+    marginTop: Spacing.sm,
+  },
+
+  heroMetricPills: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    justifyContent: "center",
+  },
+
+  metricPill: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    alignItems: "center",
+    minWidth: 100,
+  },
+
+  metricPillLabel: {
     fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-    marginTop: Spacing.lg,
+    color: "rgba(17, 17, 17, 0.6)",
+    fontWeight: FontWeight.medium,
     marginBottom: Spacing.xs,
-    textTransform: "uppercase",
   },
+
+  metricPillValue: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+
+  // ─── FLOATING CARD ──────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 0.55,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+  },
+
+  cardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.lg,
+  },
+
+  cardSectionTitle: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+  },
+
+  // ─── INCOME INPUT ────────────────────────────────────────────
+
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
   },
+
   inputPrefix: {
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     fontSize: FontSize.body,
     marginRight: Spacing.xs,
+    fontWeight: FontWeight.semibold,
   },
+
   input: {
     flex: 1,
     color: Colors.textPrimary,
@@ -277,42 +501,91 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     fontWeight: FontWeight.semibold,
   },
-  resultCard: {
-    marginTop: Spacing.lg,
-    gap: Spacing.lg,
+
+  // ─── EXPENSE GRID ────────────────────────────────────────────
+
+  expenseGrid: {
+    gap: Spacing.md,
   },
-  resultTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
+
+  expenseField: {
+    gap: Spacing.xs,
   },
-  resultRow: {
+
+  expenseLabelRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    gap: Spacing.sm,
   },
-  resultLabel: {
-    fontSize: FontSize.body,
-    color: Colors.textSecondary,
+
+  expenseIcon: {
+    fontSize: 18,
   },
-  resultValue: {
+
+  expenseLabel: {
+    color: Colors.textMuted,
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+  },
+
+  // ─── SUMMARY ─────────────────────────────────────────────────
+
+  summarySection: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  summaryTitle: {
     fontSize: FontSize.body,
-    color: Colors.textPrimary,
     fontWeight: FontWeight.bold,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.lg,
-  },
-  profitLabel: {
-    fontSize: FontSize.section + 2,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.extrabold,
+    marginBottom: Spacing.md,
   },
-  profitValue: {
-    fontSize: FontSize.section + 4,
-    fontWeight: FontWeight.extrabold,
+
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: Spacing.sm,
+  },
+
+  summaryLabel: {
+    fontSize: FontSize.body,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+  },
+
+  summaryValue: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+
+  // ─── FOOTER ──────────────────────────────────────────────────
+
+  cardFooter: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+
+  cancelBtn: {
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  cancelBtnText: {
+    fontSize: FontSize.body,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.semibold,
   },
 });

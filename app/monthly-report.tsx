@@ -1,10 +1,10 @@
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     CategoryMeta,
     Colors,
     FontSize,
     FontWeight,
-    Shadow,
     Spacing,
     type Category,
 } from "@/constants/theme";
@@ -15,7 +15,6 @@ import {
     getReceiptCount,
 } from "@/lib/expenseService";
 import { router, useFocusEffect } from "expo-router";
-import ScreenBackground from "@/components/ScreenBackground";
 import React, { useCallback, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -26,7 +25,11 @@ import {
     View,
     type DimensionValue,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, {
+    FadeInDown,
+} from "react-native-reanimated";
 
 const CATEGORY_ORDER: Category[] = [
   "fuel",
@@ -131,105 +134,138 @@ export default function MonthlyReportScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
-        </TouchableOpacity>
+      <SafeAreaView style={styles.safe}>
+        {loading ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator color={Colors.primary} />
+            <Text style={styles.loadingText}>Loading monthly report...</Text>
+          </View>
+        ) : (
+          <View style={styles.container}>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HERO SECTION (50% - Blue/Analytics themed)                     */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-        <Text style={styles.title}>Monthly Report</Text>
+            <LinearGradient
+              colors={[Colors.secondary, '#5A8FB5']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroSection}
+            >
+              {/* Top Bar */}
+              <View style={styles.heroTopBar}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.heroBackBtn}
+                >
+                  <Text style={styles.heroBackText}>✕</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroTitle}>Monthly Report</Text>
+                <View style={{ width: 40 }} />
+              </View>
 
-        <View style={{ width: 36 }} />
-      </View>
+              {/* Centered Month Display */}
+              <View style={styles.heroMonthCenter}>
+                <Text style={styles.heroMonthLabel}>📊</Text>
+                <Text style={styles.heroMonthTitle}>{monthLabel}</Text>
+                <Text style={styles.heroMonthSubtitle}>Expense Report</Text>
+              </View>
 
-      <View style={styles.monthNav}>
-        <TouchableOpacity
-          style={styles.monthArrowBtn}
-          onPress={() => setSelectedMonth((prev) => shiftMonth(prev, -1))}
-        >
-          <Text style={styles.monthArrowText}>‹</Text>
-        </TouchableOpacity>
+              {/* Month Navigation */}
+              <View style={styles.monthNav}>
+                <TouchableOpacity
+                  style={styles.monthArrowBtn}
+                  onPress={() => setSelectedMonth((prev) => shiftMonth(prev, -1))}
+                >
+                  <Text style={styles.monthArrowText}>‹</Text>
+                </TouchableOpacity>
 
-        <Text style={styles.monthLabel}>{monthLabel}</Text>
+                <TouchableOpacity
+                  style={[styles.monthArrowBtn, !canGoNext && styles.monthArrowDisabled]}
+                  onPress={() => canGoNext && setSelectedMonth((prev) => shiftMonth(prev, 1))}
+                  disabled={!canGoNext}
+                >
+                  <Text style={styles.monthArrowText}>›</Text>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
 
-        <TouchableOpacity
-          style={[styles.monthArrowBtn, !canGoNext && styles.monthArrowDisabled]}
-          onPress={() => canGoNext && setSelectedMonth((prev) => shiftMonth(prev, 1))}
-          disabled={!canGoNext}
-        >
-          <Text style={styles.monthArrowText}>›</Text>
-        </TouchableOpacity>
-      </View>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* FLOATING CARD (50%+ - Content)                                */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-      {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color={Colors.primary} />
-          <Text style={styles.loadingText}>Loading monthly report...</Text>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.card}>
-            {CATEGORY_ORDER.map((category) => {
-              const meta = CategoryMeta[category];
-              const amount = categoryTotals[category] ?? 0;
-              const widthPct: DimensionValue =
-                total > 0 ? `${Math.max(6, (amount / total) * 100)}%` : "6%";
+            <View style={styles.floatingCardContainer}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.cardContent}
+              >
+                {/* Expense Breakdown */}
+                <Animated.View entering={FadeInDown}>
+                  <Text style={styles.cardSectionTitle}>Expense Breakdown</Text>
+                  <View style={styles.breakdownContent}>
+                    {CATEGORY_ORDER.map((category) => {
+                      const meta = CategoryMeta[category];
+                      const amount = categoryTotals[category] ?? 0;
+                      const widthPct: DimensionValue =
+                        total > 0 ? `${Math.max(6, (amount / total) * 100)}%` : "6%";
 
-              return (
-                <View key={category} style={styles.rowBlock}>
-                  <View style={styles.rowHeader}>
-                    <View style={styles.rowLabelWrap}>
-                      <Text style={styles.rowIcon}>{meta.icon}</Text>
-                      <Text style={styles.rowLabel}>{meta.label}</Text>
+                      return (
+                        <View key={category} style={styles.rowBlock}>
+                          <View style={styles.rowHeader}>
+                            <View style={styles.rowLabelWrap}>
+                              <Text style={styles.rowIcon}>{meta.icon}</Text>
+                              <Text style={styles.rowLabel}>{meta.label}</Text>
+                            </View>
+                            <Text style={styles.rowAmount}>{formatCurrency(amount)}</Text>
+                          </View>
+
+                          <View style={styles.barTrack}>
+                            <View
+                              style={[
+                                styles.barFill,
+                                { width: widthPct, backgroundColor: meta.color },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                      );
+                    })}
+
+                    <View style={styles.totalDivider} />
+
+                    <View style={styles.totalRow}>
+                      <Text style={styles.totalLabel}>Total Expenses</Text>
+                      <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+                    </View>
+                  </View>
+                </Animated.View>
+
+                {/* Driver Stats */}
+                <Animated.View entering={FadeInDown.delay(50)} style={styles.statsSection}>
+                  <Text style={styles.cardSectionTitle}>📈 Driver Stats</Text>
+
+                  <View style={styles.statsGrid}>
+                    <View style={styles.statBlock}>
+                      <Text style={styles.statBlockLabel}>Trips Logged</Text>
+                      <Text style={styles.statBlockValue}>{tripsLogged}</Text>
                     </View>
 
-                    <Text style={styles.rowAmount}>{formatCurrency(amount)}</Text>
+                    <View style={styles.statBlock}>
+                      <Text style={styles.statBlockLabel}>Receipts Scanned</Text>
+                      <Text style={styles.statBlockValue}>{receiptsScanned}</Text>
+                    </View>
+
+                    <View style={styles.statBlock}>
+                      <Text style={styles.statBlockLabel}>Daily Average</Text>
+                      <Text style={styles.statBlockValue}>{formatCurrency(averagePerDay)}</Text>
+                    </View>
                   </View>
-
-                  <View style={styles.barTrack}>
-                    <View
-                      style={[
-                        styles.barFill,
-                        { width: widthPct, backgroundColor: meta.color },
-                      ]}
-                    />
-                  </View>
-                </View>
-              );
-            })}
-
-            <View style={styles.totalDivider} />
-
-            <View style={styles.totalRow}>
-              <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+                </Animated.View>
+              </ScrollView>
             </View>
           </View>
-
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Driver Stats</Text>
-
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Trips Logged</Text>
-              <Text style={styles.statValue}>{tripsLogged}</Text>
-            </View>
-
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Receipts Scanned</Text>
-              <Text style={styles.statValue}>{receiptsScanned}</Text>
-            </View>
-
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Average Expense Per Day</Text>
-              <Text style={styles.statValue}>{formatCurrency(averagePerDay)}</Text>
-            </View>
-          </View>
-        </ScrollView>
-      )}
-    </SafeAreaView>
+        )}
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -239,165 +275,252 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
+
+  container: {
+    flex: 1,
+    position: "relative",
   },
-  backBtn: {
-    width: 36,
-    height: 36,
+
+  // ─── HERO SECTION ───────────────────────────────────────────
+
+  heroSection: {
+    flex: 0.5,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
+    justifyContent: "space-between",
+  },
+
+  heroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  heroBackBtn: {
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
   },
-  backText: {
-    fontSize: 28,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
-  },
-  title: {
-    fontSize: FontSize.section,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
-  },
-  monthNav: {
-    marginHorizontal: Spacing.xl,
-    marginBottom: Spacing.md,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    ...Shadow.card,
-  },
-  monthArrowBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: BorderRadius.full,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.cardAlt,
-  },
-  monthArrowDisabled: {
-    opacity: 0.5,
-  },
-  monthArrowText: {
+
+  heroBackText: {
     fontSize: 24,
-    lineHeight: 26,
-    color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
   },
-  monthLabel: {
-    fontSize: FontSize.body,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.semibold,
+
+  heroTitle: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
   },
-  loadingWrap: {
+
+  heroMonthCenter: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.sm,
   },
-  loadingText: {
-    fontSize: FontSize.caption,
-    color: Colors.textSecondary,
+
+  heroMonthLabel: {
+    fontSize: FontSize.largeIcon,
   },
-  content: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxl,
+
+  heroMonthTitle: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  heroMonthSubtitle: {
+    fontSize: FontSize.body,
+    color: "rgba(255, 255, 255, 0.7)",
+    fontWeight: FontWeight.medium,
+  },
+
+  monthNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.md,
   },
-  card: {
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    ...Shadow.card,
+
+  monthArrowBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
-  rowBlock: {
+
+  monthArrowDisabled: {
+    opacity: 0.5,
+  },
+
+  monthArrowText: {
+    fontSize: 24,
+    lineHeight: 26,
+    color: Colors.textInverse,
+    fontWeight: FontWeight.bold,
+  },
+
+  // ─── FLOATING CARD ──────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 0.55,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+  },
+
+  cardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.lg,
+  },
+
+  cardSectionTitle: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
+
+  // ─── BREAKDOWN ───────────────────────────────────────────────
+
+  breakdownContent: {
+    gap: Spacing.md,
+  },
+
+  rowBlock: {
+    gap: Spacing.xs,
+  },
+
   rowHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: Spacing.xs,
   },
+
   rowLabelWrap: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
+
   rowIcon: {
-    fontSize: 16,
+    fontSize: 18,
   },
+
   rowLabel: {
     fontSize: FontSize.body,
     color: Colors.textPrimary,
     fontWeight: FontWeight.semibold,
   },
+
   rowAmount: {
     fontSize: FontSize.body,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     fontWeight: FontWeight.semibold,
   },
+
   barTrack: {
-    height: 6,
+    height: 8,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.border,
+    backgroundColor: Colors.surface,
     overflow: "hidden",
   },
+
   barFill: {
-    height: 6,
+    height: 8,
     borderRadius: BorderRadius.full,
   },
+
   totalDivider: {
     height: 1,
     backgroundColor: Colors.border,
     marginVertical: Spacing.md,
   },
+
   totalRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  totalLabel: {
-    fontSize: FontSize.section,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
-  },
-  totalValue: {
-    fontSize: FontSize.section,
-    color: Colors.accent,
-    fontWeight: FontWeight.bold,
-  },
-  sectionTitle: {
-    fontSize: FontSize.caption,
-    color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: Spacing.sm,
-  },
-  statRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: Spacing.sm,
   },
-  statLabel: {
+
+  totalLabel: {
     fontSize: FontSize.body,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
   },
-  statValue: {
-    fontSize: FontSize.body,
+
+  totalValue: {
+    fontSize: FontSize.section + 2,
+    color: Colors.primary,
+    fontWeight: FontWeight.extrabold,
+  },
+
+  // ─── STATS ──────────────────────────────────────────────────
+
+  statsSection: {
+    gap: Spacing.md,
+  },
+
+  statsGrid: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+
+  statBlock: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  statBlockLabel: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+    marginBottom: Spacing.xs,
+  },
+
+  statBlockValue: {
+    fontSize: FontSize.section,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
+    fontWeight: FontWeight.extrabold,
+  },
+
+  // ─── LOADING ─────────────────────────────────────────────────
+
+  loadingWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+  },
+
+  loadingText: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
   },
 });

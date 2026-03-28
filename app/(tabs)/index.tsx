@@ -1,8 +1,5 @@
 import ExpenseCard from "@/components/ExpenseCard";
-import HighContrastCard from "@/components/HighContrastCard";
-import QuickActionButton from "@/components/QuickActionButton";
 import ScreenBackground from "@/components/ScreenBackground";
-import SnapshotCard from "@/components/SnapshotCard";
 import {
     Colors,
     FontSize,
@@ -17,7 +14,7 @@ import {
 import { formatCurrency } from "@/lib/formatUtils";
 import { getMonthlyTripSnapshot, getWeeklyTripSnapshot } from "@/lib/tripService";
 import type { Expense } from "@/lib/types";
-import { router, useFocusEffect, type Href } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
     RefreshControl,
@@ -27,6 +24,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DashboardScreen() {
@@ -76,175 +74,175 @@ export default function DashboardScreen() {
     setRefreshing(false);
   }
 
+  const profitColor = weeklySnapshot.profit >= 0 ? Colors.primary : Colors.danger;
+  const profitEmoji = weeklySnapshot.profit >= 0 ? "📈" : "📉";
+
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
-      <ScrollView
-        style={{ flex: 1 }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor={Colors.primary}
-          />
-        }
-      >
-        {/* ─── Header ─────────────────────────── */}
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.greeting}>👋 {firstName}</Text>
-            <Text style={styles.subtitle}>Track your trips & earnings</Text>
-          </View>
-          <TouchableOpacity onPress={() => router.push("/profile")} style={styles.profileBtn}>
-            <Text style={styles.profileBtnText}>{firstName.slice(0, 1).toUpperCase()}</Text>
-          </TouchableOpacity>
-        </View>
+      <SafeAreaView style={styles.safe}>
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* REFERENCE DESIGN ARCHITECTURE: 50/50 LAYOUT                    */}
+        {/* Hero background (50%) + Floating white card (50%) overlapping  */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
 
-        {/* ─── Quick Actions ─────────────────────────── */}
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.actionGrid}>
-          <QuickActionButton
-            label="Add Expense"
-            icon="➕"
-            variant="primary"
-            onPress={() => router.push("/add-expense")}
-          />
-          <QuickActionButton
-            label="Scan Receipt"
-            icon="🧾"
-            variant="secondary"
-            onPress={() => router.push("/scan-receipt")}
-          />
-          <QuickActionButton
-            label="Trip Profit"
-            icon="🚚"
-            variant="fuel"
-            onPress={() => router.push("/trip-profit")}
-          />
-        </View>
-
-        <View style={styles.actionGrid}>
-          <QuickActionButton
-            label="Analytics"
-            icon="📊"
-            variant="accent"
-            onPress={() => router.push("/analytics")}
-          />
-          <QuickActionButton
-            label="Reports"
-            icon="📈"
-            variant="food"
-            onPress={() => router.push("/monthly-report" as Href)}
-          />
-          <QuickActionButton
-            label="Settings"
-            icon="⚙️"
-            variant="default"
-            onPress={() => router.push("/cloud-settings")}
-          />
-        </View>
-
-        {/* ─── Weekly Snapshot ─────────────────────────── */}
-        <SnapshotCard
-          title="This Week"
-          icon="📊"
-          stats={[
-            {
-              label: "Income",
-              value: formatCurrency(weeklySnapshot.income),
-              icon: "💰",
-              color: Colors.primary,
-            },
-            {
-              label: "Fuel",
-              value: formatCurrency(weeklySnapshot.fuel),
-              icon: "⛽",
-              color: Colors.fuel,
-            },
-            {
-              label: "Expenses",
-              value: formatCurrency(weeklySnapshot.otherExpenses),
-              icon: "💸",
-            },
-            {
-              label: "Profit",
-              value: formatCurrency(weeklySnapshot.profit),
-              icon: "📈",
-              color: weeklySnapshot.profit >= 0 ? Colors.primary : Colors.danger,
-            },
-          ]}
-        />
-
-        {/* ─── Monthly Snapshot ─────────────────────────── */}
-        <SnapshotCard
-          title="This Month"
-          icon="💼"
-          stats={[
-            {
-              label: "Income",
-              value: formatCurrency(monthlySnapshot.income),
-              icon: "💰",
-              color: Colors.primary,
-            },
-            {
-              label: "Fuel",
-              value: formatCurrency(monthlySnapshot.fuel),
-              icon: "⛽",
-              color: Colors.fuel,
-            },
-            {
-              label: "Expenses",
-              value: formatCurrency(monthlySnapshot.otherExpenses),
-              icon: "💸",
-            },
-            {
-              label: "Profit",
-              value: formatCurrency(monthlySnapshot.profit),
-              icon: "📈",
-              color: monthlySnapshot.profit >= 0 ? Colors.primary : Colors.danger,
-            },
-          ]}
-        />
-
-        {/* ─── Recent Activity ─────────────────────────── */}
-        <Text style={styles.sectionTitle}>Recent</Text>
-
-        {recentExpenses.length === 0 ? (
-          <HighContrastCard style={styles.emptyCard}>
-            <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.emptyTitle}>No expenses yet</Text>
-            <Text style={styles.emptySubtitle}>Start logging to see activity here.</Text>
-          </HighContrastCard>
-        ) : (
-          <View style={styles.expensesList}>
-            {recentExpenses.map((expense) => (
+        <View style={styles.container}>
+          {/* ─── HERO SECTION (50% of screen) ─────────────────────────── */}
+          <LinearGradient
+            colors={[Colors.secondary, '#5A8FB5']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroSection}
+          >
+            {/* Top Header Bar */}
+            <View style={styles.heroHeader}>
+              <View>
+                <Text style={styles.heroGreeting}>Welcome, {firstName}!</Text>
+                <Text style={styles.heroSubtitle}>Your business at a glance</Text>
+              </View>
               <TouchableOpacity
-                key={expense.id}
-                onPress={() =>
-                  router.push({
-                    pathname: "/expense-detail",
-                    params: { id: expense.id },
-                  })
-                }
-                activeOpacity={0.85}
+                onPress={() => router.push("/profile")}
+                style={styles.heroProfileBtn}
               >
-                <ExpenseCard expense={expense} />
+                <Text style={styles.heroProfileText}>{firstName.slice(0, 1).toUpperCase()}</Text>
               </TouchableOpacity>
-            ))}
+            </View>
 
-            <TouchableOpacity
-              style={styles.historyBtn}
-              onPress={() => router.push("/expense-history")}
-              activeOpacity={0.85}
+            {/* Centered Hero Metric */}
+            <View style={styles.heroMetricCenter}>
+              <Text style={styles.heroMetricLabel}>This Week's Profit</Text>
+              <Text style={[styles.heroMetricValue, { color: profitColor }]}>
+                {formatCurrency(weeklySnapshot.profit)}
+              </Text>
+              <Text style={styles.heroMetricEmoji}>{profitEmoji}</Text>
+            </View>
+
+            {/* Metric Pills (floating elements) */}
+            <View style={styles.heroMetricPills}>
+              <View style={styles.metricPill}>
+                <Text style={styles.metricPillLabel}>Income</Text>
+                <Text style={styles.metricPillValue}>
+                  {formatCurrency(weeklySnapshot.income)}
+                </Text>
+              </View>
+              <View style={styles.metricPill}>
+                <Text style={styles.metricPillLabel}>Expenses</Text>
+                <Text style={styles.metricPillValue}>
+                  {formatCurrency(weeklySnapshot.fuel + weeklySnapshot.otherExpenses)}
+                </Text>
+              </View>
+            </View>
+          </LinearGradient>
+
+          {/* ─── FLOATING BOTTOM CARD (overlaps hero, contains content) ─────────── */}
+          <View style={styles.floatingCardContainer}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.cardContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={handleRefresh}
+                  tintColor={Colors.primary}
+                />
+              }
             >
-              <Text style={styles.historyBtnText}>📚 View All</Text>
-            </TouchableOpacity>
+              {/* Quick Actions */}
+              <View>
+                <Text style={styles.cardSectionTitle}>Quick Actions</Text>
+                <View style={styles.actionGrid}>
+                  <TouchableOpacity
+                    style={styles.actionTile}
+                    onPress={() => router.push("/add-expense")}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.actionIcon}>➕</Text>
+                    <Text style={styles.actionLabel}>Add Expense</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionTile}
+                    onPress={() => router.push("/scan-receipt")}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.actionIcon}>🧾</Text>
+                    <Text style={styles.actionLabel}>Scan</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.actionTile}
+                    onPress={() => router.push("/trip-profit")}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.actionIcon}>🚚</Text>
+                    <Text style={styles.actionLabel}>Trip Profit</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Monthly Overview */}
+              <View style={styles.cardSection}>
+                <Text style={styles.cardSectionTitle}>This Month</Text>
+                <View style={styles.monthlyGrid}>
+                  <View style={styles.monthlyCard}>
+                    <Text style={styles.monthlyLabel}>Income</Text>
+                    <Text style={[styles.monthlyValue, { color: Colors.primary }]}>
+                      {formatCurrency(monthlySnapshot.income)}
+                    </Text>
+                  </View>
+                  <View style={styles.monthlyCard}>
+                    <Text style={styles.monthlyLabel}>Total Exp</Text>
+                    <Text style={[styles.monthlyValue, { color: Colors.accent }]}>
+                      {formatCurrency(monthlySnapshot.fuel + monthlySnapshot.otherExpenses)}
+                    </Text>
+                  </View>
+                  <View style={styles.monthlyCard}>
+                    <Text style={styles.monthlyLabel}>Profit</Text>
+                    <Text style={[styles.monthlyValue, { color: monthlySnapshot.profit >= 0 ? Colors.primary : Colors.danger }]}>
+                      {formatCurrency(monthlySnapshot.profit)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Recent Activity */}
+              <View style={styles.cardSection}>
+                <Text style={styles.cardSectionTitle}>Recent Activity</Text>
+                {recentExpenses.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyIcon}>📭</Text>
+                    <Text style={styles.emptyTitle}>No expenses yet</Text>
+                    <Text style={styles.emptySubtitle}>Add your first expense to get started</Text>
+                  </View>
+                ) : (
+                  <View style={styles.expenseList}>
+                    {recentExpenses.map((expense) => (
+                      <TouchableOpacity
+                        key={expense.id}
+                        style={styles.expenseItem}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/expense-detail",
+                            params: { id: expense.id },
+                          })
+                        }
+                        activeOpacity={0.7}
+                      >
+                        <ExpenseCard expense={expense} />
+                      </TouchableOpacity>
+                    ))}
+
+                    <TouchableOpacity
+                      style={styles.viewAllBtn}
+                      onPress={() => router.push("/expense-history")}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.viewAllBtnText}>View All Expenses →</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
           </View>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+        </View>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -254,95 +252,258 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  content: {
-    padding: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
-    gap: Spacing.lg,
+
+  // ═══════════════════════════════════════════════════════════════
+  // MAIN LAYOUT: Container with Hero + Floating Card
+  // ═══════════════════════════════════════════════════════════════
+
+  container: {
+    flex: 1,
+    position: "relative",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
+
+  // ─── HERO SECTION ───────────────────────────────────────────
+
+  heroSection: {
+    flex: 0.5,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
-    marginBottom: Spacing.md,
-    paddingBottom: Spacing.md,
-    borderBottomWidth: 0.5,
-    borderBottomColor: "rgba(0, 0, 0, 0.05)",
   },
-  greeting: {
-    color: Colors.textPrimary,
-    fontSize: FontSize.section + 2,
+
+  heroHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+
+  heroGreeting: {
+    fontSize: FontSize.title,
     fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+    marginBottom: Spacing.xs,
   },
-  subtitle: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.caption,
-    marginTop: Spacing.xs,
+
+  heroSubtitle: {
+    fontSize: FontSize.body,
+    color: "rgba(255, 255, 255, 0.7)",
     fontWeight: FontWeight.medium,
   },
-  profileBtn: {
+
+  heroProfileBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(34, 197, 94, 0.08)",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderWidth: 1.5,
-    borderColor: "rgba(34, 197, 94, 0.15)",
+    borderColor: "rgba(255, 255, 255, 0.4)",
     alignItems: "center",
     justifyContent: "center",
   },
-  profileBtnText: {
-    color: Colors.primary,
-    fontWeight: FontWeight.bold,
+
+  heroProfileText: {
     fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
   },
+
+  heroMetricCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+  },
+
+  heroMetricLabel: {
+    fontSize: FontSize.body,
+    color: "rgba(255, 255, 255, 0.7)",
+    fontWeight: FontWeight.medium,
+  },
+
+  heroMetricValue: {
+    fontSize: FontSize.hero + 4,
+    fontWeight: FontWeight.extrabold,
+  },
+
+  heroMetricEmoji: {
+    fontSize: FontSize.largeIcon,
+    marginTop: Spacing.xs,
+  },
+
+  heroMetricPills: {
+    flexDirection: "row",
+    gap: Spacing.md,
+    justifyContent: "center",
+  },
+
+  metricPill: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    alignItems: "center",
+    minWidth: 100,
+  },
+
+  metricPillLabel: {
+    fontSize: FontSize.caption,
+    color: "rgba(255, 255, 255, 0.6)",
+    fontWeight: FontWeight.medium,
+    marginBottom: Spacing.xs,
+  },
+
+  metricPillValue: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  // ─── FLOATING CARD ──────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 0.55,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+  },
+
+  cardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.xl,
+  },
+
+  cardSectionTitle: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+  },
+
+  cardSection: {
+    gap: Spacing.md,
+  },
+
+  // ─── ACTION GRID ────────────────────────────────────────────
+
   actionGrid: {
     flexDirection: "row",
     gap: Spacing.sm,
-    marginBottom: Spacing.md,
   },
-  sectionTitle: {
-    color: Colors.textPrimary,
-    fontSize: FontSize.body + 2,
-    fontWeight: FontWeight.bold,
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.sm,
-  },
-  emptyCard: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.lg,
-    gap: Spacing.xs,
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
-    borderWidth: 1.5,
-    borderColor: "rgba(0, 0, 0, 0.06)",
+
+  actionTile: {
+    flex: 1,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    alignItems: "center",
+    gap: Spacing.xs,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  emptyTitle: {
-    color: Colors.textPrimary,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+
+  actionIcon: {
+    fontSize: 28,
   },
-  emptySubtitle: {
-    color: Colors.textSecondary,
+
+  actionLabel: {
     fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+    textAlign: "center",
   },
-  expensesList: {
+
+  // ─── MONTHLY GRID ───────────────────────────────────────────
+
+  monthlyGrid: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+
+  monthlyCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.sm,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  monthlyLabel: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+    marginBottom: Spacing.xs,
+  },
+
+  monthlyValue: {
+    fontSize: FontSize.section + 1,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
+  },
+
+  // ─── EXPENSE LIST ───────────────────────────────────────────
+
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: Spacing.lg,
     gap: Spacing.sm,
   },
-  historyBtn: {
-    marginTop: Spacing.sm,
+
+  emptyIcon: {
+    fontSize: 40,
+    marginBottom: Spacing.sm,
+  },
+
+  emptyTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+
+  emptySubtitle: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    textAlign: "center",
+  },
+
+  expenseList: {
+    gap: Spacing.md,
+  },
+
+  expenseItem: {
+    marginBottom: 0,
+  },
+
+  viewAllBtn: {
+    marginTop: Spacing.md,
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     borderRadius: 12,
     backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
-  historyBtnText: {
-    color: Colors.background,
-    fontWeight: FontWeight.bold,
+
+  viewAllBtnText: {
     fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
   },
 });

@@ -1,6 +1,5 @@
 import ExpenseCard from "@/components/ExpenseCard";
 import ScreenBackground from "@/components/ScreenBackground";
-
 import {
     BorderRadius,
     CategoryMeta,
@@ -9,19 +8,13 @@ import {
     FontWeight,
     Spacing,
 } from "@/constants/theme";
-
 import type { Category, Expense } from "@/lib/types";
-
 import { exportExpenses, getAllExpenses } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
-
 import { File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-
 import { router, useFocusEffect } from "expo-router";
-
 import React, { useCallback, useState } from "react";
-
 import {
     Alert,
     RefreshControl,
@@ -33,9 +26,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-
-import Animated, { FadeInDown } from "react-native-reanimated";
-
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Section {
@@ -219,167 +211,188 @@ export default function ExpenseHistoryScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
-      {/* Header */}
-      <Animated.View entering={FadeInDown.springify()} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
-        </TouchableOpacity>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.container}>
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* HERO SECTION (50% - Red/Expense themed)                        */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
 
-        <Text style={styles.title}>Expense History</Text>
-
-        <View style={styles.totalBadge}>
-          <Text style={styles.totalBadgeText}>
-            {formatCurrency(grandTotal)}
-          </Text>
-        </View>
-      </Animated.View>
-
-      {/* Search */}
-      <Animated.View
-        entering={FadeInDown.delay(80).springify()}
-        style={styles.searchRow}
-      >
-        <View style={styles.searchContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
-
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search expenses..."
-            placeholderTextColor={Colors.textMuted}
-            value={search}
-            onChangeText={setSearch}
-          />
-
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch("")}>
-              <Text style={styles.searchClear}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </Animated.View>
-
-      {/* Filters */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-      >
-        {categories.map((cat) => {
-          const meta = cat === "all" ? null : CategoryMeta[cat];
-
-          return (
-            <FilterChip
-              key={cat}
-              label={cat === "all" ? "All" : meta?.label ?? cat}
-              icon={meta?.icon}
-              active={selectedCategory === cat}
-              onPress={() => setSelectedCategory(cat)}
-            />
-          );
-        })}
-      </ScrollView>
-
-      {/* Date Range Filters */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterRow}
-      >
-        <FilterChip
-          label="All Time"
-          icon="📅"
-          active={dateRange === "all"}
-          onPress={() => setDateRange("all")}
-        />
-        <FilterChip
-          label="This Month"
-          icon="📆"
-          active={dateRange === "month"}
-          onPress={() => setDateRange("month")}
-        />
-        <FilterChip
-          label="Last 7 Days"
-          icon="📊"
-          active={dateRange === "week"}
-          onPress={() => setDateRange("week")}
-        />
-      </ScrollView>
-
-      <View style={styles.exportRow}>
-        <TouchableOpacity
-          onPress={handleExportCsv}
-          activeOpacity={0.8}
-          style={styles.exportBtn}
-          disabled={exporting}
-        >
-          <Text style={styles.exportBtnIcon}>📤</Text>
-          <Text style={styles.exportBtnText}>
-            {exporting ? "Exporting..." : "Export CSV"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* List */}
-      {sections.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>📭</Text>
-
-          <Text style={styles.emptyTitle}>
-            {search || selectedCategory !== "all" || dateRange !== "all"
-              ? "No matching expenses"
-              : "No expenses yet"}
-          </Text>
-
-          <Text style={styles.emptyDesc}>
-            {search || selectedCategory !== "all" || dateRange !== "all"
-              ? "Try adjusting your filters"
-              : "Add your first expense from the dashboard"}
-          </Text>
-        </View>
-      ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={Colors.primary}
-            />
-          }
-          renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionDate}>
-                {formatSectionDate(section.title)}
-              </Text>
-
-              <Text style={styles.sectionTotal}>
-                {formatCurrency(section.total)}
-              </Text>
+          <LinearGradient
+            colors={[Colors.accent, '#A01B3A']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroSection}
+          >
+            {/* Top Bar */}
+            <View style={styles.heroTopBar}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.heroBackBtn}
+              >
+                <Text style={styles.heroBackText}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroTitle}>Expense History</Text>
+              <View style={{ width: 40 }} />
             </View>
-          )}
-          renderItem={({ item, index }) => (
-            <Animated.View entering={FadeInDown.delay(index * 40)}>
-              <ExpenseCard
-                expense={item}
-                onPress={() =>
-                  router.push({
-                    pathname: "/expense-detail",
-                    params: { id: item.id },
-                  })
-                }
-              />
+
+            {/* Centered Total Display */}
+            <View style={styles.heroTotalCenter}>
+              <Text style={styles.heroTotalLabel}>Total Expenses</Text>
+              <Text style={styles.heroTotalValue}>{formatCurrency(grandTotal)}</Text>
+              <Text style={styles.heroTotalEmoji}>💸</Text>
+            </View>
+          </LinearGradient>
+
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* FLOATING CARD (50%+ - Content)                                */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+
+          <View style={styles.floatingCardContainer}>
+            {/* Search Container */}
+            <Animated.View entering={FadeInDown} style={styles.searchRow}>
+              <View style={styles.searchContainer}>
+                <Text style={styles.searchIcon}>🔍</Text>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search expenses..."
+                  placeholderTextColor={Colors.textMuted}
+                  value={search}
+                  onChangeText={setSearch}
+                />
+                {search.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearch("")}>
+                    <Text style={styles.searchClear}>✕</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
             </Animated.View>
-          )}
-          ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
-          stickySectionHeadersEnabled={false}
-        />
-      )}
-    </SafeAreaView>
+
+            {/* Category Filters */}
+            <Animated.View entering={FadeInDown.delay(50)} style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Category</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterRow}
+              >
+                {categories.map((cat) => {
+                  const meta = cat === "all" ? null : CategoryMeta[cat];
+                  return (
+                    <FilterChip
+                      key={cat}
+                      label={cat === "all" ? "All" : meta?.label ?? cat}
+                      icon={meta?.icon}
+                      active={selectedCategory === cat}
+                      onPress={() => setSelectedCategory(cat)}
+                    />
+                  );
+                })}
+              </ScrollView>
+            </Animated.View>
+
+            {/* Date Range Filters */}
+            <Animated.View entering={FadeInDown.delay(100)} style={styles.filterSection}>
+              <Text style={styles.filterLabel}>Period</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.filterRow}
+              >
+                <FilterChip
+                  label="All Time"
+                  icon="📅"
+                  active={dateRange === "all"}
+                  onPress={() => setDateRange("all")}
+                />
+                <FilterChip
+                  label="This Month"
+                  icon="📆"
+                  active={dateRange === "month"}
+                  onPress={() => setDateRange("month")}
+                />
+                <FilterChip
+                  label="Last 7 Days"
+                  icon="📊"
+                  active={dateRange === "week"}
+                  onPress={() => setDateRange("week")}
+                />
+              </ScrollView>
+            </Animated.View>
+
+            {/* Export Button */}
+            <Animated.View entering={FadeInDown.delay(150)} style={styles.actionRow}>
+              <TouchableOpacity
+                onPress={handleExportCsv}
+                activeOpacity={0.8}
+                style={styles.exportBtn}
+                disabled={exporting}
+              >
+                <Text style={styles.exportBtnIcon}>📤</Text>
+                <Text style={styles.exportBtnText}>
+                  {exporting ? "Exporting..." : "Export CSV"}
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* List or Empty State */}
+            {sections.length === 0 ? (
+              <View style={styles.empty}>
+                <Text style={styles.emptyIcon}>📭</Text>
+                <Text style={styles.emptyTitle}>
+                  {search || selectedCategory !== "all" || dateRange !== "all"
+                    ? "No matching expenses"
+                    : "No expenses yet"}
+                </Text>
+                <Text style={styles.emptyDesc}>
+                  {search || selectedCategory !== "all" || dateRange !== "all"
+                    ? "Try adjusting your filters"
+                    : "Add your first expense from the dashboard"}
+                </Text>
+              </View>
+            ) : (
+              <SectionList
+                sections={sections}
+                keyExtractor={(item) => String(item.id)}
+                contentContainerStyle={styles.listContent}
+                scrollEnabled={false}
+                renderSectionHeader={({ section }) => (
+                  <Animated.View entering={FadeInDown} style={styles.sectionHeader}>
+                    <Text style={styles.sectionDate}>
+                      {formatSectionDate(section.title)}
+                    </Text>
+                    <Text style={styles.sectionTotal}>
+                      {formatCurrency(section.total)}
+                    </Text>
+                  </Animated.View>
+                )}
+                renderItem={({ item, index }) => (
+                  <Animated.View entering={FadeInDown.delay(index * 40)}>
+                    <TouchableOpacity
+                      style={styles.expenseItem}
+                      onPress={() =>
+                        router.push({
+                          pathname: "/expense-detail",
+                          params: { id: item.id },
+                        })
+                      }
+                      activeOpacity={0.7}
+                    >
+                      <ExpenseCard expense={item} />
+                    </TouchableOpacity>
+                  </Animated.View>
+                )}
+                ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
+                stickySectionHeadersEnabled={false}
+              />
+            )}
+          </View>
+        </View>
+
+        {/* Pull-to-refresh managed via ScrollView prop on list */}
+      </SafeAreaView>
     </ScreenBackground>
   );
+
 }
 
 const styles = StyleSheet.create({
@@ -388,60 +401,102 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
 
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    gap: Spacing.md,
+  container: {
+    flex: 1,
+    position: "relative",
   },
 
-  backBtn: {
-    width: 36,
-    height: 36,
+  // ─── HERO SECTION ───────────────────────────────────────────
+
+  heroSection: {
+    flex: 0.5,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
+    justifyContent: "space-between",
+  },
+
+  heroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  heroBackBtn: {
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
   },
 
-  backText: {
-    fontSize: 28,
-    color: Colors.textPrimary,
+  heroBackText: {
+    fontSize: 24,
     fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
   },
 
-  title: {
-    flex: 1,
+  heroTitle: {
     fontSize: FontSize.section,
     fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
+    color: Colors.textInverse,
   },
 
-  totalBadge: {
+  heroTotalCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+  },
+
+  heroTotalLabel: {
+    fontSize: FontSize.body,
+    color: "rgba(255, 255, 255, 0.7)",
+    fontWeight: FontWeight.medium,
+  },
+
+  heroTotalValue: {
+    fontSize: FontSize.hero,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textInverse,
+  },
+
+  heroTotalEmoji: {
+    fontSize: FontSize.largeIcon,
+    marginTop: Spacing.sm,
+  },
+
+  // ─── FLOATING CARD ──────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 0.55,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.full,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
   },
 
-  totalBadgeText: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
-    color: Colors.accent,
-  },
+  // ─── SEARCH ─────────────────────────────────────────────────
 
   searchRow: {
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
 
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
     gap: Spacing.sm,
     borderWidth: 1,
@@ -463,16 +518,31 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
 
+  // ─── FILTERS ────────────────────────────────────────────────
+
+  filterSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+
+  filterLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textMuted,
+    marginBottom: Spacing.xs,
+  },
+
   filterRow: {
     flexDirection: "row",
     gap: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.md,
   },
 
-  exportRow: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.md,
+  // ─── ACTION ROW ──────────────────────────────────────────────
+
+  actionRow: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
 
   exportBtn: {
@@ -480,11 +550,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.xs,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.accent + "15",
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: Spacing.sm + 2,
+    borderWidth: 1.5,
+    borderColor: Colors.accent,
+    paddingVertical: Spacing.md,
   },
 
   exportBtnIcon: {
@@ -492,10 +562,12 @@ const styles = StyleSheet.create({
   },
 
   exportBtnText: {
-    fontSize: FontSize.caption,
+    fontSize: FontSize.body,
     fontWeight: FontWeight.semibold,
-    color: Colors.textSecondary,
+    color: Colors.accent,
   },
+
+  // ─── FILTER CHIP ────────────────────────────────────────────
 
   chip: {
     flexDirection: "row",
@@ -504,14 +576,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs + 2,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surface,
     borderWidth: 1.5,
     borderColor: Colors.border,
   },
 
   chipActive: {
-    backgroundColor: Colors.primary + "20",
-    borderColor: Colors.primary,
+    backgroundColor: Colors.accent + "20",
+    borderColor: Colors.accent,
   },
 
   chipIcon: {
@@ -521,16 +593,18 @@ const styles = StyleSheet.create({
   chipLabel: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
 
   chipLabelActive: {
-    color: Colors.primary,
+    color: Colors.accent,
   },
 
+  // ─── LIST CONTENT ───────────────────────────────────────────
+
   listContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxl,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
 
   sectionHeader: {
@@ -549,13 +623,19 @@ const styles = StyleSheet.create({
   sectionTotal: {
     fontSize: FontSize.caption,
     fontWeight: FontWeight.bold,
-    color: Colors.textSecondary,
+    color: Colors.accent,
   },
 
+  expenseItem: {
+    marginBottom: Spacing.sm,
+  },
+
+  // ─── EMPTY STATE ────────────────────────────────────────────
+
   empty: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: Spacing.xxl,
     gap: Spacing.md,
   },
 
@@ -571,7 +651,8 @@ const styles = StyleSheet.create({
 
   emptyDesc: {
     fontSize: FontSize.body,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     textAlign: "center",
+    paddingHorizontal: Spacing.lg,
   },
 });

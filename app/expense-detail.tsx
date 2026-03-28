@@ -1,24 +1,23 @@
 import CategorySelector from "@/components/CategorySelector";
-import ScreenBackground from "@/components/ScreenBackground";
 import PrimaryButton from "@/components/PrimaryButton";
 import ReceiptPreview from "@/components/ReceiptPreview";
+import ScreenBackground from "@/components/ScreenBackground";
 
 import {
-  BorderRadius,
-  CategoryMeta,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
+    BorderRadius,
+    CategoryMeta,
+    Colors,
+    FontSize,
+    FontWeight,
+    Spacing
 } from "@/constants/theme";
 
 import type { Category, Expense } from "@/lib/types";
 
 import {
-  deleteExpense,
-  getExpenseById,
-  updateExpense,
+    deleteExpense,
+    getExpenseById,
+    updateExpense,
 } from "@/lib/expenseService";
 
 import * as Haptics from "expo-haptics";
@@ -29,19 +28,20 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Modal,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
-import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -70,8 +70,8 @@ function formatDateDisplay(iso: string): string {
   if (iso === yesterday) return "Yesterday";
 
   return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
+    weekday: "long",
+    month: "long",
     day: "numeric",
     year: "numeric",
   });
@@ -235,138 +235,258 @@ export default function ExpenseDetailScreen() {
   if (!editing) {
     return (
       <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.viewContent}>
-          <Animated.View entering={FadeInDown.springify()} style={styles.viewHeader}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={styles.backText}>‹</Text>
-            </TouchableOpacity>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.container}>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HERO SECTION (50% - Category-color themed)                     */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-            <Text style={styles.viewTitle}>Expense Detail</Text>
+            <LinearGradient
+              colors={[meta.color, meta.color + "CC"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroSection}
+            >
+              {/* Top Bar */}
+              <View style={styles.heroTopBar}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={styles.heroBackBtn}
+                >
+                  <Text style={styles.heroBackText}>✕</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroTitle}>Expense Details</Text>
+                <TouchableOpacity onPress={() => setEditing(true)}>
+                  <Text style={styles.heroEditText}>Edit</Text>
+                </TouchableOpacity>
+              </View>
 
-            <TouchableOpacity onPress={() => setEditing(true)}>
-              <Text style={styles.editBtnText}>Edit</Text>
-            </TouchableOpacity>
-          </Animated.View>
+              {/* Centered Amount Display */}
+              <View style={styles.heroAmountCenter}>
+                <Text style={styles.heroAmountValue}>
+                  {formatCurrency(expense.amount)}
+                </Text>
+                <Text style={styles.heroAmountEmoji}>{meta.icon}</Text>
+              </View>
 
-          <Animated.View entering={FadeInDown.delay(80).springify()} style={styles.heroCard}>
-            <View style={[styles.heroIcon, { backgroundColor: meta.color + "25" }]}>
-              <Text style={styles.heroEmoji}>{meta.icon}</Text>
+              {/* Category Pill */}
+              <View style={styles.heroCategoryPill}>
+                <Text style={styles.heroCategoryLabel}>{meta.label}</Text>
+              </View>
+            </LinearGradient>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* FLOATING CARD (50%+ - Details & Actions)                       */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+
+            <View style={styles.floatingCardContainer}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.cardContent}
+              >
+                {/* Details Section */}
+                <Animated.View entering={FadeInDown}>
+                  <Text style={styles.cardSectionTitle}>📋 Details</Text>
+                  <View style={styles.detailsBlock}>
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Date</Text>
+                      <Text style={styles.detailValue}>{formatDateDisplay(expense.date)}</Text>
+                    </View>
+                    <View style={styles.detailDivider} />
+                    <View style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Category</Text>
+                      <Text style={styles.detailValue}>{meta.icon} {meta.label}</Text>
+                    </View>
+                    {expense.note && (
+                      <>
+                        <View style={styles.detailDivider} />
+                        <View style={styles.detailRow}>
+                          <Text style={styles.detailLabel}>Note</Text>
+                          <Text style={[styles.detailValue, { maxWidth: "50%", textAlign: "right" }]}>
+                            {expense.note}
+                          </Text>
+                        </View>
+                      </>
+                    )}
+                  </View>
+                </Animated.View>
+
+                {/* Receipt Preview */}
+                {receiptUri && (
+                  <Animated.View entering={FadeInDown.delay(50)}>
+                    <Text style={[styles.cardSectionTitle, { marginTop: Spacing.lg }]}>
+                      📸 Receipt
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => setShowReceiptFull(true)}
+                      activeOpacity={0.8}
+                    >
+                      <ReceiptPreview uri={receiptUri} />
+                    </TouchableOpacity>
+                  </Animated.View>
+                )}
+              </ScrollView>
+
+              {/* Delete Button */}
+              <Animated.View entering={FadeInDown.delay(100)} style={styles.cardFooter}>
+                <PrimaryButton
+                  label="🗑️ Delete Expense"
+                  variant="danger"
+                  onPress={handleDelete}
+                  loading={deleting}
+                  fullWidth
+                />
+              </Animated.View>
             </View>
-
-            <Text style={styles.heroAmount}>
-              {formatCurrency(expense.amount)}
-            </Text>
-
-            <Text style={[styles.heroCategory, { color: meta.color }]}>
-              {meta.label}
-            </Text>
-          </Animated.View>
+          </View>
 
           {receiptUri && (
-            <ReceiptPreview
-              uri={receiptUri}
-              onPress={() => setShowReceiptFull(true)}
-            />
+            <Modal visible={showReceiptFull} transparent animationType="fade">
+              <View style={styles.modalBg}>
+                <TouchableOpacity
+                  style={styles.modalClose}
+                  onPress={() => setShowReceiptFull(false)}
+                >
+                  <Text style={styles.modalCloseText}>✕</Text>
+                </TouchableOpacity>
+
+                <ReceiptPreview uri={receiptUri} />
+              </View>
+            </Modal>
           )}
-
-          <PrimaryButton
-            label="Delete Expense"
-            variant="danger"
-            onPress={handleDelete}
-            loading={deleting}
-          />
-        </ScrollView>
-
-        {receiptUri && (
-          <Modal visible={showReceiptFull} transparent animationType="fade">
-            <View style={styles.modalBg}>
-              <TouchableOpacity
-                style={styles.modalClose}
-                onPress={() => setShowReceiptFull(false)}
-              >
-                <Text style={styles.modalCloseText}>✕</Text>
-              </TouchableOpacity>
-
-              <ReceiptPreview uri={receiptUri} />
-            </View>
-          </Modal>
-        )}
-      </SafeAreaView>
-    </ScreenBackground>
+        </SafeAreaView>
+      </ScreenBackground>
     );
   }
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView contentContainerStyle={styles.editContent}>
-          <Text style={styles.viewTitle}>Edit Expense</Text>
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View style={styles.container}>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HERO SECTION (40% - Category-themed for context)              */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-          {isScannedEntry && (
-            <Animated.View entering={FadeIn.duration(220)} style={styles.detectedCard}>
-              <Text style={styles.detectedTitle}>Detected fields</Text>
-              <Text style={styles.detectedHint}>Review and edit before saving.</Text>
-
-              <View style={styles.detectedRow}>
-                <Text style={styles.detectedLabel}>Vendor</Text>
-                <Text style={styles.detectedValue}>{detectedVendor || "-"}</Text>
+            <LinearGradient
+              colors={[meta.color, meta.color + "CC"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.editHeroSection}
+            >
+              {/* Top Bar */}
+              <View style={styles.editHeroTopBar}>
+                <TouchableOpacity
+                  onPress={() => setEditing(false)}
+                  style={styles.editHeroBackBtn}
+                >
+                  <Text style={styles.editHeroBackText}>✕</Text>
+                </TouchableOpacity>
+                <Text style={styles.editHeroTitle}>Edit Expense</Text>
+                <View style={{ width: 40 }} />
               </View>
 
-              <View style={styles.detectedRow}>
-                <Text style={styles.detectedLabel}>Amount</Text>
-                <Text style={styles.detectedValue}>
-                  {Number(amount) > 0 ? formatCurrency(Number(amount)) : "-"}
-                </Text>
+              {/* Category indicator */}
+              <View style={styles.editHeroCategoryRow}>
+                <Text style={styles.editHeroIcon}>{editCategoryMeta.icon}</Text>
+                <Text style={styles.editHeroCategoryName}>{editCategoryMeta.label}</Text>
               </View>
+            </LinearGradient>
 
-              <View style={styles.detectedRow}>
-                <Text style={styles.detectedLabel}>Category</Text>
-                <Text style={styles.detectedValue}>
-                  {editCategoryMeta.icon} {editCategoryMeta.label}
-                </Text>
-              </View>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* FLOATING CARD (60%+ - Edit Form)                              */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-              <View style={styles.detectedRow}>
-                <Text style={styles.detectedLabel}>Date</Text>
-                <Text style={styles.detectedValue}>{formatDateDisplay(date)}</Text>
-              </View>
-            </Animated.View>
-          )}
+            <View style={styles.editFloatingCardContainer}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.editCardContent}
+              >
+                {/* Amount Input */}
+                <Animated.View entering={FadeInDown}>
+                  <View style={styles.amountContainer}>
+                    <Text style={styles.currencySign}>$</Text>
+                    <TextInput
+                      ref={amountRef}
+                      style={styles.amountInput}
+                      value={amount}
+                      onChangeText={setAmount}
+                      keyboardType="decimal-pad"
+                      placeholder="0.00"
+                      placeholderTextColor={Colors.textMuted}
+                    />
+                  </View>
+                </Animated.View>
 
-          <View style={styles.amountContainer}>
-            <Text style={styles.currencySign}>$</Text>
+                {/* Category Selector */}
+                <Animated.View entering={FadeInDown.delay(50)}>
+                  <Text style={styles.editSectionTitle}>📁 Category</Text>
+                  <CategorySelector selected={category} onChange={setCategory} />
+                </Animated.View>
 
-            <TextInput
-              ref={amountRef}
-              style={styles.amountInput}
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="decimal-pad"
-            />
+                {/* Date & Note Fields */}
+                <Animated.View entering={FadeInDown.delay(100)} style={styles.fieldsBlock}>
+                  <View>
+                    <Text style={styles.editFieldLabel}>📅 Date</Text>
+                    <TextInput
+                      style={styles.editInput}
+                      value={date}
+                      onChangeText={setDate}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={Colors.textMuted}
+                    />
+                  </View>
+
+                  <View>
+                    <Text style={styles.editFieldLabel}>📝 Note (Optional)</Text>
+                    <TextInput
+                      style={[styles.editInput, { height: 80, paddingTop: Spacing.md, textAlignVertical: "top" }]}
+                      value={note}
+                      onChangeText={setNote}
+                      placeholder="Add notes about this expense"
+                      placeholderTextColor={Colors.textMuted}
+                      multiline
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={handlePickImage}
+                    style={styles.attachReceiptBtn}
+                  >
+                    <Text style={styles.attachReceiptIcon}>📎</Text>
+                    <View style={styles.attachReceiptText}>
+                      <Text style={styles.attachReceiptLabel}>Attach Receipt</Text>
+                      <Text style={styles.attachReceiptStatus}>
+                        {receiptUri ? "✓ Receipt attached" : "Optional"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                </Animated.View>
+              </ScrollView>
+
+              {/* Footer with Save/Cancel */}
+              <Animated.View entering={FadeInDown.delay(150)} style={styles.editCardFooter}>
+                <PrimaryButton
+                  label="💾 Save Changes"
+                  onPress={handleSave}
+                  loading={saving}
+                  disabled={saving || Number(amount) <= 0}
+                  fullWidth
+                />
+                <TouchableOpacity
+                  style={styles.editCancelBtn}
+                  onPress={() => setEditing(false)}
+                >
+                  <Text style={styles.editCancelBtnText}>Cancel</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
           </View>
-
-          <CategorySelector selected={category} onChange={setCategory} />
-
-          <TouchableOpacity onPress={handlePickImage}>
-            <Text>📎 Attach Receipt</Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <PrimaryButton
-            label="Save Changes"
-            onPress={handleSave}
-            loading={saving}
-            disabled={saving || Number(amount) <= 0}
-          />
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -374,51 +494,148 @@ export default function ExpenseDetailScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: "transparent" },
 
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: {
+    flex: 1,
+    position: "relative",
+  },
 
-  loadingText: { color: Colors.textSecondary },
+  // ─── VIEW MODE: HERO SECTION ─────────────────────────────────────────
 
-  viewContent: { padding: Spacing.xl, gap: Spacing.lg },
+  heroSection: {
+    flex: 0.5,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
+    justifyContent: "space-between",
+  },
 
-  viewHeader: {
+  heroTopBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
 
-  backText: { fontSize: 28, color: Colors.textPrimary },
-
-  viewTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-  },
-
-  editBtnText: { color: Colors.primary },
-
-  heroCard: {
-    backgroundColor: Colors.card,
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.xl,
-    alignItems: "center",
-  },
-
-  heroIcon: {
-    width: 70,
-    height: 70,
+  heroBackBtn: {
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: BorderRadius.xl,
   },
 
-  heroEmoji: { fontSize: 32 },
+  heroBackText: {
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
 
-  heroAmount: {
-    fontSize: FontSize.title,
+  heroTitle: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  heroEditText: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textInverse,
+  },
+
+  heroAmountCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+  },
+
+  heroAmountValue: {
+    fontSize: FontSize.hero,
     fontWeight: FontWeight.extrabold,
+    color: Colors.textInverse,
   },
 
-  heroCategory: { fontSize: FontSize.body },
+  heroAmountEmoji: {
+    fontSize: FontSize.largeIcon,
+    marginTop: Spacing.sm,
+  },
+
+  heroCategoryPill: {
+    alignSelf: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+
+  heroCategoryLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textInverse,
+  },
+
+  // ─── VIEW MODE: FLOATING CARD ────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 0.55,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+  },
+
+  cardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.lg,
+  },
+
+  cardSectionTitle: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+  },
+
+  detailsBlock: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    gap: 0,
+  },
+
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+  },
+
+  detailLabel: {
+    fontSize: FontSize.body,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+  },
+
+  detailValue: {
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+  },
+
+  detailDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+  },
 
   modalBg: {
     flex: 1,
@@ -430,61 +647,202 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 50,
     right: 20,
+    zIndex: 100,
   },
 
   modalCloseText: { color: Colors.textPrimary, fontSize: 18 },
 
-  editContent: { padding: Spacing.xl, gap: Spacing.lg },
-
-  detectedCard: {
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.lg,
-    gap: Spacing.sm,
-    ...Shadow.button,
+  cardFooter: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
 
-  detectedTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-  },
+  // ─── EDIT MODE: HERO SECTION ─────────────────────────────────────────
 
-  detectedHint: {
-    fontSize: FontSize.caption,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-  },
-
-  detectedRow: {
-    flexDirection: "row",
-    alignItems: "center",
+  editHeroSection: {
+    flex: 0.35,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },
 
-  detectedLabel: {
-    fontSize: FontSize.caption,
-    color: Colors.textSecondary,
+  editHeroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 
-  detectedValue: {
+  editHeroBackBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  editHeroBackText: {
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  editHeroTitle: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  editHeroCategoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "center",
+    gap: Spacing.sm,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+
+  editHeroIcon: {
+    fontSize: FontSize.largeIcon,
+  },
+
+  editHeroCategoryName: {
     fontSize: FontSize.body,
-    color: Colors.textPrimary,
     fontWeight: FontWeight.semibold,
+    color: Colors.textInverse,
+  },
+
+  // ─── EDIT MODE: FLOATING CARD ────────────────────────────────────────
+
+  editFloatingCardContainer: {
+    flex: 0.65,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+  },
+
+  editCardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.lg,
+  },
+
+  editSectionTitle: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
   },
 
   amountContainer: {
     flexDirection: "row",
-    backgroundColor: Colors.card,
+    alignItems: "center",
+    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
 
-  currencySign: { fontSize: FontSize.title },
+  currencySign: { fontSize: FontSize.title, color: Colors.textMuted },
 
-  amountInput: { flex: 1, fontSize: FontSize.title },
+  amountInput: {
+    flex: 1,
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+    paddingVertical: Spacing.lg,
+  },
 
-  footer: { padding: Spacing.xl },
+  fieldsBlock: {
+    gap: Spacing.lg,
+  },
+
+  editFieldLabel: {
+    fontSize: FontSize.caption,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textMuted,
+    marginBottom: Spacing.sm,
+  },
+
+  editInput: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+  },
+
+  attachReceiptBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: Colors.border + "30",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+
+  attachReceiptIcon: {
+    fontSize: 24,
+  },
+
+  attachReceiptText: {
+    flex: 1,
+  },
+
+  attachReceiptLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+  },
+
+  attachReceiptStatus: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    marginTop: 2,
+  },
+
+  editCardFooter: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+
+  editCancelBtn: {
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  editCancelBtnText: {
+    fontSize: FontSize.body,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.semibold,
+  },
 });

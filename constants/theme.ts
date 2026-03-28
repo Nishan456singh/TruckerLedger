@@ -1,27 +1,40 @@
-// TruckerLedger Design System
+// TruckLedger Premium Design System
+// Inspired by modern, high-end mobile UI with bright premium colors
 
 export const Colors = {
-  primary: '#22C55E',
+  // Premium primary colors
+  primary: '#F4C21B',        // Bold yellow - action, CTAs, primary
+  primaryHover: '#E8B107',   // Darker yellow for press state
+  secondary: '#6FA0C8',      // Calm blue - hero sections, trust
+  accent: '#C3224E',         // Red/pink - alerts, losses, high-energy
+
+  // Neutral palette
   background: '#FFFFFF',
-  card: '#F8F9FA',
-  cardAlt: '#F0F3F7',
-  cardStrong: '#E8EBF0',
-  accent: '#38BDF8',
-  danger: '#FF5A5F',
+  surface: '#F8F8F8',
+  card: '#FFFFFF',
+  cardAlt: '#F8F8F8',
+  cardStrong: '#F0F0F0',
+
+  // Text hierarchy
+  textPrimary: '#111111',     // Deep black
+  textSecondary: '#1A1A1A',   // Soft dark
+  textMuted: '#8A8A8A',       // Muted neutral
+  textInverse: '#FFFFFF',     // For dark backgrounds
+
+  // Utility
+  border: 'rgba(0,0,0,0.08)',
+  danger: '#C3224E',
   warning: '#FFB84C',
-  textPrimary: '#0B1220',
-  textSecondary: '#64748B',
-  textMuted: '#94A3B8',
-  border: '#E2E8F0',
+  success: '#22C55E',
   overlay: 'rgba(255, 255, 255, 0.85)',
 
-  // Category colors
+  // Category colors (updated for premium feel)
   fuel: '#FF8C42',
   toll: '#2E7DFF',
   parking: '#A78BFA',
   food: '#00D09E',
-  repair: '#FF5A5F',
-  other: '#9AA0AA',
+  repair: '#C3224E',
+  other: '#8A8A8A',
 };
 
 export const Spacing = {
@@ -29,20 +42,24 @@ export const Spacing = {
   sm: 8,
   md: 12,
   lg: 16,
-  xl: 24,
-  xxl: 32,
-  xxxl: 48,
+  xl: 20,
+  xxl: 28,
+  xxxl: 36,
+  xxxxl: 48,
 };
 
 export const FontSize = {
-  title: 28,
-  section: 20,
-  body: 16,
-  caption: 13,
-  small: 11,
-  largeIcon: 36,
-  headerIcon: 24,
-  statIcon: 20,
+  hero: 48,        // Large hero titles
+  title: 36,       // Main screen titles
+  section: 24,     // Section headers
+  subsection: 20,  // Subsection headers
+  body: 16,        // Regular body text
+  caption: 14,     // Secondary text
+  small: 12,       // Meta text
+  tiny: 11,        // Smallest text
+  largeIcon: 40,
+  headerIcon: 28,
+  statIcon: 24,
 };
 
 export const FontWeight = {
@@ -54,35 +71,57 @@ export const FontWeight = {
 };
 
 export const BorderRadius = {
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 28,
-  full: 9999,
+  sm: 12,      // Small pills, compact elements
+  md: 18,      // Standard cards
+  lg: 24,      // Medium containers
+  xl: 32,      // Large sections
+  xxl: 36,     // Hero cards
+  full: 9999,  // Circular
 };
 
 export const Shadow = {
+  // Soft, premium floating shadows
   card: {
     shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardElevated: {
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.12,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 4,
   },
   button: {
-    shadowColor: '#22C55E',
+    shadowColor: '#F4C21B',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 12,
-    elevation: 8,
+    elevation: 6,
+  },
+  buttonPressed: {
+    shadowColor: '#F4C21B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   accent: {
-    shadowColor: '#38BDF8',
+    shadowColor: '#6FA0C8',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.15,
     shadowRadius: 10,
-    elevation: 6,
+    elevation: 4,
+  },
+  danger: {
+    shadowColor: '#C3224E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
   },
 };
 
@@ -102,3 +141,10 @@ export const CategoryMeta: Record<
 export const CATEGORIES = Object.keys(CategoryMeta) as Category[];
 
 export type Category = 'fuel' | 'toll' | 'parking' | 'food' | 'repair' | 'other';
+
+// Gradient definitions for hero sections
+export const Gradients = {
+  bluePrimary: ['#6FA0C8', '#5A8FB5'],      // Blue gradient
+  yellowPrimary: ['#F4C21B', '#E8B107'],    // Yellow gradient
+  pinkAccent: ['#C3224E', '#A01A40'],       // Pink/Red gradient
+};

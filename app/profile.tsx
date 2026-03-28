@@ -1,12 +1,12 @@
+import PrimaryButton from "@/components/PrimaryButton";
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
     FontSize,
     FontWeight,
-    Shadow,
-    Spacing,
+    Spacing
 } from "@/constants/theme";
-import ScreenBackground from "@/components/ScreenBackground";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { exportBOLs } from "@/lib/bolService";
 import {
@@ -19,6 +19,7 @@ import { exportTrips, getTripCount } from "@/lib/tripService";
 import { File, Paths } from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import * as Sharing from "expo-sharing";
 import React, { useCallback, useMemo, useState } from "react";
@@ -30,6 +31,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function formatCurrency(value: number): string {
@@ -49,36 +51,8 @@ function AvatarInitials({ name }: { name: string }) {
     .join("");
 
   return (
-    <View style={styles.avatarFallback}>
-      <Text style={styles.avatarFallbackText}>{initials}</Text>
-    </View>
-  );
-}
-
-function SectionCard({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={styles.card}>
-      <Text style={styles.cardTitle}>
-        {icon} {title}
-      </Text>
-      {children}
-    </View>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+    <View style={styles.heroAvatarFallback}>
+      <Text style={styles.heroAvatarFallbackText}>{initials}</Text>
     </View>
   );
 }
@@ -250,100 +224,186 @@ export default function ProfileScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.container}>
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* HERO SECTION (45% - Blue/Profile themed)                       */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.identityCard}>
-          {user.photo && !photoError ? (
-            <Image
-              source={{ uri: user.photo }}
-              style={styles.avatar}
-              contentFit="cover"
-              onError={() => setPhotoError(true)}
-            />
-          ) : (
-            <AvatarInitials name={user.name} />
-          )}
+          <LinearGradient
+            colors={[Colors.secondary, '#5A8FB5']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroSection}
+          >
+            {/* Top Bar */}
+            <View style={styles.heroTopBar}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.heroBackBtn}
+              >
+                <Text style={styles.heroBackText}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroTitle}>Profile</Text>
+              <View style={{ width: 40 }} />
+            </View>
 
-          <View style={styles.identityTextWrap}>
-            <Text style={styles.name}>{user.name}</Text>
-            {!!user.email && <Text style={styles.email}>{user.email}</Text>}
+            {/* Centered User Info */}
+            <View style={styles.heroUserCenter}>
+              {user.photo && !photoError ? (
+                <Image
+                  source={{ uri: user.photo }}
+                  style={styles.heroAvatar}
+                  contentFit="cover"
+                  onError={() => setPhotoError(true)}
+                />
+              ) : (
+                <AvatarInitials name={user.name} />
+              )}
+
+              <Text style={styles.heroUserName}>{user.name}</Text>
+              <Text style={styles.heroUserSubtitle}>{displayProvider} Account</Text>
+            </View>
+          </LinearGradient>
+
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* FLOATING CARD (55%+ - Sections & Actions)                      */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+
+          <View style={styles.floatingCardContainer}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.cardContent}
+            >
+              {/* Driver Stats Section */}
+              <Animated.View entering={FadeInDown}>
+                <Text style={styles.cardSectionTitle}>📊 Driver Stats</Text>
+                <View style={styles.statsBlock}>
+                  <View style={styles.statRow}>
+                    <Text style={styles.statLabel}>Total Expenses</Text>
+                    <Text style={styles.statValue}>{formatCurrency(totalExpenses)}</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statRow}>
+                    <Text style={styles.statLabel}>This Month</Text>
+                    <Text style={styles.statValue}>{formatCurrency(thisMonth)}</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statRow}>
+                    <Text style={styles.statLabel}>Receipts Scanned</Text>
+                    <Text style={styles.statValue}>{receiptsScanned}</Text>
+                  </View>
+                  <View style={styles.statDivider} />
+                  <View style={styles.statRow}>
+                    <Text style={styles.statLabel}>Trips Logged</Text>
+                    <Text style={styles.statValue}>{tripsLogged}</Text>
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Tools Section */}
+              <Animated.View entering={FadeInDown.delay(50)}>
+                <Text style={styles.cardSectionTitle}>🧰 Tools</Text>
+                <View style={styles.toolsGrid}>
+                  <TouchableOpacity
+                    onPress={handleExportCsv}
+                    style={styles.toolButton}
+                    disabled={exportingExpenses}
+                  >
+                    <Text style={styles.toolIcon}>📋</Text>
+                    <Text style={styles.toolLabel}>
+                      {exportingExpenses ? "Exporting..." : "Export Expenses"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleExportTrips}
+                    style={styles.toolButton}
+                    disabled={exportingTrips}
+                  >
+                    <Text style={styles.toolIcon}>🚚</Text>
+                    <Text style={styles.toolLabel}>
+                      {exportingTrips ? "Exporting..." : "Export Trips"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleExportBOLs}
+                    style={styles.toolButton}
+                    disabled={exportingBOLs}
+                  >
+                    <Text style={styles.toolIcon}>📦</Text>
+                    <Text style={styles.toolLabel}>
+                      {exportingBOLs ? "Exporting..." : "Export BOLs"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => router.push("/monthly-report")}
+                    style={styles.toolButton}
+                  >
+                    <Text style={styles.toolIcon}>📈</Text>
+                    <Text style={styles.toolLabel}>Monthly Report</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => router.push("/trip-profit")}
+                    style={styles.toolButton}
+                  >
+                    <Text style={styles.toolIcon}>💰</Text>
+                    <Text style={styles.toolLabel}>Trip Profit</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => router.push("/receipts")}
+                    style={styles.toolButton}
+                  >
+                    <Text style={styles.toolIcon}>📸</Text>
+                    <Text style={styles.toolLabel}>Receipts</Text>
+                  </TouchableOpacity>
+                </View>
+              </Animated.View>
+
+              {/* Account Section */}
+              <Animated.View entering={FadeInDown.delay(100)}>
+                <Text style={styles.cardSectionTitle}>🔐 Account</Text>
+                <View style={styles.accountBlock}>
+                  <View style={styles.accountRow}>
+                    <Text style={styles.accountLabel}>Email</Text>
+                    <Text style={styles.accountValue}>{user.email || "-"}</Text>
+                  </View>
+                  <View style={styles.accountDivider} />
+                  <View style={styles.accountRow}>
+                    <Text style={styles.accountLabel}>Provider</Text>
+                    <Text style={styles.accountValue}>{displayProvider}</Text>
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Cloud Settings Button */}
+              <Animated.View entering={FadeInDown.delay(150)}>
+                <TouchableOpacity
+                  onPress={() => router.push("/cloud-settings")}
+                  style={styles.settingsButton}
+                >
+                  <Text style={styles.settingsIcon}>⚙️</Text>
+                  <Text style={styles.settingsLabel}>Cloud Settings & Backup</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </ScrollView>
+
+            {/* Logout Button */}
+            <Animated.View entering={FadeInDown.delay(200)} style={styles.cardFooter}>
+              <PrimaryButton
+                label="🚪 Sign Out"
+                variant="danger"
+                onPress={handleLogout}
+                fullWidth
+              />
+            </Animated.View>
           </View>
         </View>
-
-        <SectionCard title="Driver Stats" icon="📊">
-          <Row label="Total Expenses" value={formatCurrency(totalExpenses)} />
-          <Row label="This Month" value={formatCurrency(thisMonth)} />
-          <Row label="Receipts Scanned" value={String(receiptsScanned)} />
-          <Row label="Trips Logged" value={String(tripsLogged)} />
-        </SectionCard>
-
-        <SectionCard title="Tools" icon="🧰">
-          <TouchableOpacity onPress={handleExportCsv} style={styles.toolBtn}>
-            <Text style={styles.toolBtnText}>
-              {exportingExpenses ? "Exporting..." : "Export Expenses (CSV)"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleExportTrips} style={styles.toolBtn}>
-            <Text style={styles.toolBtnText}>
-              {exportingTrips ? "Exporting..." : "Export Trips (CSV)"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleExportBOLs} style={styles.toolBtn}>
-            <Text style={styles.toolBtnText}>
-              {exportingBOLs ? "Exporting..." : "Export BOLs (CSV)"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push("/monthly-report")}
-            style={styles.toolBtn}
-          >
-            <Text style={styles.toolBtnText}>Monthly Report</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push("/trip-profit")}
-            style={styles.toolBtn}
-          >
-            <Text style={styles.toolBtnText}>Trip Profit Calculator</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => router.push("/receipts")}
-            style={styles.toolBtn}
-          >
-            <Text style={styles.toolBtnText}>Receipt Gallery</Text>
-          </TouchableOpacity>
-        </SectionCard>
-
-        <SectionCard title="Account" icon="🔐">
-          <Row label="Email" value={user.email || "-"} />
-          <Row label="Account ID" value={user.id.slice(0, 16) + "..."} />
-          <Row label="Provider" value={displayProvider} />
-        </SectionCard>
-
-        <TouchableOpacity
-          onPress={() => router.push("/cloud-settings")}
-          style={styles.toolBtn}
-        >
-          <Text style={styles.toolBtnText}>⚙️ Cloud Settings & Backup</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-          <Text style={styles.logoutBtnText}>Logout</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -353,140 +413,253 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backText: {
-    fontSize: 28,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
-  },
-  headerTitle: {
-    fontSize: FontSize.section,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
-  },
-  content: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.md,
-  },
-  identityCard: {
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    ...Shadow.card,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    borderColor: Colors.primary + "60",
-  },
-  avatarFallback: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: Colors.primary + "25",
-    borderWidth: 2,
-    borderColor: Colors.primary + "60",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarFallbackText: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.primary,
-  },
-  identityTextWrap: {
+
+  container: {
     flex: 1,
+    position: "relative",
   },
-  name: {
-    fontSize: FontSize.section - 2,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
-  },
-  email: {
-    marginTop: 2,
-    fontSize: FontSize.caption,
-    color: Colors.textSecondary,
-  },
-  card: {
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    ...Shadow.card,
-  },
-  cardTitle: {
-    fontSize: FontSize.caption,
-    color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    marginBottom: Spacing.sm,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
+
+  // ─── HERO SECTION ───────────────────────────────────────────
+
+  heroSection: {
+    flex: 0.45,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
-    paddingVertical: Spacing.xs + 2,
   },
-  rowLabel: {
+
+  heroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  heroBackBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  heroBackText: {
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  heroTitle: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  heroUserCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.md,
+  },
+
+  heroAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+  },
+
+  heroAvatarFallback: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderWidth: 3,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  heroAvatarFallbackText: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  heroUserName: {
+    fontSize: FontSize.title,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textInverse,
+  },
+
+  heroUserSubtitle: {
     fontSize: FontSize.body,
-    color: Colors.textSecondary,
-  },
-  rowValue: {
-    fontSize: FontSize.body,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.semibold,
-    maxWidth: "55%",
-    textAlign: "right",
-  },
-  toolBtn: {
-    backgroundColor: Colors.cardAlt,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.sm + 2,
-    paddingHorizontal: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  toolBtnText: {
-    fontSize: FontSize.body,
-    color: Colors.textPrimary,
+    color: "rgba(255, 255, 255, 0.7)",
     fontWeight: FontWeight.medium,
   },
-  logoutBtn: {
-    marginTop: Spacing.sm,
-    backgroundColor: Colors.danger + "1F",
-    borderWidth: 1,
-    borderColor: Colors.danger + "55",
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.md,
-    alignItems: "center",
-    justifyContent: "center",
+
+  // ─── FLOATING CARD ──────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 0.55,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
   },
-  logoutBtnText: {
+
+  cardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.lg,
+  },
+
+  cardSectionTitle: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+  },
+
+  // ─── STATS SECTION ───────────────────────────────────────────
+
+  statsBlock: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: 0,
+    overflow: "hidden",
+  },
+
+  statRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+
+  statLabel: {
     fontSize: FontSize.body,
-    color: Colors.danger,
-    fontWeight: FontWeight.bold,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+  },
+
+  statValue: {
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+  },
+
+  statDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+
+  // ─── TOOLS GRID ──────────────────────────────────────────
+
+  toolsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: Spacing.md,
+  },
+
+  toolButton: {
+    width: "48%",
+    alignItems: "center",
+    gap: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingVertical: Spacing.lg,
+  },
+
+  toolIcon: {
+    fontSize: 28,
+  },
+
+  toolLabel: {
+    fontSize: FontSize.caption,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+    textAlign: "center",
+  },
+
+  // ─── ACCOUNT SECTION ────────────────────────────────────────
+
+  accountBlock: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: 0,
+    overflow: "hidden",
+  },
+
+  accountRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+
+  accountLabel: {
+    fontSize: FontSize.body,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+  },
+
+  accountValue: {
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+    maxWidth: "50%",
+    textAlign: "right",
+  },
+
+  accountDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+
+  // ─── SETTINGS BUTTON ────────────────────────────────────────
+
+  settingsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+
+  settingsIcon: {
+    fontSize: 22,
+  },
+
+  settingsLabel: {
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+  },
+
+  // ─── FOOTER ──────────────────────────────────────────────────
+
+  cardFooter: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
 });

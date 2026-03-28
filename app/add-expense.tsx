@@ -1,4 +1,4 @@
-import PrimaryButton from "@/components/PrimaryButton";
+import PremiumButton from "@/components/PremiumButton";
 import ScreenBackground from "@/components/ScreenBackground";
 
 import {
@@ -36,6 +36,7 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Category_ = Category;
 
@@ -138,135 +139,192 @@ export default function AddExpenseScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-      >
-        <ScrollView
+      <SafeAreaView style={styles.safe}>
+        <KeyboardAvoidingView
           style={{ flex: 1 }}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <Animated.View entering={FadeInDown}>
-            <View style={styles.header}>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.closeBtnText}>✕</Text>
-              </TouchableOpacity>
-              <Text style={styles.formTitle}>💰 Add Expense</Text>
-              <View style={{ width: 20 }} />
-            </View>
-          </Animated.View>
+          <View style={styles.container}>
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* HERO SECTION (50% - Yellow/Action themed)                      */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
 
-          <Animated.View entering={FadeInDown.delay(50)}>
-            <View style={styles.amountContainer}>
-              <Text style={styles.currencySign}>$</Text>
-              <TextInput
-                ref={amountRef}
-                style={styles.amountInput}
-                value={amount}
-                onChangeText={setAmount}
-                placeholder="0.00"
-                keyboardType="decimal-pad"
-                placeholderTextColor={Colors.textMuted}
-              />
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(100)}>
-            <Text style={styles.fieldLabel}>Quick amounts</Text>
-            <View style={styles.quickAmounts}>
-              {QUICK_AMOUNTS.map((qa) => (
+            <LinearGradient
+              colors={[Colors.primary, '#E8B107']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroSection}
+            >
+              {/* Top Bar */}
+              <View style={styles.heroTopBar}>
                 <TouchableOpacity
-                  key={qa}
-                  style={styles.quickAmountBtn}
-                  onPress={() => handleQuickAmount(qa)}
+                  onPress={() => router.back()}
+                  style={styles.heroBackBtn}
                 >
-                  <Text style={styles.quickAmountText}>${qa}</Text>
+                  <Text style={styles.heroBackText}>✕</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-          </Animated.View>
+                <Text style={styles.heroTitle}>Add Expense</Text>
+                <View style={{ width: 40 }} />
+              </View>
 
-          <Animated.View entering={FadeInDown.delay(150)}>
-            <Text style={styles.fieldLabel}>Category</Text>
-            <View style={styles.categoryGrid}>
-              {(["fuel", "food", "repair", "toll", "parking", "other"] as Category_[]).map((cat) => (
+              {/* Centered Amount Display */}
+              <View style={styles.heroAmountCenter}>
+                <Text style={styles.heroAmountLabel}>Amount</Text>
+                <View style={styles.heroAmountDisplay}>
+                  <Text style={styles.heroAmountCurrency}>$</Text>
+                  <TextInput
+                    ref={amountRef}
+                    style={styles.heroAmountInput}
+                    value={amount}
+                    onChangeText={setAmount}
+                    placeholder="0"
+                    keyboardType="decimal-pad"
+                    placeholderTextColor="rgba(17, 17, 17, 0.2)"
+                  />
+                </View>
+                {parsedAmount > 0 && (
+                  <Text style={styles.heroProjectedTotal}>
+                    Today's total: {formatCurrency(projectedTotal)}
+                  </Text>
+                )}
+              </View>
+            </LinearGradient>
+
+            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* FLOATING CARD (50%+ - Form & Actions)                         */}
+            {/* ═══════════════════════════════════════════════════════════════ */}
+
+            <View style={styles.floatingCardContainer}>
+              <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === "ios" ? "padding" : undefined}
+              >
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.cardContent}
+                >
+                  {/* Quick Amounts */}
+                  <Animated.View entering={FadeInDown}>
+                    <Text style={styles.cardSectionTitle}>Quick Amounts</Text>
+                    <View style={styles.quickAmountsGrid}>
+                      {QUICK_AMOUNTS.map((qa) => (
+                        <TouchableOpacity
+                          key={qa}
+                          style={styles.quickAmountBtn}
+                          onPress={() => handleQuickAmount(qa)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.quickAmountText}>${qa}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </Animated.View>
+
+                  {/* Category Selection */}
+                  <Animated.View entering={FadeInDown.delay(50)}>
+                    <Text style={styles.cardSectionTitle}>Category</Text>
+                    <View style={styles.categoryGrid}>
+                      {(["fuel", "food", "repair", "toll", "parking", "other"] as Category_[]).map((cat) => (
+                        <TouchableOpacity
+                          key={cat}
+                          style={[
+                            styles.categoryBtn,
+                            category === cat && styles.categoryBtnActive,
+                          ]}
+                          onPress={() => setCategory(cat)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.categoryIcon}>{CATEGORY_EMOJIS[cat]}</Text>
+                          <Text
+                            style={[
+                              styles.categoryLabel,
+                              category === cat && styles.categoryLabelActive,
+                            ]}
+                          >
+                            {cat}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </Animated.View>
+
+                  {/* Date & Note */}
+                  <Animated.View entering={FadeInDown.delay(100)}>
+                    <Text style={styles.cardSectionTitle}>Details</Text>
+
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>Date</Text>
+                      <TextInput
+                        style={styles.fieldInput}
+                        value={date}
+                        onChangeText={setDate}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor={Colors.textMuted}
+                      />
+                    </View>
+
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>Note (optional)</Text>
+                      <TextInput
+                        style={[styles.fieldInput, styles.notesInput]}
+                        value={note}
+                        onChangeText={setNote}
+                        placeholder="Vendor, description, etc."
+                        placeholderTextColor={Colors.textMuted}
+                        multiline
+                      />
+                    </View>
+                  </Animated.View>
+
+                  {/* Summary */}
+                  {parsedAmount > 0 && (
+                    <Animated.View entering={FadeInDown.delay(150)} style={styles.summarySection}>
+                      <Text style={styles.summaryTitle}>Summary</Text>
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>Today's expenses</Text>
+                        <Text style={styles.summaryValue}>{formatCurrency(todayTotal)}</Text>
+                      </View>
+                      <View style={styles.summaryDivider} />
+                      <View style={styles.summaryRow}>
+                        <Text style={styles.summaryLabel}>+ This expense</Text>
+                        <Text style={styles.summaryValue}>{formatCurrency(parsedAmount)}</Text>
+                      </View>
+                      <View style={styles.summaryDivider} />
+                      <View style={styles.summaryRow}>
+                        <Text style={[styles.summaryLabel, styles.summaryLabelBold]}>
+                          New total
+                        </Text>
+                        <Text style={[styles.summaryValue, styles.summaryValueBold]}>
+                          {formatCurrency(projectedTotal)}
+                        </Text>
+                      </View>
+                    </Animated.View>
+                  )}
+                </ScrollView>
+              </KeyboardAvoidingView>
+
+              {/* Bottom Action Buttons */}
+              <Animated.View entering={FadeInUp} style={styles.cardFooter}>
+                <PremiumButton
+                  label="💾 Save Expense"
+                  onPress={handleSave}
+                  loading={saving}
+                  disabled={!amount || saving}
+                  size="large"
+                  fullWidth
+                />
                 <TouchableOpacity
-                  key={cat}
-                  style={[styles.categoryBtn, category === cat && styles.categoryBtnActive]}
-                  onPress={() => setCategory(cat)}
+                  style={styles.cancelBtn}
+                  onPress={() => router.back()}
+                  activeOpacity={0.7}
                 >
-                  <Text style={styles.categoryEmoji}>{CATEGORY_EMOJIS[cat]}</Text>
-                  <Text style={[styles.categoryLabel, category === cat && styles.categoryLabelActive]}>
-                    {cat}
-                  </Text>
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
                 </TouchableOpacity>
-              ))}
+              </Animated.View>
             </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(200)}>
-            <Text style={styles.fieldLabel}>Date</Text>
-            <TextInput
-              style={styles.dateInput}
-              value={date}
-              onChangeText={setDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={Colors.textMuted}
-            />
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(250)}>
-            <Text style={styles.fieldLabel}>Note</Text>
-            <TextInput
-              style={styles.notesInput}
-              value={note}
-              onChangeText={setNote}
-              placeholder="Optional note (vendor, description, etc.)"
-              placeholderTextColor={Colors.textMuted}
-              multiline
-            />
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(300)} style={styles.summaryCard}>
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Today's total</Text>
-              <Text style={styles.summaryValue}>{formatCurrency(todayTotal)}</Text>
-            </View>
-            {parsedAmount > 0 && (
-              <>
-                <View style={styles.summaryDivider} />
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>+ This expense</Text>
-                  <Text style={styles.summaryValue}>{formatCurrency(parsedAmount)}</Text>
-                </View>
-                <View style={styles.summaryDivider} />
-                <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { fontWeight: FontWeight.bold }]}>New total</Text>
-                  <Text style={[styles.summaryValue, { color: Colors.accent, fontWeight: FontWeight.bold }]}>
-                    {formatCurrency(projectedTotal)}
-                  </Text>
-                </View>
-              </>
-            )}
-          </Animated.View>
-        </ScrollView>
-
-        <Animated.View entering={FadeInUp} style={styles.footer}>
-          <PrimaryButton
-            label="💾 Save Expense"
-            onPress={handleSave}
-            loading={saving}
-            disabled={!amount || saving}
-            size="lg"
-          />
-          <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
-            <Text style={styles.cancelBtnText}>Cancel</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -277,89 +335,149 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
 
-  scrollContent: {
-    padding: Spacing.xl,
-    gap: Spacing.md,
-    paddingBottom: Spacing.xxl,
+  container: {
+    flex: 1,
+    position: "relative",
   },
 
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
+  // ─── HERO SECTION ───────────────────────────────────────────
+
+  heroSection: {
+    flex: 0.5,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
-    marginBottom: Spacing.lg,
   },
 
-  closeBtnText: {
-    fontSize: 18,
-    color: Colors.textSecondary,
+  heroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
 
-  formTitle: {
+  heroBackBtn: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  heroBackText: {
+    fontSize: 24,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+
+  heroTitle: {
     fontSize: FontSize.section,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
 
-  amountContainer: {
+  heroAmountCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.md,
+  },
+
+  heroAmountLabel: {
+    fontSize: FontSize.body,
+    color: "rgba(17, 17, 17, 0.6)",
+    fontWeight: FontWeight.medium,
+  },
+
+  heroAmountDisplay: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
-    gap: Spacing.lg,
-    marginBottom: Spacing.lg,
+    justifyContent: "center",
+    gap: Spacing.sm,
   },
 
-  currencySign: {
-    fontSize: 36,
-    color: Colors.background,
+  heroAmountCurrency: {
+    fontSize: FontSize.hero + 2,
     fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
   },
 
-  amountInput: {
-    flex: 1,
-    fontSize: 36,
+  heroAmountInput: {
+    fontSize: FontSize.hero,
     fontWeight: FontWeight.extrabold,
-    color: Colors.background,
+    color: Colors.textPrimary,
+    minWidth: 150,
+    textAlign: "center",
   },
 
-  fieldLabel: {
+  heroProjectedTotal: {
     fontSize: FontSize.caption,
-    color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
-    marginBottom: Spacing.sm,
+    color: "rgba(17, 17, 17, 0.5)",
+    marginTop: Spacing.sm,
   },
 
-  quickAmounts: {
+  // ─── FLOATING CARD ──────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 0.55,
+    marginTop: -Spacing.xxxl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    overflow: "hidden",
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 16,
+      elevation: 10,
+    },
+  },
+
+  cardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
+    gap: Spacing.lg,
+  },
+
+  cardSectionTitle: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+  },
+
+  // ─── QUICK AMOUNTS ──────────────────────────────────────────
+
+  quickAmountsGrid: {
     flexDirection: "row",
     gap: Spacing.md,
     flexWrap: "wrap",
-    marginBottom: Spacing.lg,
   },
 
   quickAmountBtn: {
     flex: 1,
     minWidth: "22%",
-    paddingVertical: Spacing.md + 2,
+    paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 1.5,
     borderColor: Colors.border,
+    backgroundColor: Colors.surface,
     alignItems: "center",
-    backgroundColor: Colors.card,
   },
 
   quickAmountText: {
-    fontSize: FontSize.body + 1,
+    fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
     color: Colors.primary,
   },
+
+  // ─── CATEGORY GRID ──────────────────────────────────────────
 
   categoryGrid: {
     flexDirection: "row",
     gap: Spacing.sm,
     flexWrap: "wrap",
-    marginBottom: Spacing.md,
   },
 
   categoryBtn: {
@@ -370,9 +488,9 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
+    backgroundColor: Colors.surface,
     alignItems: "center",
     gap: Spacing.xs,
-    backgroundColor: Colors.card,
   },
 
   categoryBtnActive: {
@@ -380,13 +498,13 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
 
-  categoryEmoji: {
-    fontSize: 20,
+  categoryIcon: {
+    fontSize: 24,
   },
 
   categoryLabel: {
     fontSize: FontSize.caption,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     fontWeight: FontWeight.semibold,
   },
 
@@ -395,35 +513,50 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
 
-  dateInput: {
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    color: Colors.textPrimary,
-    fontSize: FontSize.body,
+  // ─── FIELDS ─────────────────────────────────────────────────
+
+  fieldGroup: {
     marginBottom: Spacing.md,
   },
 
-  notesInput: {
-    backgroundColor: Colors.card,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    minHeight: 80,
-    color: Colors.textPrimary,
-    fontSize: FontSize.body,
+  fieldLabel: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.sm,
   },
 
-  summaryCard: {
-    backgroundColor: Colors.card,
+  fieldInput: {
+    backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: FontSize.body,
+    color: Colors.textPrimary,
+  },
+
+  notesInput: {
+    minHeight: 80,
+    textAlignVertical: "top",
+  },
+
+  // ─── SUMMARY ────────────────────────────────────────────────
+
+  summarySection: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
     padding: Spacing.lg,
-    marginTop: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+
+  summaryTitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
   },
 
   summaryRow: {
@@ -435,7 +568,13 @@ const styles = StyleSheet.create({
 
   summaryLabel: {
     fontSize: FontSize.body,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+  },
+
+  summaryLabelBold: {
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
   },
 
   summaryValue: {
@@ -444,29 +583,39 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
 
+  summaryValueBold: {
+    fontSize: FontSize.section,
+    color: Colors.primary,
+  },
+
   summaryDivider: {
     height: 1,
     backgroundColor: Colors.border,
     marginVertical: Spacing.sm,
   },
 
-  footer: {
-    padding: Spacing.xl,
-    paddingBottom: Spacing.xl * 2,
+  // ─── FOOTER ─────────────────────────────────────────────────
+
+  cardFooter: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
     gap: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
   },
 
   cancelBtn: {
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: "center",
+    justifyContent: "center",
   },
 
   cancelBtnText: {
     fontSize: FontSize.body,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     fontWeight: FontWeight.semibold,
   },
 });
