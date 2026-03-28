@@ -149,7 +149,7 @@ export default function LoginScreen() {
             <View style={{ height: 50 }}>
               {appleLoading ? (
                 <View style={styles.appleLoading}>
-                  <ActivityIndicator color={Colors.background} />
+                  <ActivityIndicator color={Colors.primary} />
                 </View>
               ) : (
                 <AppleAuthentication.AppleAuthenticationButton
@@ -157,7 +157,7 @@ export default function LoginScreen() {
                     AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
                   }
                   buttonStyle={
-                    AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                    AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
                   }
                   cornerRadius={BorderRadius.md}
                   style={{ width: "100%", height: 50 }}
@@ -251,10 +251,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    backgroundColor: "#FFFFFF",
     borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderWidth: 0,
+    ...{
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 12,
+      elevation: 8,
+    },
   },
 
   errorBanner: {
@@ -270,25 +276,27 @@ const styles = StyleSheet.create({
     fontSize: FontSize.caption,
     color: Colors.danger,
     textAlign: "center",
+    fontWeight: FontWeight.semibold,
   },
 
   appleLoading: {
     height: 50,
     borderRadius: BorderRadius.md,
-    backgroundColor: "#fff",
+    backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
   },
 
   legal: {
     fontSize: FontSize.small,
-    color: Colors.textSecondary,
+    color: "#666666",
     textAlign: "center",
+    lineHeight: 18,
   },
 
   legalLink: {
-    color: Colors.accent,
-    textDecorationLine: "underline",
+    color: Colors.primary,
+    fontWeight: FontWeight.semibold,
   },
 
   safeBottom: {
