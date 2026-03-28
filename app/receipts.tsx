@@ -1,3 +1,4 @@
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
@@ -6,7 +7,6 @@ import {
     Spacing,
 } from "@/constants/theme";
 import { getAllExpenses } from "@/lib/expenseService";
-import ScreenBackground from "@/components/ScreenBackground";
 import type { Expense } from "@/lib/types";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";

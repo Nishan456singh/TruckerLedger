@@ -1,3 +1,4 @@
+import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     CategoryMeta,
@@ -8,7 +9,6 @@ import {
     type Category,
 } from "@/constants/theme";
 import { getCurrentMonthCategoryTotals } from "@/lib/expenseService";
-import ScreenBackground from "@/components/ScreenBackground";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {

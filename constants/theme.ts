@@ -11,6 +11,7 @@ export const Colors = {
   // Neutral palette
   background: '#FFFFFF',
   surface: '#F8F8F8',
+  surfaceAlt: '#FAF7F8',     // Soft alt surface for secondary cards
   card: '#FFFFFF',
   cardAlt: '#F8F8F8',
   cardStrong: '#F0F0F0',
@@ -23,6 +24,8 @@ export const Colors = {
 
   // Utility
   border: 'rgba(0,0,0,0.08)',
+  borderLight: 'rgba(0,0,0,0.06)',     // Lighter borders for subtle dividers
+  borderTiny: 'rgba(0,0,0,0.04)',      // Minimal borders
   danger: '#C3224E',
   warning: '#FFB84C',
   success: '#22C55E',
@@ -35,6 +38,15 @@ export const Colors = {
   food: '#00D09E',
   repair: '#C3224E',
   other: '#8A8A8A',
+};
+
+// Color utilities with opacity variants
+export const ColorUtilities = {
+  accentLight10: '#C3224E19',   // Primary 10% opacity
+  accentLight20: '#C3224E33',   // Primary 20% opacity
+  successLight: 'rgba(34, 197, 94, 0.1)',
+  dangerLight: 'rgba(220, 38, 38, 0.1)',
+  warningLight: 'rgba(255, 180, 76, 0.1)',
 };
 
 export const Spacing = {
@@ -80,7 +92,14 @@ export const BorderRadius = {
 };
 
 export const Shadow = {
-  // Soft, premium floating shadows
+  // Soft, premium floating shadows - tiered system
+  small: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   card: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -88,12 +107,33 @@ export const Shadow = {
     shadowRadius: 8,
     elevation: 2,
   },
+  medium: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   cardElevated: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 4,
+  },
+  large: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  xl: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
+    elevation: 12,
   },
   button: {
     shadowColor: '#F4C21B',
@@ -125,7 +165,22 @@ export const Shadow = {
   },
 };
 
-// Category metadata
+// Typography scale with line heights for premium readability
+export const TypographyScale = {
+  display: { fontSize: 48, lineHeight: 52, fontWeight: '800' as const },      // Hero numbers
+  headline: { fontSize: 36, lineHeight: 40, fontWeight: '800' as const },     // Big titles
+  title: { fontSize: 24, lineHeight: 28, fontWeight: '700' as const },        // Section headers
+  subtitle: { fontSize: 20, lineHeight: 24, fontWeight: '700' as const },     // Card titles
+  body: { fontSize: 16, lineHeight: 20, fontWeight: '600' as const },         // Default text
+  small: { fontSize: 14, lineHeight: 17, fontWeight: '500' as const },        // Secondary labels
+  caption: { fontSize: 12, lineHeight: 15, fontWeight: '500' as const },      // Metadata
+};
+
+// Modal and special component gradients
+export const ModalGradients = {
+  yellowGradient: ['#FFE5B4', '#FFD99B'],    // For Add Receipt modal
+  blueGradient: ['#E5F4FF', '#D4EAFF'],      // For Add BOL modal
+};
 export const CategoryMeta: Record<
   string,
   { label: string; icon: string; color: string }
@@ -147,4 +202,8 @@ export const Gradients = {
   bluePrimary: ['#6FA0C8', '#5A8FB5'],      // Blue gradient
   yellowPrimary: ['#F4C21B', '#E8B107'],    // Yellow gradient
   pinkAccent: ['#C3224E', '#A01A40'],       // Pink/Red gradient
+
+  // Modal gradients (alternative - can also use ModalGradients constant)
+  modalYellow: ['#FFE5B4', '#FFD99B'],      // Add Receipt modal
+  modalBlue: ['#E5F4FF', '#D4EAFF'],        // Add BOL modal
 };

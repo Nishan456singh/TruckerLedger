@@ -8,11 +8,20 @@ import {
   getWeeklyTripSnapshot,
 } from "@/lib/tripService";
 import type { Expense } from "@/lib/types";
-import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from "@/constants/theme";
+import {
+  BorderRadius,
+  Colors,
+  ColorUtilities,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+} from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
+  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -26,6 +35,7 @@ export default function DashboardScreen() {
   const { user } = useAuth();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [weekly, setWeekly] = useState({
     income: 0,
     fuel: 0,
@@ -43,27 +53,51 @@ export default function DashboardScreen() {
   const name = user?.name?.split(" ")[0] ?? "Driver";
 
   const load = useCallback(async () => {
-    const [w, m, e] = await Promise.all([
-      getWeeklyTripSnapshot(),
-      getMonthlyTripSnapshot(),
-      getAllExpenses(),
-    ]);
+    try {
+      const [w, m, e] = await Promise.all([
+        getWeeklyTripSnapshot(),
+        getMonthlyTripSnapshot(),
+        getAllExpenses(),
+      ]);
 
-    setWeekly(w);
-    setMonthly(m);
-    setExpenses(e.slice(0, 4));
+      setWeekly(w);
+      setMonthly(m);
+      setExpenses(e.slice(0, 4));
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      load().catch(console.error);
+      setLoading(true);
+      load();
     }, [load])
   );
 
-  async function refresh() {
+  async function handleRefresh() {
     setRefreshing(true);
     await load();
     setRefreshing(false);
+  }
+
+  if (loading) {
+    return (
+      <ScreenBackground>
+        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+          <View style={styles.centerContainer}>
+            <ActivityIndicator
+              size="large"
+              color={Colors.accent}
+              style={{ marginBottom: Spacing.lg }}
+            />
+            <Text style={styles.loadingText}>Loading your dashboard...</Text>
+          </View>
+        </SafeAreaView>
+      </ScreenBackground>
+    );
   }
 
   return (
@@ -71,91 +105,185 @@ export default function DashboardScreen() {
       <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <LinearGradient
           colors={["#C3224E", "#8E1B3B"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={styles.container}
         >
-          {/* HEADER */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* HEADER - Premium greeting & profile */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
           <View style={styles.header}>
-            <Text style={styles.greeting}>Hey, {name}</Text>
+            <View>
+              <Text style={styles.greetingSmall}>Good to see you</Text>
+              <Text style={styles.greetingMain}>{name}</Text>
+            </View>
 
             <TouchableOpacity
-              style={styles.profile}
+              style={styles.profileButton}
               onPress={() => router.push("/profile")}
+              activeOpacity={0.75}
             >
-              <Text style={styles.profileText}>
-                {name[0]}
-              </Text>
+              <Text style={styles.profileInitial}>{name[0]}</Text>
             </TouchableOpacity>
           </View>
 
-          {/* PROFIT */}
-          <View style={styles.center}>
-            <Text style={styles.label}>Weekly Profit</Text>
-            <Text style={styles.value}>
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* HERO SECTION - Weekly profit display */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.heroContent}>
+            <Text style={styles.heroLabel}>Weekly Profit</Text>
+
+            <Text style={styles.heroValue}>
               {formatCurrency(weekly.profit)}
             </Text>
+
+            {weekly.profit > 0 ? (
+              <Text style={styles.heroHint}>📈 On track this week</Text>
+            ) : (
+              <Text style={styles.heroHintNeutral}>Keep going strong</Text>
+            )}
           </View>
 
-          {/* WHITE CARD */}
-          <View style={styles.card}>
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* FLOATING CARD - White card with all content */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          <View style={styles.floatingCard}>
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
-                  onRefresh={refresh}
+                  onRefresh={handleRefresh}
+                  tintColor={Colors.accent}
                 />
               }
             >
-              {/* ACTIONS */}
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={styles.btn}
-                  onPress={() => router.push("/scan-receipt")}
-                >
-                  <Text style={styles.btnText}>Add</Text>
-                </TouchableOpacity>
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* QUICK ACTION BUTTONS - Premium layout */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              <View style={styles.actionsSection}>
+                <View style={styles.actionGrid}>
+                  {/* Add Button */}
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => router.push("/scan-receipt")}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={styles.actionIcon}>➕</Text>
+                    <Text style={styles.actionLabel}>Add Expense</Text>
+                    <Text style={styles.actionSubtext}>Scan or enter</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.btn}
-                  onPress={() => router.push("/history")}
-                >
-                  <Text style={styles.btnText}>History</Text>
-                </TouchableOpacity>
+                  {/* History Button */}
+                  <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => router.push("/history")}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={styles.actionIcon}>📋</Text>
+                    <Text style={styles.actionLabel}>History</Text>
+                    <Text style={styles.actionSubtext}>All records</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              {/* MONTH */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* MONTHLY SUMMARY - Premium card design */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Monthly Summary</Text>
-                <View style={styles.row}>
-                  <Text style={styles.rowLabel}>Income</Text>
-                  <Text style={styles.rowValue}>{formatCurrency(monthly.income)}</Text>
-                </View>
 
-                <View style={styles.divider} />
+                <View style={styles.summaryCard}>
+                  {/* Income Row */}
+                  <View style={styles.summaryRow}>
+                    <View style={styles.summaryLabel}>
+                      <Text style={styles.summaryIcon}>💰</Text>
+                      <View>
+                        <Text style={styles.summaryRowLabel}>Income</Text>
+                        <Text style={styles.summaryRowHint}>
+                          Total load payments
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.summaryRowValue}>
+                      {formatCurrency(monthly.income)}
+                    </Text>
+                  </View>
 
-                <View style={styles.row}>
-                  <Text style={styles.rowLabel}>Expense</Text>
-                  <Text style={styles.rowValue}>
-                    {formatCurrency(
-                      monthly.fuel + monthly.otherExpenses
-                    )}
-                  </Text>
+                  <View style={styles.divider} />
+
+                  {/* Expenses Row */}
+                  <View style={styles.summaryRow}>
+                    <View style={styles.summaryLabel}>
+                      <Text style={styles.summaryIcon}>💳</Text>
+                      <View>
+                        <Text style={styles.summaryRowLabel}>Expenses</Text>
+                        <Text style={styles.summaryRowHint}>
+                          Fuel + all costs
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={styles.summaryRowValue}>
+                      {formatCurrency(monthly.fuel + monthly.otherExpenses)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.divider} />
+
+                  {/* Net Profit Row - Highlighted */}
+                  <View style={[styles.summaryRow, styles.summaryRowHighlight]}>
+                    <View style={styles.summaryLabel}>
+                      <Text style={styles.summaryIcon}>📊</Text>
+                      <View>
+                        <Text style={styles.summaryRowLabel}>Net Profit</Text>
+                        <Text style={styles.summaryRowHint}>This month</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.summaryRowValueHighlight}>
+                      {formatCurrency(
+                        monthly.income - (monthly.fuel + monthly.otherExpenses)
+                      )}
+                    </Text>
+                  </View>
                 </View>
               </View>
 
-              {/* RECENT */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* RECENT EXPENSES SECTION - Premium list */}
+              {/* ═══════════════════════════════════════════════════════════════ */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Recent Expenses</Text>
 
                 {expenses.length === 0 ? (
-                  <Text style={styles.empty}>
-                    No expenses yet
-                  </Text>
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyIcon}>📭</Text>
+                    <Text style={styles.emptyTitle}>No expenses yet</Text>
+                    <Text style={styles.emptyDesc}>
+                      Add your first receipt to get started
+                    </Text>
+                  </View>
                 ) : (
-                  expenses.map((e) => (
-                    <ExpenseCard key={e.id} expense={e} />
-                  ))
+                  <View style={styles.expensesList}>
+                    {expenses.map((expense, index) => (
+                      <View key={expense.id}>
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() =>
+                            router.push({
+                              pathname: "/expense-detail",
+                              params: { id: expense.id },
+                            })
+                          }
+                        >
+                          <ExpenseCard expense={expense} />
+                        </TouchableOpacity>
+                        {index < expenses.length - 1 && (
+                          <View style={styles.expensesDivider} />
+                        )}
+                      </View>
+                    ))}
+                  </View>
                 )}
               </View>
             </ScrollView>
@@ -175,6 +303,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
+  centerContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: Spacing.lg,
+  },
+
+  loadingText: {
+    fontSize: FontSize.body,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+  },
+
+  // ─── HEADER ────────────────────────────────────────────────────────
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -184,51 +327,79 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.md,
   },
 
-  greeting: {
-    color: "#fff",
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-  },
-
-  profile: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  profileText: {
-    color: "#fff",
-    fontWeight: FontWeight.bold,
-    fontSize: FontSize.body,
-  },
-
-  center: {
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-  },
-
-  label: {
+  greetingSmall: {
+    fontSize: FontSize.caption,
     color: "rgba(255,255,255,0.7)",
-    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+    marginBottom: Spacing.xs,
   },
 
-  value: {
-    fontSize: 32,
+  greetingMain: {
+    fontSize: 24,
     color: "#fff",
     fontWeight: FontWeight.extrabold,
-    marginTop: Spacing.sm,
   },
 
-  card: {
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.15)",
+  },
+
+  profileInitial: {
+    color: "#fff",
+    fontWeight: FontWeight.bold,
+    fontSize: FontSize.section,
+  },
+
+  // ─── HERO SECTION ──────────────────────────────────────────────────
+
+  heroContent: {
+    alignItems: "center",
+    paddingVertical: Spacing.xl,
+  },
+
+  heroLabel: {
+    fontSize: FontSize.body,
+    color: "rgba(255,255,255,0.75)",
+    fontWeight: FontWeight.medium,
+    marginBottom: Spacing.sm,
+  },
+
+  heroValue: {
+    fontSize: 44,
+    color: "#fff",
+    fontWeight: FontWeight.extrabold,
+    marginBottom: Spacing.md,
+  },
+
+  heroHint: {
+    fontSize: FontSize.caption,
+    color: "#22C55E",
+    fontWeight: FontWeight.semibold,
+  },
+
+  heroHintNeutral: {
+    fontSize: FontSize.caption,
+    color: "rgba(255,255,255,0.6)",
+    fontWeight: FontWeight.medium,
+  },
+
+  // ─── FLOATING CARD ────────────────────────────────────────────────
+
+  floatingCard: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.card,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     marginTop: Spacing.xl,
     overflow: "hidden",
+    ...Shadow.large,
   },
 
   scrollContent: {
@@ -237,65 +408,171 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xxxxl,
   },
 
-  actions: {
-    flexDirection: "row",
-    gap: Spacing.lg,
+  // ─── ACTIONS SECTION ────────────────────────────────────────────
+
+  actionsSection: {
     marginBottom: Spacing.xl,
   },
 
-  btn: {
-    flex: 1,
-    backgroundColor: "#C3224E",
-    paddingVertical: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
+  actionGrid: {
+    flexDirection: "row",
+    gap: Spacing.lg,
   },
 
-  btnText: {
-    color: "#fff",
-    fontWeight: FontWeight.bold,
-    fontSize: FontSize.body,
+  actionButton: {
+    flex: 1,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.surfaceAlt,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    ...Shadow.card,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
+
+  actionIcon: {
+    fontSize: 28,
+    marginBottom: Spacing.xs,
+  },
+
+  actionLabel: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+    textAlign: "center",
+  },
+
+  actionSubtext: {
+    fontSize: FontSize.small,
+    color: Colors.textMuted,
+    textAlign: "center",
+  },
+
+  // ─── SECTIONS ──────────────────────────────────────────────────
 
   section: {
     marginBottom: Spacing.xl,
   },
 
   sectionTitle: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.subsection,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
 
-  row: {
+  // ─── MONTHLY SUMMARY ────────────────────────────────────────────
+
+  summaryCard: {
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    ...Shadow.small,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+
+  summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: Spacing.md,
   },
 
-  rowLabel: {
-    fontSize: FontSize.body,
-    color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
+  summaryLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    flex: 1,
   },
 
-  rowValue: {
+  summaryIcon: {
+    fontSize: 24,
+  },
+
+  summaryRowLabel: {
     fontSize: FontSize.body,
+    fontWeight: FontWeight.semibold,
+    color: Colors.textPrimary,
+  },
+
+  summaryRowHint: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    marginTop: Spacing.xs,
+  },
+
+  summaryRowValue: {
+    fontSize: FontSize.subsection,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
+    textAlign: "right",
+  },
+
+  summaryRowHighlight: {
+    paddingHorizontal: Spacing.md,
+    marginHorizontal: -Spacing.md,
+    marginVertical: Spacing.xs,
+    paddingVertical: Spacing.lg,
+    backgroundColor: ColorUtilities.accentLight10,
+    borderRadius: BorderRadius.md,
+  },
+
+  summaryRowValueHighlight: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.extrabold,
+    color: Colors.accent,
+    textAlign: "right",
   },
 
   divider: {
     height: 1,
+    backgroundColor: Colors.borderLight,
+  },
+
+  // ─── EXPENSES LIST ─────────────────────────────────────────────
+
+  expensesList: {
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+    backgroundColor: Colors.card,
+    ...Shadow.card,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+
+  expensesDivider: {
+    height: 1,
     backgroundColor: Colors.border,
   },
 
-  empty: {
-    textAlign: "center",
-    paddingVertical: Spacing.xl,
-    color: Colors.textMuted,
+  // ─── EMPTY STATE ────────────────────────────────────────────────
+
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: Spacing.xxl,
+    gap: Spacing.md,
+  },
+
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: Spacing.sm,
+  },
+
+  emptyTitle: {
+    fontSize: FontSize.subsection,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
+  },
+
+  emptyDesc: {
     fontSize: FontSize.body,
+    color: Colors.textMuted,
+    textAlign: "center",
+    paddingHorizontal: Spacing.lg,
   },
 });
