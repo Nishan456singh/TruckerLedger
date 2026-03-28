@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 
 import * as AppleAuthentication from "expo-apple-authentication";
 
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import {
     ActivityIndicator,
@@ -35,6 +35,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const loginBg = require("@/assets/images/login.png");
 const logo = require("@/assets/images/icon.png");
 
+const FEATURE_PILLS = ["⛽ Fuel", "🛣️ Tolls", "🔧 Repairs", "📎 Receipts"];
+const ERROR_DISMISS_TIMEOUT = 5000;
+
 export default function LoginScreen() {
   const { signInGoogle, signInApple } = useAuth();
 
@@ -44,9 +47,15 @@ export default function LoginScreen() {
 
   const anyLoading = googleLoading || appleLoading;
 
-  // ─── Google Login ─────────────────────────────────────
+  // Auto-dismiss errors after 5 seconds
+  useEffect(() => {
+    if (!errorMsg) return;
+    const timer = setTimeout(() => setErrorMsg(null), ERROR_DISMISS_TIMEOUT);
+    return () => clearTimeout(timer);
+  }, [errorMsg]);
 
-  async function handleGoogleSignIn() {
+  // ─── Google Login ─────────────────────────────────────
+  const handleGoogleSignIn = useCallback(async () => {
     if (anyLoading) return;
 
     setGoogleLoading(true);
@@ -64,11 +73,10 @@ export default function LoginScreen() {
     } finally {
       setGoogleLoading(false);
     }
-  }
+  }, [signInGoogle, anyLoading]);
 
   // ─── Apple Login ─────────────────────────────────────
-
-  async function handleAppleSignIn() {
+  const handleAppleSignIn = useCallback(async () => {
     if (anyLoading) return;
 
     setAppleLoading(true);
@@ -86,21 +94,21 @@ export default function LoginScreen() {
     } finally {
       setAppleLoading(false);
     }
-  }
+  }, [signInApple, anyLoading]);
 
   return (
-    <ImageBackground
-      source={loginBg}
-      style={styles.container}
-      resizeMode="cover"
-      blurRadius={6}
-    >
-      {/* Base dark overlay */}
-      <View style={styles.overlay} pointerEvents="none" />
-      {/* Extra vignette at bottom for button readability */}
-      <View style={styles.overlayBottom} pointerEvents="none" />
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+      <ImageBackground
+        source={loginBg}
+        style={styles.container}
+        resizeMode="cover"
+        blurRadius={6}
+      >
+        {/* Base dark overlay */}
+        <View style={styles.overlay} pointerEvents="none" />
+        {/* Extra vignette at bottom for button readability */}
+        <View style={styles.overlayBottom} pointerEvents="none" />
 
-      <SafeAreaView style={styles.safe}>
         <View style={{ flex: 1 }} />
 
         {/* Branding */}
@@ -120,13 +128,11 @@ export default function LoginScreen() {
           entering={FadeInDown.delay(260).springify()}
           style={styles.pillRow}
         >
-          {["⛽ Fuel", "🛣️ Tolls", "🔧 Repairs", "📎 Receipts"].map(
-            (label) => (
-              <View key={label} style={styles.pill}>
-                <Text style={styles.pillText}>{label}</Text>
-              </View>
-            )
-          )}
+          {FEATURE_PILLS.map((label) => (
+            <View key={label} style={styles.pill}>
+              <Text style={styles.pillText}>{label}</Text>
+            </View>
+          ))}
         </Animated.View>
 
         <View style={{ flex: 1.2 }} />
@@ -180,15 +186,23 @@ export default function LoginScreen() {
             <Text style={styles.legalLink}>Privacy Policy</Text>
           </Text>
         </Animated.View>
-      </SafeAreaView>
-    </ImageBackground>
+
+        <View style={styles.safeBottom} />
+      </ImageBackground>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.xl,
   },
 
   overlay: {
@@ -203,11 +217,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: "50%",
     backgroundColor: "rgba(11, 18, 32, 0.72)",
-  },
-
-  safe: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
   },
 
   brandSection: {
@@ -302,5 +311,9 @@ const styles = StyleSheet.create({
   legalLink: {
     color: Colors.accent,
     textDecorationLine: "underline",
+  },
+
+  safeBottom: {
+    height: Spacing.md,
   },
 });
