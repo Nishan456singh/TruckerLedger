@@ -5,7 +5,9 @@ import {
     Colors,
     FontSize,
     FontWeight,
-    Spacing
+    Spacing,
+    Shadow,
+    TypographyScale
 } from "@/constants/theme";
 import { getBOLHistory, getBOLsByBroker, getBOLsByLocation, searchBOLs } from "@/lib/bolService";
 import type { BOLRecord } from "@/lib/types";
@@ -130,11 +132,12 @@ export default function BOLHistoryScreen() {
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={Colors.primary} />
+          <ActivityIndicator color={Colors.primary} size="large" />
           <Text style={styles.loadingText}>Loading BOL history...</Text>
         </View>
       ) : items.length === 0 ? (
         <View style={styles.emptyWrap}>
+          <Text style={styles.emptyIcon}>📋</Text>
           <Text style={styles.emptyTitle}>{searchQuery ? "No results found" : "No BOL records yet"}</Text>
           <Text style={styles.emptyText}>{searchQuery ? "Try different search terms" : "Scan your first BOL to build load history."}</Text>
         </View>
@@ -153,10 +156,14 @@ export default function BOLHistoryScreen() {
                 <Text style={styles.value}>{item.pickup_location || "-"}</Text>
               </View>
 
+              <View style={styles.divider} />
+
               <View style={styles.row}>
                 <Text style={styles.label}>📍 To</Text>
                 <Text style={styles.value}>{item.delivery_location || "-"}</Text>
               </View>
+
+              <View style={styles.divider} />
 
               <View style={styles.row}>
                 <Text style={styles.label}>🤝 Broker</Text>
@@ -195,14 +202,13 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   title: {
-    fontSize: FontSize.section,
+    ...TypographyScale.title,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
   },
   searchWrap: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.sm,
+    paddingBottom: Spacing.lg,
+    gap: Spacing.md,
   },
   searchContainer: {
     flexDirection: "row",
@@ -210,8 +216,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
     paddingHorizontal: Spacing.md,
+    ...Shadow.small,
   },
   searchIcon: {
     fontSize: FontSize.body,
@@ -220,12 +227,13 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     color: Colors.textPrimary,
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     paddingVertical: Spacing.md,
   },
   clearIcon: {
     fontSize: FontSize.body,
     color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
   },
   filterButtons: {
     flexDirection: "row",
@@ -233,99 +241,113 @@ const styles = StyleSheet.create({
   },
   filterBtn: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: Colors.surface,
   },
   filterBtnActive: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
   filterBtnText: {
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
   },
   filterBtnTextActive: {
     color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
   },
   loadingWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   loadingText: {
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontSize: FontSize.caption,
   },
   emptyWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.xs,
+    gap: Spacing.md,
     paddingHorizontal: Spacing.lg,
   },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: Spacing.sm,
+  },
   emptyTitle: {
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    textAlign: "center",
   },
   emptyText: {
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontSize: FontSize.caption,
     textAlign: "center",
+    lineHeight: 20,
   },
   content: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.md,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.lg,
   },
   resultCount: {
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontSize: FontSize.caption,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.xs,
+    fontWeight: FontWeight.medium,
   },
   card: {
-    gap: Spacing.sm,
+    gap: Spacing.md,
+    ...Shadow.card,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: Spacing.sm,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: Colors.borderLight,
   },
   cardDate: {
+    ...TypographyScale.small,
     color: Colors.textPrimary,
-    fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },
   cardAmount: {
+    ...TypographyScale.small,
     color: Colors.accent,
-    fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: Spacing.sm,
-    paddingVertical: 4,
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.borderTiny,
+    marginVertical: Spacing.xs,
   },
   label: {
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontSize: FontSize.caption,
+    fontWeight: FontWeight.medium,
   },
   value: {
+    ...TypographyScale.small,
     color: Colors.textPrimary,
-    fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
     flex: 1,
     textAlign: "right",

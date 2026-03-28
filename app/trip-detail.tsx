@@ -6,6 +6,8 @@ import {
     FontSize,
     FontWeight,
     Spacing,
+    Shadow,
+    TypographyScale,
 } from "@/constants/theme";
 import { deleteTrip, getTripById, updateTrip } from "@/lib/tripService";
 import type { Trip } from "@/lib/types";
@@ -282,7 +284,32 @@ export default function TripDetailScreen() {
             </>
           ) : (
             <>
+              {/* Hero Metrics Card */}
+              <View style={styles.heroCard}>
+                <Text style={styles.heroLabel}>Trip Profit</Text>
+                <Text
+                  style={[
+                    styles.heroValue,
+                    { color: trip.profit >= 0 ? Colors.primary : Colors.accent },
+                  ]}
+                >
+                  {formatCurrency(trip.profit)}
+                </Text>
+                <View style={styles.heroMeta}>
+                  <Text style={styles.heroMetaText}>
+                    {trip.date}
+                  </Text>
+                  <View style={styles.heroMetaDivider} />
+                  <Text style={styles.heroMetaText}>
+                    Income: {formatCurrency(trip.income)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Details Card */}
               <HighContrastCard style={styles.resultCard}>
+                <Text style={styles.sectionTitle}>Expenses Breakdown</Text>
+
                 <View style={styles.resultRow}>
                   <Text style={styles.resultLabel}>Date</Text>
                   <Text style={styles.resultValue}>{trip.date}</Text>
@@ -330,20 +357,6 @@ export default function TripDetailScreen() {
                   <Text style={styles.resultValue}>{formatCurrency(trip.total_expenses)}</Text>
                 </View>
 
-                <View style={styles.divider} />
-
-                <View style={styles.resultRow}>
-                  <Text style={styles.profitLabel}>Profit</Text>
-                  <Text
-                    style={[
-                      styles.profitValue,
-                      { color: trip.profit >= 0 ? Colors.accent : Colors.danger },
-                    ]}
-                  >
-                    {formatCurrency(trip.profit)}
-                  </Text>
-                </View>
-
                 {trip.note && (
                   <>
                     <View style={styles.divider} />
@@ -385,8 +398,9 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   content: {
-    padding: Spacing.xl,
-    gap: Spacing.md,
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+    gap: Spacing.xl,
   },
   centerWrap: {
     flex: 1,
@@ -399,13 +413,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.lg,
   },
   backBtn: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
   backText: {
     fontSize: 28,
@@ -413,15 +431,15 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   title: {
-    fontSize: FontSize.section,
+    ...TypographyScale.headline,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
     flex: 1,
     textAlign: "center",
   },
   editBtn: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.sm,
   },
   editBtnText: {
     color: Colors.primary,
@@ -433,21 +451,58 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: FontSize.body,
   },
+
+  /* Hero Metrics Card */
+  heroCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    ...Shadow.card,
+    marginBottom: Spacing.xl,
+    alignItems: "center",
+  },
+  heroLabel: {
+    ...TypographyScale.small,
+    color: Colors.textMuted,
+    marginBottom: Spacing.sm,
+  },
+  heroValue: {
+    ...TypographyScale.display,
+    color: Colors.primary,
+    fontWeight: '800' as const,
+    marginBottom: Spacing.md,
+  },
+  heroMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+  },
+  heroMetaText: {
+    ...TypographyScale.small,
+    color: Colors.textSecondary,
+  },
+  heroMetaDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: Colors.borderLight,
+  },
+
+  /* Form Fields */
   fieldWrap: {
     gap: Spacing.xs,
   },
   fieldLabel: {
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
   },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
     paddingHorizontal: Spacing.md,
   },
   inputPrefix: {
@@ -462,28 +517,39 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     fontWeight: FontWeight.semibold,
   },
+
+  /* Result Card */
   resultCard: {
-    marginTop: Spacing.sm,
-    gap: Spacing.sm,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.xl,
+    ...Shadow.card,
+    gap: Spacing.lg,
+  },
+  sectionTitle: {
+    ...TypographyScale.subtitle,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.md,
   },
   resultRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: Spacing.sm,
   },
   resultLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
   },
   resultValue: {
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
     fontWeight: FontWeight.bold,
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.xs,
+    backgroundColor: Colors.borderLight,
+    marginVertical: Spacing.md,
   },
   profitLabel: {
     fontSize: FontSize.section,
@@ -495,49 +561,52 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.extrabold,
   },
   noteLabel: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textSecondary,
-    fontWeight: FontWeight.semibold,
     marginBottom: Spacing.xs,
   },
   noteValue: {
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
   },
+
+  /* Action Buttons */
   saveBtn: {
-    marginTop: Spacing.md,
+    marginTop: Spacing.xl,
     backgroundColor: Colors.primary,
-    minHeight: 58,
-    borderRadius: BorderRadius.lg,
+    minHeight: 56,
+    borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
+    ...Shadow.button,
   },
   saveBtnText: {
-    color: Colors.background,
+    color: Colors.textPrimary,
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },
   deleteBtn: {
-    marginTop: Spacing.md,
-    backgroundColor: Colors.danger + "1F",
-    borderWidth: 1,
-    borderColor: Colors.danger + "55",
-    minHeight: 58,
-    borderRadius: BorderRadius.lg,
+    marginTop: Spacing.xl,
+    backgroundColor: Colors.accent + '14',
+    borderWidth: 1.5,
+    borderColor: Colors.accent + '40',
+    minHeight: 56,
+    borderRadius: BorderRadius.md,
     alignItems: "center",
     justifyContent: "center",
   },
   deleteBtnText: {
-    color: Colors.danger,
+    color: Colors.accent,
     fontSize: FontSize.body,
     fontWeight: FontWeight.bold,
   },
   primaryBtn: {
-    minHeight: 52,
-    borderRadius: BorderRadius.lg,
+    minHeight: 56,
+    borderRadius: BorderRadius.md,
     backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    ...Shadow.button,
   },
   primaryBtnText: {
     color: Colors.textPrimary,
