@@ -29,12 +29,10 @@ const APP_ROUTES = new Set([
   "expense-history",
   "fuel-stats",
   "history",
-  "modal",
   "monthly-report",
   "monthly-summary",
   "profile",
   "receipts",
-  "scan-bol",
   "scan-receipt",
   "trip-profit",
 ]);
@@ -205,12 +203,10 @@ function RootLayoutInner() {
         <Stack.Screen name="expense-history" />
         <Stack.Screen name="fuel-stats" />
         <Stack.Screen name="history" />
-        <Stack.Screen name="modal" />
         <Stack.Screen name="monthly-report" />
         <Stack.Screen name="monthly-summary" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="receipts" />
-        <Stack.Screen name="scan-bol" />
         <Stack.Screen name="scan-receipt" />
         <Stack.Screen name="trip-profit" />
 

@@ -1,22 +1,22 @@
 import ScreenBackground from "@/components/ScreenBackground";
 import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-  TypographyScale,
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
+    TypographyScale,
 } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
