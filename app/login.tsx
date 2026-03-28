@@ -17,7 +17,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Image,
-    ImageBackground,
     Platform,
     StyleSheet,
     Text,
@@ -30,9 +29,9 @@ import Animated, {
     FadeInUp,
 } from "react-native-reanimated";
 
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const loginBg = require("@/assets/images/login.png");
 const logo = require("@/assets/images/icon.png");
 
 const FEATURE_PILLS = ["⛽ Fuel", "🛣️ Tolls", "🔧 Repairs", "📎 Receipts"];
@@ -97,18 +96,13 @@ export default function LoginScreen() {
   }, [signInApple, anyLoading]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
-      <ImageBackground
-        source={loginBg}
-        style={styles.container}
-        resizeMode="cover"
-        blurRadius={6}
-      >
-        {/* Base dark overlay */}
-        <View style={styles.overlay} pointerEvents="none" />
-        {/* Extra vignette at bottom for button readability */}
-        <View style={styles.overlayBottom} pointerEvents="none" />
-
+    <LinearGradient
+      colors={["#6FA0C8", "#5A8FB5"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      <SafeAreaView style={styles.safe} edges={["bottom"]}>
         <View style={{ flex: 1 }} />
 
         {/* Branding */}
@@ -137,7 +131,7 @@ export default function LoginScreen() {
 
         <View style={{ flex: 1.2 }} />
 
-        {/* CTA */}
+        {/* CTA Card */}
         <Animated.View
           entering={FadeInUp.delay(360).springify()}
           style={styles.ctaCard}
@@ -188,35 +182,19 @@ export default function LoginScreen() {
         </Animated.View>
 
         <View style={styles.safeBottom} />
-      </ImageBackground>
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+  },
+
+  safe: {
+    flex: 1,
     paddingHorizontal: Spacing.xl,
-  },
-
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.overlay,
-  },
-
-  overlayBottom: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: "50%",
-    backgroundColor: "rgba(11, 18, 32, 0.72)",
   },
 
   brandSection: {
@@ -228,7 +206,7 @@ const styles = StyleSheet.create({
     padding: 3,
     borderRadius: BorderRadius.xxl + 4,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
 
   logoImage: {
@@ -239,7 +217,7 @@ const styles = StyleSheet.create({
 
   tagline: {
     fontSize: FontSize.body,
-    color: Colors.textPrimary,
+    color: Colors.textInverse,
     fontWeight: FontWeight.medium,
     letterSpacing: 0.4,
     textAlign: "center",
@@ -257,14 +235,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs + 2,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.cardStrong,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: "rgba(255, 255, 255, 0.25)",
   },
 
   pillText: {
     fontSize: FontSize.caption,
-    color: Colors.textPrimary,
+    color: Colors.textInverse,
     fontWeight: FontWeight.medium,
   },
 
@@ -273,10 +251,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
-    backgroundColor: Colors.cardStrong,
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
 
   errorBanner: {
