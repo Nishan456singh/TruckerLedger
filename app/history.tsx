@@ -23,7 +23,9 @@ import {
     Colors,
     FontSize,
     FontWeight,
-    Spacing
+    Spacing,
+    Shadow,
+    TypographyScale
 } from "@/constants/theme";
 import { getBOLHistory } from "@/lib/bolService";
 import { getAllExpenses } from "@/lib/expenseService";
@@ -211,7 +213,9 @@ export default function HistoryScreen() {
 
             {/* Centered Total Display */}
             <View style={styles.heroTotalCenter}>
-              <Text style={styles.heroTotalLabel}>Total {filterType === 'receipts' ? 'Receipts' : filterType === 'bols' ? 'BOLs' : 'Amount'}</Text>
+              <Text style={styles.heroTotalLabel}>
+                {filterType === 'receipts' ? 'Total Receipts' : filterType === 'bols' ? 'Total BOLs' : 'Total Amount'}
+              </Text>
               <Text style={styles.heroTotalValue}>{formatCurrency(totalAmount)}</Text>
               <Text style={styles.heroTotalEmoji}>{filterType === 'receipts' ? '🧾' : filterType === 'bols' ? '📄' : '📋'}</Text>
             </View>
@@ -363,24 +367,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
 
   heroTotalLabel: {
-    fontSize: FontSize.body,
-    color: "rgba(255, 255, 255, 0.7)",
-    fontWeight: FontWeight.medium,
+    fontSize: FontSize.caption,
+    color: "rgba(255, 255, 255, 0.85)",
+    fontWeight: FontWeight.semibold,
+    letterSpacing: 0.5,
   },
 
   heroTotalValue: {
-    fontSize: FontSize.hero,
+    fontSize: 52,
     fontWeight: FontWeight.extrabold,
     color: Colors.textInverse,
+    lineHeight: 56,
   },
 
   heroTotalEmoji: {
-    fontSize: FontSize.largeIcon,
-    marginTop: Spacing.sm,
+    fontSize: 44,
+    marginTop: Spacing.xs,
   },
 
   // ─── FLOATING CARD ──────────────────────────────────────────
@@ -392,13 +398,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 32,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   scrollContent: {
@@ -410,13 +410,14 @@ const styles = StyleSheet.create({
 
   searchSection: {
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
 
   // ─── FILTER SECTION ─────────────────────────────────────────
 
   filterSection: {
     paddingBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
 
   // ─── LIST CONTENT ───────────────────────────────────────────
@@ -428,24 +429,32 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: Spacing.md,
-    marginTop: Spacing.sm,
+    alignItems: "center",
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
+    marginTop: Spacing.md,
+    marginHorizontal: -Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
 
   sectionDate: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
-    color: Colors.textMuted,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: Colors.textPrimary,
   },
 
   sectionTotal: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.bold,
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.extrabold,
     color: Colors.accent,
   },
 
   itemWrapper: {
-    marginBottom: Spacing.sm,
+    marginVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
   },
 
   // ─── EMPTY STATE ────────────────────────────────────────────
@@ -453,12 +462,14 @@ const styles = StyleSheet.create({
   empty: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.xxl,
-    gap: Spacing.md,
+    paddingVertical: Spacing.xxxl,
+    gap: Spacing.lg,
+    marginTop: Spacing.xl,
   },
 
   emptyIcon: {
-    fontSize: 52,
+    fontSize: 64,
+    marginBottom: Spacing.md,
   },
 
   emptyTitle: {
@@ -472,5 +483,6 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     textAlign: "center",
     paddingHorizontal: Spacing.lg,
+    lineHeight: 22,
   },
 });

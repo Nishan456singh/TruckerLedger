@@ -1,4 +1,4 @@
-import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
 import { SCALE_VALUES, SPRING_CONFIGS } from '@/lib/animationUtils';
 import { pressHaptic } from '@/lib/hapticUtils';
 import React, { useCallback, useMemo } from 'react';
@@ -109,21 +109,23 @@ const styles = StyleSheet.create({
     flex: 1,
     borderWidth: 1.5,
     borderRadius: BorderRadius.lg,
+    minHeight: 56,
+    minWidth: 56,
     padding: Spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    minHeight: 100,
     overflow: 'hidden',
+    ...Shadow.card,
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.55,
   },
   icon: {
-    fontSize: FontSize.largeIcon,
+    fontSize: 28,
   },
   label: {
-    fontSize: FontSize.caption + 1,
+    fontSize: FontSize.small,
     fontWeight: FontWeight.semibold,
     color: Colors.textPrimary,
     textAlign: 'center',

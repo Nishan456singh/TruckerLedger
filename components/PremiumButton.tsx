@@ -10,9 +10,11 @@ import {
     ViewStyle,
 } from 'react-native';
 import Animated, {
+    Easing,
     useAnimatedStyle,
     useSharedValue,
     withSpring,
+    withTiming,
 } from 'react-native-reanimated';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
@@ -30,8 +32,16 @@ const VARIANT_STYLES: Record<ButtonVariant, { bg: string; text: string; shadowKe
 
 const SIZE_STYLES: Record<ButtonSize, { height: number; paddingH: number; fontSize: number }> = {
   small: { height: 40, paddingH: Spacing.md, fontSize: FontSize.caption },
-  medium: { height: 52, paddingH: Spacing.lg, fontSize: FontSize.body },
+  medium: { height: 56, paddingH: Spacing.lg, fontSize: FontSize.body },
   large: { height: 60, paddingH: Spacing.xl, fontSize: FontSize.body },
+};
+
+const LOADING_TEXT: Record<ButtonVariant, string> = {
+  primary: 'Processing...',
+  secondary: 'Loading...',
+  accent: 'Loading...',
+  danger: 'Deleting...',
+  outline: 'Loading...',
 };
 
 interface PremiumButtonProps {
@@ -58,6 +68,7 @@ export default function PremiumButton({
   fullWidth = false,
 }: PremiumButtonProps) {
   const scale = useSharedValue(1);
+  const shadowOpacity = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -65,11 +76,19 @@ export default function PremiumButton({
 
   const handlePressIn = useCallback(() => {
     scale.value = withSpring(SCALE_VALUES.press, SPRING_CONFIGS.standard);
-  }, [scale]);
+    shadowOpacity.value = withTiming(0.6, {
+      duration: 200,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [scale, shadowOpacity]);
 
   const handlePressOut = useCallback(() => {
     scale.value = withSpring(SCALE_VALUES.normal, SPRING_CONFIGS.standard);
-  }, [scale]);
+    shadowOpacity.value = withTiming(1, {
+      duration: 200,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [scale, shadowOpacity]);
 
   const handlePress = useCallback(() => {
     if (disabled || loading) return;
@@ -96,6 +115,11 @@ export default function PremiumButton({
     ];
   }, [variant, size, disabled, fullWidth, sizeStyle, variantStyle]);
 
+  const shadowStyle = useMemo(() => {
+    if (disabled || variant === 'outline') return {};
+    return { ...Shadow.medium };
+  }, [disabled, variant]);
+
   return (
     <Animated.View style={[animatedStyle, style]}>
       <TouchableOpacity
@@ -104,13 +128,24 @@ export default function PremiumButton({
         onPressOut={handlePressOut}
         activeOpacity={1}
         disabled={disabled || loading}
-        style={[
-          buttonStyle,
-          !disabled && (variant === 'outline' ? {} : Shadow[variantStyle.shadowKey]),
-        ]}
+        style={[buttonStyle, shadowStyle]}
       >
         {loading ? (
-          <ActivityIndicator color={variantStyle.text} size="small" />
+          <>
+            <ActivityIndicator color={variantStyle.text} size="small" />
+            <Text
+              style={[
+                styles.label,
+                styles.loadingText,
+                {
+                  fontSize: sizeStyle.fontSize,
+                  color: variantStyle.text,
+                },
+              ]}
+            >
+              {LOADING_TEXT[variant]}
+            </Text>
+          </>
         ) : (
           <>
             {icon && <Text style={styles.icon}>{icon}</Text>}
@@ -140,9 +175,10 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
     flexDirection: 'row',
     overflow: 'hidden',
+    paddingVertical: Spacing.md,
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.55,
   },
   icon: {
     fontSize: FontSize.body,
@@ -150,5 +186,8 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: FontWeight.bold,
     textAlign: 'center',
+  },
+  loadingText: {
+    opacity: 0.75,
   },
 });

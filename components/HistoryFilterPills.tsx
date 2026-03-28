@@ -102,8 +102,9 @@ const styles = StyleSheet.create({
   },
   pillsRow: {
     flexDirection: 'row',
-    gap: Spacing.md,
+    gap: Spacing.lg,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   pill: {
     paddingHorizontal: Spacing.lg,
@@ -119,14 +120,14 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   pillInactive: {
-    backgroundColor: Colors.cardAlt,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
+    backgroundColor: Colors.card,
+    borderColor: Colors.borderLight,
   },
   pillIcon: {
     fontSize: FontSize.body,
   },
   pillText: {
-    fontSize: FontSize.caption,
+    fontSize: FontSize.small,
     fontWeight: FontWeight.semibold,
   },
   pillTextActive: {

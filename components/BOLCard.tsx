@@ -76,7 +76,7 @@ export default function BOLCard({ bol, onPress }: BOLCardProps) {
         style={styles.card}
       >
         {/* Left: icon badge */}
-        <View style={[styles.iconBadge, { backgroundColor: '#E5F4FF' }]}>
+        <View style={[styles.iconBadge, { backgroundColor: '#2E7DFF33' }]}>
           <Text style={styles.icon}>📄</Text>
         </View>
 
@@ -108,12 +108,12 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    gap: Spacing.md,
+    gap: Spacing.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(0, 0, 0, 0.06)',
+    borderColor: Colors.borderLight,
     overflow: 'hidden',
     ...Shadow.card,
   },
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   icon: {
-    fontSize: 22,
+    fontSize: 24,
   },
   info: {
     flex: 1,
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
   },
   location: {
     fontSize: FontSize.caption,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
     flex: 1,
   },
   arrow: {
@@ -154,11 +154,11 @@ const styles = StyleSheet.create({
   },
   right: {
     alignItems: 'flex-end',
-    gap: 3,
+    gap: Spacing.xs,
     flexShrink: 0,
   },
   amount: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.subsection,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },

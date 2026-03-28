@@ -1,4 +1,4 @@
-import { BorderRadius, Colors, FontSize, Spacing } from '@/constants/theme';
+import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import React, { useCallback } from 'react';
 import {
     StyleSheet,
@@ -55,19 +55,20 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   input: {
-    backgroundColor: Colors.cardAlt,
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
     fontSize: FontSize.body,
     color: Colors.textPrimary,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
     paddingRight: 40,
+    fontWeight: FontWeight.medium,
   },
   clearButton: {
     position: 'absolute',
-    right: Spacing.md,
+    right: Spacing.lg,
     top: 0,
     bottom: 0,
     justifyContent: 'center',
@@ -77,6 +78,6 @@ const styles = StyleSheet.create({
   clearIcon: {
     fontSize: FontSize.body,
     color: Colors.textMuted,
-    fontWeight: '600',
+    fontWeight: FontWeight.bold,
   },
 });

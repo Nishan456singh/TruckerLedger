@@ -2,6 +2,7 @@ import {
     BorderRadius,
     CategoryMeta,
     Colors,
+    ColorUtilities,
     FontSize,
     FontWeight,
     Shadow,
@@ -59,6 +60,20 @@ export default function ExpenseCard({ expense, onPress }: ExpenseCardProps) {
     transform: [{ scale: scale.value }],
   }));
 
+  // Generate icon badge background with proper opacity
+  const iconBadgeBackground =
+    meta.color === Colors.fuel
+      ? '#FF8C4233'
+      : meta.color === Colors.toll
+        ? '#2E7DFF33'
+        : meta.color === Colors.parking
+          ? '#A78BFA33'
+          : meta.color === Colors.food
+            ? '#00D09E33'
+            : meta.color === Colors.repair
+              ? '#C3224E33'
+              : '#8A8A8A33';
+
   return (
     <Animated.View style={animStyle}>
       <TouchableOpacity
@@ -73,7 +88,7 @@ export default function ExpenseCard({ expense, onPress }: ExpenseCardProps) {
         style={styles.card}
       >
         {/* Left: icon badge */}
-        <View style={[styles.iconBadge, { backgroundColor: meta.color + '20' }]}>
+        <View style={[styles.iconBadge, { backgroundColor: iconBadgeBackground }]}>
           <Text style={styles.icon}>{meta.icon}</Text>
         </View>
 
@@ -108,12 +123,12 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: "rgba(0, 0, 0, 0.02)",
+    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    gap: Spacing.md,
+    gap: Spacing.lg,
     borderWidth: 1.5,
-    borderColor: "rgba(0, 0, 0, 0.06)",
+    borderColor: Colors.borderLight,
     overflow: 'hidden',
     ...Shadow.card,
   },
@@ -126,11 +141,11 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   icon: {
-    fontSize: 22,
+    fontSize: 24,
   },
   info: {
     flex: 1,
-    gap: 3,
+    gap: Spacing.xs,
   },
   category: {
     fontSize: FontSize.body,
@@ -139,15 +154,15 @@ const styles = StyleSheet.create({
   },
   note: {
     fontSize: FontSize.caption,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
   right: {
     alignItems: 'flex-end',
-    gap: 3,
+    gap: Spacing.xs,
     flexShrink: 0,
   },
   amount: {
-    fontSize: FontSize.body,
+    fontSize: FontSize.subsection,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
@@ -156,6 +171,6 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
   receiptBadge: {
-    fontSize: 12,
+    fontSize: FontSize.small,
   },
 });

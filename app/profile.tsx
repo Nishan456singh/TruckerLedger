@@ -5,7 +5,9 @@ import {
     Colors,
     FontSize,
     FontWeight,
-    Spacing
+    Shadow,
+    Spacing,
+    TypographyScale
 } from "@/constants/theme";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { exportBOLs } from "@/lib/bolService";
@@ -458,38 +460,40 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
 
   heroAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    borderWidth: 4,
+    borderColor: "rgba(255, 255, 255, 0.4)",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
 
   heroAvatarFallback: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderWidth: 3,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    borderWidth: 4,
+    borderColor: "rgba(255, 255, 255, 0.4)",
     alignItems: "center",
     justifyContent: "center",
   },
 
   heroAvatarFallbackText: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
-  },
-
-  heroUserName: {
     fontSize: FontSize.title,
     fontWeight: FontWeight.extrabold,
     color: Colors.textInverse,
+    letterSpacing: 0.5,
+  },
+
+  heroUserName: {
+    ...TypographyScale.headline,
+    color: Colors.textInverse,
+    letterSpacing: 0.3,
   },
 
   heroUserSubtitle: {
@@ -507,13 +511,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 32,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   cardContent: {
@@ -524,19 +522,20 @@ const styles = StyleSheet.create({
   },
 
   cardSectionTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.title,
     color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
+    marginTop: Spacing.md,
   },
 
   // ─── STATS SECTION ───────────────────────────────────────────
 
   statsBlock: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     padding: 0,
     overflow: "hidden",
+    ...Shadow.card,
   },
 
   statRow: {
@@ -544,19 +543,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
   },
 
   statLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.small,
     color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
   },
 
   statValue: {
-    fontSize: FontSize.body,
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.semibold,
   },
 
   statDivider: {
@@ -575,32 +572,34 @@ const styles = StyleSheet.create({
   toolButton: {
     width: "48%",
     alignItems: "center",
-    gap: Spacing.sm,
-    backgroundColor: Colors.surface,
+    gap: Spacing.md,
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
-    paddingVertical: Spacing.lg,
+    borderColor: Colors.borderLight,
+    paddingVertical: Spacing.xl,
+    paddingHorizontal: Spacing.md,
+    ...Shadow.small,
   },
 
   toolIcon: {
-    fontSize: 28,
+    fontSize: 36,
   },
 
   toolLabel: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.semibold,
     textAlign: "center",
   },
 
   // ─── ACCOUNT SECTION ────────────────────────────────────────
 
   accountBlock: {
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     padding: 0,
     overflow: "hidden",
+    ...Shadow.card,
   },
 
   accountRow: {
@@ -608,19 +607,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
   },
 
   accountLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.small,
     color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
   },
 
   accountValue: {
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.semibold,
     maxWidth: "50%",
     textAlign: "right",
   },
@@ -636,30 +633,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
+    paddingVertical: Spacing.lg,
+    ...Shadow.small,
   },
 
   settingsIcon: {
-    fontSize: 22,
+    fontSize: 26,
   },
 
   settingsLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.semibold,
   },
 
   // ─── FOOTER ──────────────────────────────────────────────────
 
   cardFooter: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.xl,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
+    gap: Spacing.md,
   },
 });
