@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.45,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.xl + Spacing.lg,
     paddingBottom: Spacing.md,
     justifyContent: "space-between",
   },
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
 
   cardContent: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.xl + Spacing.lg,
     paddingBottom: Spacing.md,
     gap: Spacing.lg,
   },

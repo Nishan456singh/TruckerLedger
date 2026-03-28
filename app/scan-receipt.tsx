@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.35,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.xl + Spacing.lg,
     paddingBottom: Spacing.md,
     justifyContent: "space-between",
   },
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   detailsHeroSection: {
     flex: 0.30,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.xl + Spacing.lg,
     paddingBottom: Spacing.md,
     justifyContent: "center",
   },
