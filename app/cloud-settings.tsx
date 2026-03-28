@@ -118,7 +118,7 @@ export default function CloudSettingsScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
         <Animated.View entering={FadeInDown} style={styles.header}>

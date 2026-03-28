@@ -84,7 +84,7 @@ export default function MonthlySummaryScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe} edges={["top"]}>
+    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
       <Animated.View entering={FadeInDown.springify()} style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>‹</Text>

@@ -14,13 +14,14 @@ export default function TabsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          animationEnabled: false,
+          animation: "none",
         }}
       />
+
       <Stack.Screen
         name="explore"
         options={{
-          animationEnabled: false,
+          animation: "none",
         }}
       />
     </Stack>

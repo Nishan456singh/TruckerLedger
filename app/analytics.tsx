@@ -175,7 +175,7 @@ export default function AnalyticsScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={

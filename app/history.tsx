@@ -31,8 +31,8 @@ import { formatCurrency } from "@/lib/formatUtils";
 import type { BOLRecord, Expense } from "@/lib/types";
 
 type HistoryItem =
-  | { type: 'expense'; id: string; date: string; data: Expense }
-  | { type: 'bol'; id: string; date: string; data: BOLRecord };
+  | { type: 'expense'; id: number; date: string; data: Expense }
+  | { type: 'bol'; id: number; date: string; data: BOLRecord };
 
 interface Section {
   title: string;
