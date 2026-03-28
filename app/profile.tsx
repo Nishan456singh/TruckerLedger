@@ -424,8 +424,8 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.45,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl + Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
     justifyContent: "space-between",
   },
 

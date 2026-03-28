@@ -288,7 +288,7 @@ export default function ScanReceiptScreen() {
                     <View>
                       <Text style={styles.detailsFieldLabel}>📝 Note (Optional)</Text>
                       <TextInput
-                        style={[styles.detailsInput, { height: 70, paddingTop: Spacing.xl + Spacing.md, textAlignVertical: "top" }]}
+                        style={[styles.detailsInput, { height: 70, paddingTop: Spacing.xl, textAlignVertical: "top" }]}
                         value={note}
                         onChangeText={setNote}
                         placeholder="Optional note"
@@ -419,8 +419,8 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.35,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl + Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
     justifyContent: "space-between",
   },
 
@@ -523,8 +523,8 @@ const styles = StyleSheet.create({
   detailsHeroSection: {
     flex: 0.30,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl + Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
     justifyContent: "center",
   },
 

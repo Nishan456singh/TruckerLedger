@@ -443,7 +443,7 @@ export default function ExpenseDetailScreen() {
                   <View>
                     <Text style={styles.editFieldLabel}>📝 Note (Optional)</Text>
                     <TextInput
-                      style={[styles.editInput, { height: 80, paddingTop: Spacing.xl + Spacing.md, textAlignVertical: "top" }]}
+                      style={[styles.editInput, { height: 80, paddingTop: Spacing.xl, textAlignVertical: "top" }]}
                       value={note}
                       onChangeText={setNote}
                       placeholder="Add notes about this expense"
@@ -504,8 +504,8 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.5,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl + Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
     justifyContent: "space-between",
   },
 
@@ -664,8 +664,8 @@ const styles = StyleSheet.create({
   editHeroSection: {
     flex: 0.35,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xl + Spacing.md,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xl,
+    paddingBottom: Spacing.md,
     justifyContent: "space-between",
   },
 
