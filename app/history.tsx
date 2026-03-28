@@ -23,9 +23,8 @@ import {
     Colors,
     FontSize,
     FontWeight,
-    Spacing,
     Shadow,
-    TypographyScale
+    Spacing
 } from "@/constants/theme";
 import { getBOLHistory } from "@/lib/bolService";
 import { getAllExpenses } from "@/lib/expenseService";

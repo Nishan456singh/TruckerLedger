@@ -2,12 +2,11 @@ import {
     BorderRadius,
     CategoryMeta,
     Colors,
-    ColorUtilities,
     FontSize,
     FontWeight,
     Shadow,
     Spacing,
-    type Category,
+    type Category
 } from '@/constants/theme';
 import type { Expense } from '@/lib/types';
 import React from 'react';

@@ -5,11 +5,14 @@ import {
     Colors,
     FontSize,
     FontWeight,
-    Spacing
+    Shadow,
+    Spacing,
+    TypographyScale
 } from "@/constants/theme";
 import { calculateTripProfit, createTrip } from "@/lib/tripService";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
     Alert,
     KeyboardAvoidingView,
@@ -21,12 +24,11 @@ import {
     TouchableOpacity,
     View
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
     FadeInDown,
     FadeInUp,
 } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function parseAmount(value: string): number {
   if (!value.trim()) return 0;
@@ -98,6 +100,11 @@ export default function TripProfitScreen() {
   const profitColor = profit >= 0 ? Colors.primary : Colors.danger;
   const profitEmoji = profit >= 0 ? "📈" : "📉";
 
+  const heroHint = useMemo(
+    () => profit >= 0 ? "✓ Profitable trip" : "⚠ Adjust expenses",
+    [profit]
+  );
+
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
@@ -121,10 +128,11 @@ export default function TripProfitScreen() {
                 <TouchableOpacity
                   onPress={() => router.back()}
                   style={styles.heroBackBtn}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.heroBackText}>✕</Text>
                 </TouchableOpacity>
-                <Text style={styles.heroTitle}>Trip Profit</Text>
+                <Text style={styles.heroTitle}>Trip Profit Calculator</Text>
                 <View style={{ width: 40 }} />
               </View>
 
@@ -137,6 +145,7 @@ export default function TripProfitScreen() {
                   </Text>
                 </View>
                 <Text style={styles.heroProfitEmoji}>{profitEmoji}</Text>
+                <Text style={styles.heroHint}>{heroHint}</Text>
               </View>
 
               {/* Metric Pills */}
@@ -188,6 +197,7 @@ export default function TripProfitScreen() {
                   {/* Trip Expenses */}
                   <Animated.View entering={FadeInDown.delay(50)}>
                     <Text style={styles.cardSectionTitle}>💸 Trip Expenses</Text>
+                    <Text style={styles.expenseGridDescription}>Track all your trip costs</Text>
                     <View style={styles.expenseGrid}>
                       <View style={styles.expenseField}>
                         <View style={styles.expenseLabelRow}>
@@ -302,10 +312,43 @@ export default function TripProfitScreen() {
                   {/* Summary */}
                   {parsed.income > 0 && (
                     <Animated.View entering={FadeInDown.delay(100)} style={styles.summarySection}>
-                      <Text style={styles.summaryTitle}>Summary</Text>
+                      <Text style={styles.summaryTitle}>Trip Summary</Text>
+
                       <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Total Expenses</Text>
-                        <Text style={styles.summaryValue}>{formatCurrency(totalExpenses)}</Text>
+                        <View style={styles.summaryLabel}>
+                          <Text style={styles.summaryIcon}>💰</Text>
+                          <View>
+                            <Text style={styles.summaryRowLabel}>Total Income</Text>
+                            <Text style={styles.summaryRowHint}>All loads</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.summaryRowValue}>{formatCurrency(parsed.income)}</Text>
+                      </View>
+
+                      <View style={styles.divider} />
+
+                      <View style={styles.summaryRow}>
+                        <View style={styles.summaryLabel}>
+                          <Text style={styles.summaryIcon}>💸</Text>
+                          <View>
+                            <Text style={styles.summaryRowLabel}>Total Expenses</Text>
+                            <Text style={styles.summaryRowHint}>All costs</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.summaryRowValue}>{formatCurrency(totalExpenses)}</Text>
+                      </View>
+
+                      <View style={styles.divider} />
+
+                      <View style={[styles.summaryRow, styles.summaryRowHighlight]}>
+                        <View style={styles.summaryLabel}>
+                          <Text style={styles.summaryIcon}>📊</Text>
+                          <View>
+                            <Text style={styles.summaryRowLabel}>Net Profit</Text>
+                            <Text style={styles.summaryRowHint}>Bottom line</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.summaryRowValueHighlight}>{formatCurrency(profit)}</Text>
                       </View>
                     </Animated.View>
                   )}
@@ -379,8 +422,7 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
   },
 
@@ -392,9 +434,15 @@ const styles = StyleSheet.create({
   },
 
   heroProfitLabel: {
-    fontSize: FontSize.body,
-    color: "rgba(17, 17, 17, 0.6)",
-    fontWeight: FontWeight.medium,
+    ...TypographyScale.caption,
+    color: "rgba(17, 17, 17, 0.65)",
+  },
+
+  heroHint: {
+    fontSize: FontSize.caption,
+    color: "rgba(17, 17, 17, 0.7)",
+    fontWeight: FontWeight.semibold,
+    marginTop: Spacing.sm,
   },
 
   heroProfitDisplay: {
@@ -404,8 +452,7 @@ const styles = StyleSheet.create({
   },
 
   heroProfitValue: {
-    fontSize: FontSize.hero,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.display,
   },
 
   heroProfitEmoji: {
@@ -450,15 +497,9 @@ const styles = StyleSheet.create({
     marginTop: -Spacing.lg,
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.card,
-    borderRadius: 32,
+    borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   cardContent: {
@@ -469,9 +510,15 @@ const styles = StyleSheet.create({
   },
 
   cardSectionTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
+    marginBottom: Spacing.md,
+  },
+
+  expenseGridDescription: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
     marginBottom: Spacing.md,
   },
 
@@ -483,8 +530,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
     paddingHorizontal: Spacing.md,
+    ...Shadow.small,
   },
 
   inputPrefix: {
@@ -509,7 +557,7 @@ const styles = StyleSheet.create({
   },
 
   expenseField: {
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
 
   expenseLabelRow: {
@@ -523,7 +571,7 @@ const styles = StyleSheet.create({
   },
 
   expenseLabel: {
-    color: Colors.textMuted,
+    color: Colors.textPrimary,
     fontSize: FontSize.caption,
     fontWeight: FontWeight.semibold,
   },
@@ -531,37 +579,74 @@ const styles = StyleSheet.create({
   // ─── SUMMARY ─────────────────────────────────────────────────
 
   summarySection: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
+    ...Shadow.small,
   },
 
   summaryTitle: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
 
   summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
   },
 
   summaryLabel: {
-    fontSize: FontSize.body,
-    color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    flex: 1,
   },
 
-  summaryValue: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+  summaryIcon: {
+    fontSize: 24,
+  },
+
+  summaryRowLabel: {
+    ...TypographyScale.body,
     color: Colors.textPrimary,
+  },
+
+  summaryRowHint: {
+    fontSize: FontSize.caption,
+    color: Colors.textMuted,
+    fontWeight: FontWeight.medium,
+    marginTop: Spacing.xs,
+  },
+
+  summaryRowValue: {
+    ...TypographyScale.body,
+    color: Colors.textPrimary,
+  },
+
+  summaryRowValueHighlight: {
+    ...TypographyScale.body,
+    color: Colors.primary,
+  },
+
+  summaryRowHighlight: {
+    backgroundColor: "rgba(244, 194, 27, 0.05)",
+    marginHorizontal: -Spacing.lg,
+    paddingHorizontal: Spacing.lg,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderTopColor: Colors.borderLight,
+    borderBottomColor: Colors.borderLight,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
+    marginVertical: 0,
   },
 
   // ─── FOOTER ──────────────────────────────────────────────────

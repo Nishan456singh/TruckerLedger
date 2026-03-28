@@ -5,7 +5,9 @@ import {
     Colors,
     FontSize,
     FontWeight,
+    Shadow,
     Spacing,
+    TypographyScale,
     type Category,
 } from "@/constants/theme";
 import {
@@ -14,6 +16,7 @@ import {
     getMonthlyTotal,
     getReceiptCount,
 } from "@/lib/expenseService";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -25,11 +28,10 @@ import {
     View,
     type DimensionValue,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Animated, {
     FadeInDown,
 } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const CATEGORY_ORDER: Category[] = [
   "fuel",
@@ -311,8 +313,7 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.headline,
     color: Colors.textInverse,
   },
 
@@ -328,15 +329,14 @@ const styles = StyleSheet.create({
   },
 
   heroMonthTitle: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.bold,
+    ...TypographyScale.display,
     color: Colors.textInverse,
+    marginVertical: Spacing.xs,
   },
 
   heroMonthSubtitle: {
-    fontSize: FontSize.body,
-    color: "rgba(255, 255, 255, 0.7)",
-    fontWeight: FontWeight.medium,
+    ...TypographyScale.body,
+    color: "rgba(255, 255, 255, 0.85)",
   },
 
   monthNav: {
@@ -377,13 +377,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: 32,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   cardContent: {
@@ -394,8 +388,7 @@ const styles = StyleSheet.create({
   },
 
   cardSectionTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.extrabold,
+    ...TypographyScale.title,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
@@ -403,18 +396,20 @@ const styles = StyleSheet.create({
   // ─── BREAKDOWN ───────────────────────────────────────────────
 
   breakdownContent: {
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
 
   rowBlock: {
-    gap: Spacing.xs,
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
   },
 
   rowHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.xs,
   },
 
   rowLabelWrap: {
@@ -428,15 +423,13 @@ const styles = StyleSheet.create({
   },
 
   rowLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.semibold,
   },
 
   rowAmount: {
-    fontSize: FontSize.body,
-    color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
+    ...TypographyScale.body,
+    color: Colors.primary,
   },
 
   barTrack: {
@@ -453,27 +446,25 @@ const styles = StyleSheet.create({
 
   totalDivider: {
     height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: Spacing.md,
+    backgroundColor: Colors.borderLight,
+    marginVertical: Spacing.lg,
   },
 
   totalRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
   },
 
   totalLabel: {
-    fontSize: FontSize.body,
+    ...TypographyScale.body,
     color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
   },
 
   totalValue: {
-    fontSize: FontSize.section + 2,
+    ...TypographyScale.display,
     color: Colors.primary,
-    fontWeight: FontWeight.extrabold,
   },
 
   // ─── STATS ──────────────────────────────────────────────────
@@ -490,24 +481,24 @@ const styles = StyleSheet.create({
   statBlock: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.lg,
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderLight,
+    ...Shadow.small,
   },
 
   statBlockLabel: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.small,
     color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
   },
 
   statBlockValue: {
-    fontSize: FontSize.section,
+    ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.extrabold,
   },
 
   // ─── LOADING ─────────────────────────────────────────────────

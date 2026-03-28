@@ -1,17 +1,17 @@
+import {
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Spacing,
+} from '@/constants/theme';
 import React from 'react';
 import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
-import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Spacing,
-} from '@/constants/theme';
 
 interface PremiumEmptyStateProps {
   icon?: string;           // emoji like "📭"

@@ -3,9 +3,10 @@ import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
-    FontSize,
     FontWeight,
+    Shadow,
     Spacing,
+    TypographyScale,
 } from "@/constants/theme";
 import { addExpense } from "@/lib/expenseService";
 import { extractReceiptText } from "@/lib/receipt/ocrService";
@@ -383,7 +384,7 @@ export default function ScanReceiptScreen() {
                   onPress={handleCapture}
                   loading={isCapturing}
                   disabled={isCapturing}
-                  size="large"
+                  size="lg"
                   fullWidth
                 />
               </Animated.View>
@@ -444,8 +445,9 @@ const styles = StyleSheet.create({
   },
 
   heroTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    fontSize: TypographyScale.title.fontSize,
+    lineHeight: TypographyScale.title.lineHeight,
+    fontWeight: TypographyScale.title.fontWeight,
     color: Colors.textInverse,
   },
 
@@ -453,22 +455,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
 
   heroEmoji: {
-    fontSize: FontSize.hero,
+    fontSize: 56,
+    marginBottom: Spacing.sm,
   },
 
   heroMessage: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
+    fontSize: TypographyScale.subtitle.fontSize,
+    lineHeight: TypographyScale.subtitle.lineHeight,
+    fontWeight: TypographyScale.subtitle.fontWeight,
     color: Colors.textInverse,
   },
 
   heroSubMessage: {
-    fontSize: FontSize.caption,
-    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: TypographyScale.small.fontSize,
+    lineHeight: TypographyScale.small.lineHeight,
+    fontWeight: TypographyScale.small.fontWeight,
+    color: "rgba(255, 255, 255, 0.8)",
   },
 
   // ─── CAMERA VIEW: CAMERA CARD ───────────────────────────────────────
@@ -478,25 +484,19 @@ const styles = StyleSheet.create({
     marginTop: -Spacing.lg,
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.card,
-    borderRadius: 32,
+    borderRadius: BorderRadius.lg,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   cameraWrap: {
     flex: 1,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.md,
     overflow: "hidden",
     margin: Spacing.lg,
     backgroundColor: Colors.surface,
-    borderWidth: 2,
-    borderColor: Colors.accent + "30",
+    borderWidth: 2.5,
+    borderColor: Colors.accent + "40",
   },
 
   camera: {
@@ -508,13 +508,14 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
     gap: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
   },
 
   captureHint: {
-    fontSize: FontSize.caption,
+    fontSize: TypographyScale.small.fontSize,
+    lineHeight: TypographyScale.small.lineHeight,
+    fontWeight: TypographyScale.small.fontWeight,
     color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
     textAlign: "center",
   },
 
@@ -541,8 +542,9 @@ const styles = StyleSheet.create({
   },
 
   detailsHeroTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
+    fontSize: TypographyScale.title.fontSize,
+    lineHeight: TypographyScale.title.lineHeight,
+    fontWeight: TypographyScale.title.fontWeight,
     color: Colors.textInverse,
   },
 
@@ -553,15 +555,9 @@ const styles = StyleSheet.create({
     marginTop: -Spacing.lg,
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.card,
-    borderRadius: 32,
+    borderRadius: BorderRadius.lg,
     overflow: "hidden",
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 8 },
-      shadowOpacity: 0.15,
-      shadowRadius: 16,
-      elevation: 10,
-    },
+    ...Shadow.large,
   },
 
   detailsCardContent: {
@@ -574,25 +570,26 @@ const styles = StyleSheet.create({
   statusCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: Spacing.sm,
-    backgroundColor: Colors.accent + "10",
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.accent + "30",
+    gap: Spacing.md,
+    backgroundColor: Colors.accent + "12",
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+    borderColor: Colors.accent + "35",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
   },
 
   statusText: {
     color: Colors.accent,
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    fontSize: TypographyScale.small.fontSize,
+    lineHeight: TypographyScale.small.lineHeight,
+    fontWeight: TypographyScale.small.fontWeight,
   },
 
   warningCard: {
-    backgroundColor: Colors.warning + "15",
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    backgroundColor: Colors.warning + "18",
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
     borderColor: Colors.warning + "50",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
@@ -600,13 +597,15 @@ const styles = StyleSheet.create({
 
   warningText: {
     color: Colors.warning,
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    fontSize: TypographyScale.small.fontSize,
+    lineHeight: TypographyScale.small.lineHeight,
+    fontWeight: TypographyScale.small.fontWeight,
   },
 
   detailsFieldLabel: {
-    fontSize: FontSize.caption,
-    fontWeight: FontWeight.semibold,
+    fontSize: TypographyScale.small.fontSize,
+    lineHeight: TypographyScale.small.lineHeight,
+    fontWeight: TypographyScale.small.fontWeight,
     color: Colors.textMuted,
     marginBottom: Spacing.sm,
   },
@@ -615,21 +614,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     paddingHorizontal: Spacing.md,
   },
 
   detailsCurrencySign: {
-    fontSize: FontSize.title,
-    color: Colors.textMuted,
+    fontSize: TypographyScale.headline.fontSize,
+    lineHeight: TypographyScale.headline.lineHeight,
+    fontWeight: TypographyScale.headline.fontWeight,
+    color: Colors.accent,
     marginRight: Spacing.xs,
   },
 
   detailsInput: {
     flex: 1,
-    fontSize: FontSize.body,
+    fontSize: TypographyScale.body.fontSize,
+    lineHeight: TypographyScale.body.lineHeight,
+    fontWeight: TypographyScale.body.fontWeight,
     color: Colors.textPrimary,
     paddingVertical: Spacing.md,
   },
@@ -637,34 +640,37 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
+    gap: Spacing.md,
+    marginBottom: Spacing.sm,
   },
 
   categoryBtn: {
     width: "31%",
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     alignItems: "center",
     gap: Spacing.xs,
     backgroundColor: Colors.surface,
+    ...Shadow.small,
   },
 
   categoryBtnActive: {
-    backgroundColor: Colors.accent + "20",
-    borderColor: Colors.accent,
+    backgroundColor: Colors.accent + "18",
+    borderColor: Colors.accent + "60",
+    ...Shadow.card,
   },
 
   categoryEmoji: {
-    fontSize: 20,
+    fontSize: 22,
   },
 
   categoryName: {
-    fontSize: FontSize.tiny,
+    fontSize: TypographyScale.caption.fontSize,
+    lineHeight: TypographyScale.caption.lineHeight,
+    fontWeight: TypographyScale.caption.fontWeight,
     color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
   },
 
   fieldsBlock: {
@@ -676,49 +682,57 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
     gap: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    borderTopColor: Colors.borderLight,
   },
 
   detailsCancelBtn: {
     paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
     borderColor: Colors.border,
     alignItems: "center",
+    backgroundColor: Colors.surface,
+    ...Shadow.small,
   },
 
   detailsCancelBtnText: {
-    fontSize: FontSize.body,
+    fontSize: TypographyScale.body.fontSize,
+    lineHeight: TypographyScale.body.lineHeight,
+    fontWeight: TypographyScale.body.fontWeight,
     color: Colors.textMuted,
-    fontWeight: FontWeight.semibold,
   },
 
   // ─── PERMISSION SCREENS ─────────────────────────────────────────────
 
   title: {
-    fontSize: FontSize.section,
+    fontSize: TypographyScale.title.fontSize,
+    lineHeight: TypographyScale.title.lineHeight,
+    fontWeight: TypographyScale.title.fontWeight,
     color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
   },
 
   helperText: {
     color: Colors.textSecondary,
     textAlign: "center",
-    fontSize: FontSize.body,
+    fontSize: TypographyScale.body.fontSize,
+    lineHeight: TypographyScale.body.lineHeight,
+    fontWeight: TypographyScale.body.fontWeight,
   },
 
   primaryBtn: {
     minHeight: 52,
-    borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.accent,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: Spacing.xl,
+    ...Shadow.button,
   },
 
   primaryBtnText: {
     color: Colors.background,
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
+    fontSize: TypographyScale.body.fontSize,
+    lineHeight: TypographyScale.body.lineHeight,
+    fontWeight: TypographyScale.body.fontWeight,
   },
 });
