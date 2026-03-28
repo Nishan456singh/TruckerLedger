@@ -211,7 +211,7 @@ export default function ExpenseHistoryScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <View style={styles.container}>
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* HERO SECTION (50% - Red/Expense themed)                        */}
@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.5,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xl + Spacing.md,
     paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },

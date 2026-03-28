@@ -79,7 +79,7 @@ export default function DashboardScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* REFERENCE DESIGN ARCHITECTURE: 50/50 LAYOUT                    */}
         {/* Hero background (50%) + Floating white card (50%) overlapping  */}
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.5,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xl + Spacing.md,
     paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },

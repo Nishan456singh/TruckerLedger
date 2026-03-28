@@ -235,7 +235,7 @@ export default function ExpenseDetailScreen() {
   if (!editing) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe}>
+        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
           <View style={styles.container}>
             {/* ═══════════════════════════════════════════════════════════════ */}
             {/* HERO SECTION (50% - Category-color themed)                     */}
@@ -361,7 +361,7 @@ export default function ExpenseDetailScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -443,7 +443,7 @@ export default function ExpenseDetailScreen() {
                   <View>
                     <Text style={styles.editFieldLabel}>📝 Note (Optional)</Text>
                     <TextInput
-                      style={[styles.editInput, { height: 80, paddingTop: Spacing.md, textAlignVertical: "top" }]}
+                      style={[styles.editInput, { height: 80, paddingTop: Spacing.xl + Spacing.md, textAlignVertical: "top" }]}
                       value={note}
                       onChangeText={setNote}
                       placeholder="Add notes about this expense"
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.5,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xl + Spacing.md,
     paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   editHeroSection: {
     flex: 0.35,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xl + Spacing.md,
     paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },

@@ -151,7 +151,7 @@ export default function ScanReceiptScreen() {
   if (!permission) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe}>
+        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
           <View style={styles.centerWrap}>
             <ActivityIndicator color={Colors.primary} />
             <Text style={styles.helperText}>Loading camera...</Text>
@@ -164,7 +164,7 @@ export default function ScanReceiptScreen() {
   if (!permission.granted) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe}>
+        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
           <View style={styles.centerWrap}>
             <Text style={styles.title}>Camera access required</Text>
             <Text style={styles.helperText}>Grant permission to scan receipts.</Text>
@@ -181,7 +181,7 @@ export default function ScanReceiptScreen() {
   if (imageUri) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe}>
+        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
           <KeyboardAvoidingView
             style={{ flex: 1 }}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -288,7 +288,7 @@ export default function ScanReceiptScreen() {
                     <View>
                       <Text style={styles.detailsFieldLabel}>📝 Note (Optional)</Text>
                       <TextInput
-                        style={[styles.detailsInput, { height: 70, paddingTop: Spacing.md, textAlignVertical: "top" }]}
+                        style={[styles.detailsInput, { height: 70, paddingTop: Spacing.xl + Spacing.md, textAlignVertical: "top" }]}
                         value={note}
                         onChangeText={setNote}
                         placeholder="Optional note"
@@ -330,7 +330,7 @@ export default function ScanReceiptScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.35,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xl + Spacing.md,
     paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   detailsHeroSection: {
     flex: 0.30,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xl + Spacing.md,
     paddingBottom: Spacing.lg,
     justifyContent: "center",
   },

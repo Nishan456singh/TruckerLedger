@@ -224,7 +224,7 @@ export default function ProfileScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <View style={styles.container}>
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* HERO SECTION (45% - Blue/Profile themed)                       */}
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.45,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xl + Spacing.md,
     paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },
