@@ -3,11 +3,10 @@ import ScreenBackground from "@/components/ScreenBackground";
 import {
     BorderRadius,
     Colors,
-    FontSize,
     FontWeight,
-    Spacing,
     Shadow,
-    TypographyScale,
+    Spacing,
+    TypographyScale
 } from "@/constants/theme";
 import { getFuelStats } from "@/lib/fuelService";
 import { router } from "expo-router";
@@ -143,6 +142,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     paddingBottom: 40,
     gap: Spacing.xl,
+    marginTop: Spacing.lg,
   },
   header: {
     flexDirection: "row",

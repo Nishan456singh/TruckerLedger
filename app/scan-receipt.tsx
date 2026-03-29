@@ -565,6 +565,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
     gap: Spacing.lg,
+    marginTop: Spacing.lg,
   },
 
   statusCard: {

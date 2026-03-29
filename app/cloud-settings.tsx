@@ -1,7 +1,7 @@
 import HighContrastCard from '@/components/HighContrastCard';
 import PrimaryButton from '@/components/PrimaryButton';
 import ScreenBackground from '@/components/ScreenBackground';
-import { Colors, FontSize, FontWeight, Spacing, Shadow, TypographyScale, BorderRadius } from '@/constants/theme';
+import { BorderRadius, Colors, FontSize, Shadow, Spacing, TypographyScale } from '@/constants/theme';
 import { useAuth } from '@/lib/auth/AuthContext';
 import {
     createBackup,
@@ -267,6 +267,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
     gap: Spacing.xl,
+    marginTop: Spacing.lg,
   },
   header: {
     flexDirection: 'row',

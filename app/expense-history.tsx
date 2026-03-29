@@ -473,6 +473,7 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     overflow: "hidden",
     ...Shadow.large,
+    paddingTop: Spacing.lg,
   },
 
   // ─── SEARCH ─────────────────────────────────────────────────

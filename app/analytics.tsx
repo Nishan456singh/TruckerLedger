@@ -1,6 +1,6 @@
 import HighContrastCard from '@/components/HighContrastCard';
 import ScreenBackground from '@/components/ScreenBackground';
-import { Colors, FontSize, FontWeight, Spacing, Shadow, TypographyScale, BorderRadius } from '@/constants/theme';
+import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing, TypographyScale } from '@/constants/theme';
 import { formatCurrency } from '@/lib/formatUtils';
 import { getCategoryAnalysis, getDailyStats, getProfitTrend, type CategoryAnalysis } from '@/lib/tripService';
 import { router, useFocusEffect } from 'expo-router';
@@ -347,6 +347,7 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: Spacing.xl,
     paddingVertical: Spacing.lg,
+    marginTop: Spacing.lg,
   },
   sectionTitle: {
     ...TypographyScale.title,

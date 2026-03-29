@@ -3,12 +3,11 @@ import {
     BorderRadius,
     CategoryMeta,
     Colors,
-    FontSize,
     FontWeight,
-    Spacing,
     Shadow,
+    Spacing,
     TypographyScale,
-    type Category,
+    type Category
 } from "@/constants/theme";
 import { getCurrentMonthCategoryTotals } from "@/lib/expenseService";
 import { router, useFocusEffect } from "expo-router";
@@ -194,6 +193,7 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.xxl,
     gap: Spacing.lg,
+    marginTop: Spacing.lg,
   },
   totalCard: {
     backgroundColor: Colors.card,

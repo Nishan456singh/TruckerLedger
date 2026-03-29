@@ -1,33 +1,36 @@
 import ExpenseCard from "@/components/ExpenseCard";
 import ScreenBackground from "@/components/ScreenBackground";
+import {
+    BorderRadius,
+    Colors,
+    ColorUtilities,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
+} from "@/constants/theme";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getAllExpenses } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
 import {
-  getMonthlyTripSnapshot,
-  getWeeklyTripSnapshot,
+    getMonthlyTripSnapshot,
+    getWeeklyTripSnapshot,
 } from "@/lib/tripService";
 import type { Expense } from "@/lib/types";
-import {
-  BorderRadius,
-  Colors,
-  ColorUtilities,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-} from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ActionSheetIOS,
+    Alert,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -81,6 +84,51 @@ export default function DashboardScreen() {
     setRefreshing(true);
     await load();
     setRefreshing(false);
+  }
+
+  function handleAddExpense() {
+    const options = [
+      {
+        text: "📸 Scan Receipt",
+        onPress: () => router.push("/scan-receipt"),
+      },
+      {
+        text: "📄 Scan BOL",
+        onPress: () => router.push("/bol-history"),
+      },
+      {
+        text: "✏️ Manual Entry",
+        onPress: () => router.push("/add-expense"),
+      },
+      {
+        text: "Cancel",
+        onPress: () => {},
+      },
+    ];
+
+    // Show action sheet using Alert
+    const buttons = options.map((option) => ({
+      text: option.text,
+      onPress: option.onPress,
+    }));
+
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: options.map((o) => o.text),
+          cancelButtonIndex: options.length - 1,
+          title: "How would you like to add an expense?",
+        },
+        (index) => {
+          if (index >= 0 && index < options.length - 1) {
+            options[index].onPress();
+          }
+        }
+      );
+    } else {
+      // For Android, use Alert
+      Alert.alert("Add Expense", "How would you like to add an expense?", buttons);
+    }
   }
 
   if (loading) {
@@ -167,7 +215,7 @@ export default function DashboardScreen() {
                   {/* Add Button */}
                   <TouchableOpacity
                     style={styles.actionButton}
-                    onPress={() => router.push("/scan-receipt")}
+                    onPress={handleAddExpense}
                     activeOpacity={0.75}
                   >
                     <Text style={styles.actionIcon}>➕</Text>

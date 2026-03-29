@@ -382,9 +382,10 @@ const styles = StyleSheet.create({
 
   cardContent: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.xl,
     gap: Spacing.lg,
+    marginTop: Spacing.lg,
   },
 
   cardSectionTitle: {

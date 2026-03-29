@@ -1,12 +1,12 @@
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Spacing,
-  TypographyScale,
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Spacing,
+    TypographyScale,
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -16,18 +16,18 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import React, { useCallback, useEffect, useState } from "react";
 
 import {
-  ActivityIndicator,
-  Image,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Image,
+    Platform,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeInUp,
+    FadeIn,
+    FadeInDown,
+    FadeInUp,
 } from "react-native-reanimated";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -252,6 +252,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.md,
+    marginTop: Spacing.lg,
     backgroundColor: "#FFFFFF",
     borderRadius: BorderRadius.xl,
     borderWidth: 0,

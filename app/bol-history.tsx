@@ -5,8 +5,8 @@ import {
     Colors,
     FontSize,
     FontWeight,
-    Spacing,
     Shadow,
+    Spacing,
     TypographyScale
 } from "@/constants/theme";
 import { getBOLHistory, getBOLsByBroker, getBOLsByLocation, searchBOLs } from "@/lib/bolService";
@@ -298,6 +298,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xl,
     gap: Spacing.lg,
+    marginTop: Spacing.lg,
   },
   resultCount: {
     ...TypographyScale.small,

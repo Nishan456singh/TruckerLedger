@@ -131,6 +131,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
     gap: Spacing.md,
+    marginTop: Spacing.lg,
   },
   row: {
     justifyContent: "space-between",

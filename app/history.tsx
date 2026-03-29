@@ -402,7 +402,9 @@ const styles = StyleSheet.create({
 
   scrollContent: {
     paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.xl,
+    marginTop: Spacing.lg,
   },
 
   // ─── SEARCH SECTION ─────────────────────────────────────────

@@ -12,7 +12,7 @@ import {
 import { calculateTripProfit, createTrip } from "@/lib/tripService";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
     Alert,
     KeyboardAvoidingView,
@@ -504,9 +504,10 @@ const styles = StyleSheet.create({
 
   cardContent: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
     gap: Spacing.lg,
+    marginTop: Spacing.lg,
   },
 
   cardSectionTitle: {
