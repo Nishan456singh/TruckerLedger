@@ -1,3 +1,4 @@
+import { getShadow } from '@/constants/shadowUtils';
 import { BorderRadius, Colors, Shadow, Spacing } from '@/constants/theme';
 import React from 'react';
 import {
@@ -23,7 +24,7 @@ export default function FloatingCard({
     <View
       style={[
         styles.card,
-        elevated ? Shadow.cardElevated : Shadow.card,
+        elevated ? getShadow(Shadow.cardElevated) : getShadow(Shadow.card),
         { padding: innerPadding },
         style,
       ]}

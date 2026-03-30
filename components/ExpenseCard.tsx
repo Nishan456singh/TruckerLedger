@@ -8,6 +8,7 @@ import {
     Spacing,
     type Category
 } from '@/constants/theme';
+import { getShadow } from '@/constants/shadowUtils';
 import type { Expense } from '@/lib/types';
 import React from 'react';
 import {
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.borderLight,
     overflow: 'hidden',
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
   },
   iconBadge: {
     width: 48,

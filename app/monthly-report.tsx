@@ -1,4 +1,5 @@
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     CategoryMeta,
@@ -149,7 +150,7 @@ export default function MonthlyReportScreen() {
             {/* ═══════════════════════════════════════════════════════════════ */}
 
             <LinearGradient
-              colors={[Colors.secondary, '#5A8FB5']}
+              colors={[Colors.secondary, Colors.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.heroSection}
@@ -163,7 +164,7 @@ export default function MonthlyReportScreen() {
                   <Text style={styles.heroBackText}>✕</Text>
                 </TouchableOpacity>
                 <Text style={styles.heroTitle}>Monthly Report</Text>
-                <View style={{ width: 40 }} />
+                <View style={styles.heroBackBtn} />
               </View>
 
               {/* Centered Month Display */}
@@ -286,10 +287,9 @@ const styles = StyleSheet.create({
   // ─── HERO SECTION ───────────────────────────────────────────
 
   heroSection: {
-    flex: 0.5,
+    paddingTop: Spacing.xxxl,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },
 
@@ -318,10 +318,10 @@ const styles = StyleSheet.create({
   },
 
   heroMonthCenter: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.sm,
+    paddingVertical: Spacing.lg,
   },
 
   heroMonthLabel: {
@@ -336,7 +336,8 @@ const styles = StyleSheet.create({
 
   heroMonthSubtitle: {
     ...TypographyScale.body,
-    color: "rgba(255, 255, 255, 0.85)",
+    color: Colors.textInverse,
+    opacity: 0.85,
   },
 
   monthNav: {
@@ -344,6 +345,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
 
   monthArrowBtn: {
@@ -352,13 +354,14 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: Colors.textInverse,
+    opacity: 0.2,
     borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderColor: Colors.textInverse,
   },
 
   monthArrowDisabled: {
-    opacity: 0.5,
+    opacity: 0.1,
   },
 
   monthArrowText: {
@@ -371,21 +374,20 @@ const styles = StyleSheet.create({
   // ─── FLOATING CARD ──────────────────────────────────────────
 
   floatingCardContainer: {
-    flex: 0.55,
-    marginTop: -Spacing.lg,
-    marginHorizontal: Spacing.md,
-    backgroundColor: Colors.card,
-    borderRadius: 32,
+    flex: 1,
+    marginTop: -Spacing.xl,
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    ...Shadow.large,
+    ...getShadow(Shadow.large),
   },
 
   cardContent: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.xxxxl,
     gap: Spacing.lg,
-    marginTop: Spacing.lg,
   },
 
   cardSectionTitle: {
@@ -480,7 +482,6 @@ const styles = StyleSheet.create({
   },
 
   statBlock: {
-    flex: 1,
     alignItems: "center",
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.lg,
@@ -488,7 +489,8 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.borderLight,
-    ...Shadow.small,
+    ...getShadow(Shadow.small),
+    minWidth: "32%",
   },
 
   statBlockLabel: {
@@ -512,7 +514,7 @@ const styles = StyleSheet.create({
   },
 
   loadingText: {
-    fontSize: FontSize.caption,
+    ...TypographyScale.body,
     color: Colors.textMuted,
   },
 });

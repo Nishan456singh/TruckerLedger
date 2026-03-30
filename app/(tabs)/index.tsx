@@ -1,5 +1,6 @@
 import ExpenseCard from "@/components/ExpenseCard";
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     Colors,
@@ -21,8 +22,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    ActivityIndicator,
     ActionSheetIOS,
+    ActivityIndicator,
     Alert,
     Platform,
     RefreshControl,
@@ -94,7 +95,7 @@ export default function DashboardScreen() {
       },
       {
         text: "📄 Scan BOL",
-        onPress: () => router.push("/bol-history"),
+        onPress: () => router.push("/scan-bol"),
       },
       {
         text: "✏️ Manual Entry",
@@ -371,7 +372,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
+    paddingTop: 60,
     paddingBottom: Spacing.md,
   },
 
@@ -447,7 +448,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: BorderRadius.xl,
     marginTop: Spacing.xl,
     overflow: "hidden",
-    ...Shadow.large,
+    ...getShadow(Shadow.large),
   },
 
   scrollContent: {
@@ -476,7 +477,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.sm,
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
     borderWidth: 1,
     borderColor: Colors.borderLight,
   },
@@ -518,7 +519,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
-    ...Shadow.small,
+    ...getShadow(Shadow.small),
     borderWidth: 1,
     borderColor: Colors.borderLight,
   },
@@ -587,7 +588,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
     backgroundColor: Colors.card,
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
     borderWidth: 1,
     borderColor: Colors.borderLight,
   },

@@ -2,38 +2,46 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    SectionList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  SectionList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+  useAnimatedStyle,
+  interpolate,
+} from "react-native-reanimated";
 
 import BOLCard from "@/components/BOLCard";
 import ExpenseCard from "@/components/ExpenseCard";
 import HistoryFilterPills, { type FilterType } from "@/components/HistoryFilterPills";
 import ScreenBackground from "@/components/ScreenBackground";
 import SearchBar from "@/components/SearchBar";
+
 import {
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing
+  BorderRadius,
+  Colors,
+  FontWeight,
+  Spacing,
 } from "@/constants/theme";
+
 import { getBOLHistory } from "@/lib/bolService";
 import { getAllExpenses } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
 import type { BOLRecord, Expense } from "@/lib/types";
 
+/* ================= TYPES ================= */
+
 type HistoryItem =
-  | { type: 'expense'; id: number; date: string; data: Expense }
-  | { type: 'bol'; id: number; date: string; data: BOLRecord };
+  | { type: "expense"; id: number; date: string; data: Expense }
+  | { type: "bol"; id: number; date: string; data: BOLRecord };
 
 interface Section {
   title: string;
@@ -41,52 +49,44 @@ interface Section {
   total: number;
 }
 
+/* ================= HELPERS ================= */
+
+function formatDateLabel(date: string) {
+  const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000)
+    .toISOString()
+    .split("T")[0];
+
+  if (date === today) return "Today";
+  if (date === yesterday) return "Yesterday";
+
+  return date;
+}
+
 function groupByDate(items: HistoryItem[]): Section[] {
   const map = new Map<string, HistoryItem[]>();
 
-  for (const item of items) {
+  items.forEach((item) => {
     const list = map.get(item.date) ?? [];
     list.push(item);
     map.set(item.date, list);
-  }
-
-  const sections: Section[] = [];
-
-  for (const [date, items] of map.entries()) {
-    const total = items.reduce((sum, i) => {
-      if (i.type === 'expense') return sum + i.data.amount;
-      if (i.type === 'bol') return sum + (i.data.load_amount ?? 0);
-      return sum;
-    }, 0);
-    sections.push({ title: date, data: items, total });
-  }
-
-  return sections.sort((a, b) => b.title.localeCompare(a.title));
-}
-
-function todayISO() {
-  return new Date().toISOString().split("T")[0];
-}
-
-function yesterdayISO() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
-}
-
-function formatSectionDate(dateStr: string): string {
-  const today = todayISO();
-  const yesterday = yesterdayISO();
-
-  if (dateStr === today) return "Today";
-  if (dateStr === yesterday) return "Yesterday";
-
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
   });
+
+  return Array.from(map.entries()).map(([date, items]) => ({
+    title: date,
+    data: items,
+    total: items.reduce((sum, i) => {
+      if (i.type === "expense") return sum + i.data.amount;
+      if (i.type === "bol") return sum + (i.data.load_amount ?? 0);
+      return sum;
+    }, 0),
+  }));
 }
+
+/* ================= MAIN ================= */
+
+const AnimatedSectionList =
+  Animated.createAnimatedComponent(SectionList<HistoryItem>);
 
 export default function HistoryScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -96,394 +96,264 @@ export default function HistoryScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const scrollY = useSharedValue(0);
+
+  /* LOAD DATA */
+
   const loadData = useCallback(async () => {
-    setLoading(true);
     try {
-      const [expensesData, bolsData] = await Promise.all([
+      const [exp, bol] = await Promise.all([
         getAllExpenses(),
         getBOLHistory(),
       ]);
-      setExpenses(expensesData);
-      setBols(bolsData);
+      setExpenses(exp);
+      setBols(bol);
     } catch (err) {
-      console.error("Failed to load history:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  }, [loadData]);
+  };
+
+  /* FILTER */
 
   const filteredItems = useMemo(() => {
-    const q = searchQuery.toLowerCase();
     let items: HistoryItem[] = [];
 
-    // Filter by type
-    if (filterType === 'all' || filterType === 'receipts') {
-      const filtered = expenses
-        .filter(e => {
-          if (!q) return true;
-          return (
-            e.category.toLowerCase().includes(q) ||
-            (e.note ?? "").toLowerCase().includes(q) ||
-            String(e.amount).includes(q)
-          );
-        })
-        .map(e => ({ type: 'expense' as const, id: e.id, date: e.date, data: e }));
-      items.push(...filtered);
+    if (filterType !== "bols") {
+      items.push(
+        ...expenses.map((e) => ({
+          type: "expense" as const,
+          id: e.id,
+          date: e.date,
+          data: e,
+        }))
+      );
     }
 
-    if (filterType === 'all' || filterType === 'bols') {
-      const filtered = bols
-        .filter(b => {
-          if (!q) return true;
-          return (
-            (b.broker ?? "").toLowerCase().includes(q) ||
-            (b.pickup_location ?? "").toLowerCase().includes(q) ||
-            (b.delivery_location ?? "").toLowerCase().includes(q) ||
-            String(b.load_amount).includes(q)
-          );
-        })
-        .map(b => ({ type: 'bol' as const, id: b.id, date: b.date, data: b }));
-      items.push(...filtered);
+    if (filterType !== "receipts") {
+      items.push(
+        ...bols.map((b) => ({
+          type: "bol" as const,
+          id: b.id,
+          date: b.date,
+          data: b,
+        }))
+      );
     }
 
     return items.sort((a, b) => b.date.localeCompare(a.date));
-  }, [expenses, bols, searchQuery, filterType]);
+  }, [expenses, bols, filterType]);
 
   const sections = useMemo(() => groupByDate(filteredItems), [filteredItems]);
 
-  const totalAmount = useMemo(
-    () => filteredItems.reduce((sum, i) => {
-      if (i.type === 'expense') return sum + i.data.amount;
-      if (i.type === 'bol') return sum + (i.data.load_amount ?? 0);
+  const totalAmount = useMemo(() => {
+    return filteredItems.reduce((sum, i) => {
+      if (i.type === "expense") return sum + i.data.amount;
+      if (i.type === "bol") return sum + (i.data.load_amount ?? 0);
       return sum;
-    }, 0),
-    [filteredItems]
-  );
+    }, 0);
+  }, [filteredItems]);
+
+  /* ANIMATION */
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const heroStyle = useAnimatedStyle(() => {
+    const height = interpolate(scrollY.value, [0, 150], [180, 100], "clamp");
+    return { height };
+  });
+
+  /* LOADING */
 
   if (loading) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-          </View>
+        <SafeAreaView style={styles.center}>
+          <ActivityIndicator size="large" color={Colors.primary} />
         </SafeAreaView>
       </ScreenBackground>
     );
   }
 
+  /* UI */
+
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-        <View style={styles.container}>
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* HERO SECTION (RED - History themed)                            */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
-
+      <SafeAreaView style={styles.safe}>
+        {/* HERO */}
+        <Animated.View style={[styles.heroWrapper, heroStyle]}>
           <LinearGradient
-            colors={[Colors.accent, '#A01B3A']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroSection}
+            colors={[Colors.accent, "#A01B3A"]}
+            style={styles.hero}
           >
-            {/* Top Bar */}
-            <View style={styles.heroTopBar}>
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={styles.heroBackBtn}
-              >
-                <Text style={styles.heroBackText}>✕</Text>
+            <View style={styles.heroTop}>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Text style={styles.back}>✕</Text>
               </TouchableOpacity>
+
               <Text style={styles.heroTitle}>History</Text>
               <View style={{ width: 40 }} />
             </View>
 
-            {/* Centered Total Display */}
-            <View style={styles.heroTotalCenter}>
-              <Text style={styles.heroTotalLabel}>
-                {filterType === 'receipts' ? 'Total Receipts' : filterType === 'bols' ? 'Total BOLs' : 'Total Amount'}
-              </Text>
-              <Text style={styles.heroTotalValue}>{formatCurrency(totalAmount)}</Text>
-              <Text style={styles.heroTotalEmoji}>{filterType === 'receipts' ? '🧾' : filterType === 'bols' ? '📄' : '📋'}</Text>
-            </View>
+            <Text style={styles.totalValue}>
+              {formatCurrency(totalAmount)}
+            </Text>
           </LinearGradient>
+        </Animated.View>
 
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* FLOATING CARD (Content)                                        */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* LIST */}
+        <AnimatedSectionList
+          sections={sections}
+          keyExtractor={(item) => `${item.type}-${item.id}`}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          contentContainerStyle={styles.content}
+          ListHeaderComponent={
+            <View style={styles.headerContent}>
+              <SearchBar
+                placeholder="Search..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
 
-          <View style={styles.floatingCardContainer}>
-            <ScrollView
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-              }
-              contentContainerStyle={styles.scrollContent}
-              showsVerticalScrollIndicator={false}
-            >
-              {/* Search Bar */}
-              <Animated.View entering={FadeInDown} style={styles.searchSection}>
-                <SearchBar
-                  placeholder="Search receipts, BOLs..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                />
-              </Animated.View>
-
-              {/* Filter Pills */}
-              <Animated.View entering={FadeInDown.delay(50)} style={styles.filterSection}>
+              <View style={styles.filterWrapper}>
                 <HistoryFilterPills
                   activeFilter={filterType}
                   onFilterChange={setFilterType}
                 />
-              </Animated.View>
-
-              {/* List or Empty State */}
-              {sections.length === 0 ? (
-                <View style={styles.empty}>
-                  <Text style={styles.emptyIcon}>📭</Text>
-                  <Text style={styles.emptyTitle}>
-                    {searchQuery || filterType !== 'all'
-                      ? "No matching items"
-                      : "No history yet"}
-                  </Text>
-                  <Text style={styles.emptyDesc}>
-                    {searchQuery || filterType !== 'all'
-                      ? "Try adjusting your filters"
-                      : "Add receipts or BOLs to get started"}
-                  </Text>
-                </View>
+              </View>
+            </View>
+          }
+          renderSectionHeader={({ section }) => (
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionDate}>
+                {formatDateLabel(section.title)}
+              </Text>
+              <Text style={styles.sectionTotal}>
+                {formatCurrency(section.total)}
+              </Text>
+            </View>
+          )}
+          renderItem={({ item }) => (
+            <View style={styles.item}>
+              {item.type === "expense" ? (
+                <ExpenseCard
+                  expense={item.data}
+                  onPress={() =>
+                    router.push(`/expense-detail?id=${item.data.id}`)
+                  }
+                />
               ) : (
-                <SectionList
-                  sections={sections}
-                  keyExtractor={(item) => item.id}
-                  contentContainerStyle={styles.listContent}
-                  scrollEnabled={false}
-                  renderSectionHeader={({ section }) => (
-                    <Animated.View entering={FadeInDown} style={styles.sectionHeader}>
-                      <Text style={styles.sectionDate}>
-                        {formatSectionDate(section.title)}
-                      </Text>
-                      <Text style={styles.sectionTotal}>
-                        {formatCurrency(section.total)}
-                      </Text>
-                    </Animated.View>
-                  )}
-                  renderItem={({ item, index }) => (
-                    <Animated.View entering={FadeInDown.delay(index * 40)}>
-                      {item.type === 'expense' ? (
-                        <TouchableOpacity
-                          style={styles.itemWrapper}
-                          onPress={() =>
-                            router.push({
-                              pathname: "/expense-detail",
-                              params: { id: item.data.id },
-                            })
-                          }
-                          activeOpacity={0.7}
-                        >
-                          <ExpenseCard expense={item.data} />
-                        </TouchableOpacity>
-                      ) : (
-                        <BOLCard bol={item.data} />
-                      )}
-                    </Animated.View>
-                  )}
-                  ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
-                  stickySectionHeadersEnabled={false}
+                <BOLCard
+                  bol={item.data}
+                  onPress={() =>
+                    router.push(`/bol-detail?id=${item.data.id}`)
+                  }
                 />
               )}
-            </ScrollView>
-          </View>
-        </View>
+            </View>
+          )}
+        />
       </SafeAreaView>
     </ScreenBackground>
   );
 }
 
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "transparent",
-  },
-  container: {
-    flex: 1,
-    position: "relative",
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+  safe: { flex: 1 },
+
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  heroWrapper: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
 
-  // ─── HERO SECTION ───────────────────────────────────────────
-
-  heroSection: {
-    flex: 0.5,
+  hero: {
+    flex: 1,
+    paddingTop: 70,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
-    paddingBottom: Spacing.md,
     justifyContent: "space-between",
   },
 
-  heroTopBar: {
+  heroTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
 
-  heroBackBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  heroBackText: {
-    fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
+  back: {
+    color: "#fff",
+    fontSize: 22,
   },
 
   heroTitle: {
-    fontSize: FontSize.section,
+    color: "#fff",
+    fontSize: 18,
     fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
   },
 
-  heroTotalCenter: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.md,
+  totalValue: {
+    color: "#fff",
+    fontSize: 36,
+    fontWeight: "800",
+    marginBottom: 10,
   },
 
-  heroTotalLabel: {
-    fontSize: FontSize.caption,
-    color: "rgba(255, 255, 255, 0.85)",
-    fontWeight: FontWeight.semibold,
-    letterSpacing: 0.5,
-  },
-
-  heroTotalValue: {
-    fontSize: 52,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.textInverse,
-    lineHeight: 56,
-  },
-
-  heroTotalEmoji: {
-    fontSize: 44,
-    marginTop: Spacing.xs,
-  },
-
-  // ─── FLOATING CARD ──────────────────────────────────────────
-
-  floatingCardContainer: {
-    flex: 0.55,
-    marginTop: -Spacing.lg,
-    marginHorizontal: Spacing.md,
-    backgroundColor: Colors.card,
-    borderRadius: 32,
-    overflow: "hidden",
-    ...Shadow.large,
-  },
-
-  scrollContent: {
+  content: {
+    paddingTop: 200,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xl,
-    marginTop: Spacing.lg,
-  },
-
-  // ─── SEARCH SECTION ─────────────────────────────────────────
-
-  searchSection: {
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.lg,
-  },
-
-  // ─── FILTER SECTION ─────────────────────────────────────────
-
-  filterSection: {
-    paddingBottom: Spacing.lg,
-    marginBottom: Spacing.md,
-  },
-
-  // ─── LIST CONTENT ───────────────────────────────────────────
-
-  listContent: {
-    paddingBottom: Spacing.xl,
+    paddingBottom: 120,
+    gap: Spacing.md,
   },
 
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    marginTop: Spacing.md,
-    marginHorizontal: -Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
   },
 
   sectionDate: {
-    fontSize: 20,
     fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
+    fontSize: 16,
   },
 
   sectionTotal: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.extrabold,
     color: Colors.accent,
+    fontWeight: FontWeight.bold,
   },
 
-  itemWrapper: {
-    marginVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
-  },
-
-  // ─── EMPTY STATE ────────────────────────────────────────────
-
-  empty: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.xxxl,
-    gap: Spacing.lg,
-    marginTop: Spacing.xl,
-  },
-
-  emptyIcon: {
-    fontSize: 64,
+  item: {
     marginBottom: Spacing.md,
   },
+  headerContent: {
+  marginBottom: Spacing.lg,
+},
 
-  emptyTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-  },
-
-  emptyDesc: {
-    fontSize: FontSize.body,
-    color: Colors.textMuted,
-    textAlign: "center",
-    paddingHorizontal: Spacing.lg,
-    lineHeight: 22,
-  },
+filterWrapper: {
+  marginTop: Spacing.md,
+  marginBottom: Spacing.lg, 
+},
 });

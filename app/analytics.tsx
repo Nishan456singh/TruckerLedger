@@ -1,20 +1,36 @@
-import HighContrastCard from '@/components/HighContrastCard';
-import ScreenBackground from '@/components/ScreenBackground';
-import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing, TypographyScale } from '@/constants/theme';
-import { formatCurrency } from '@/lib/formatUtils';
-import { getCategoryAnalysis, getDailyStats, getProfitTrend, type CategoryAnalysis } from '@/lib/tripService';
-import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { getShadow } from "@/constants/shadowUtils";
 import {
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+  BorderRadius,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
+  Gradients,
+} from "@/constants/theme";
+import { formatCurrency } from "@/lib/formatUtils";
+import {
+  getCategoryAnalysis,
+  getDailyStats,
+  getProfitTrend,
+  type CategoryAnalysis,
+} from "@/lib/tripService";
+import { router, useFocusEffect } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import React, { useCallback, useState } from "react";
+import {
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Animated, { FadeInDown } from "react-native-reanimated";
+
+/* ───────────────────────────────────────────── */
 
 interface DailyStatsData {
   bestDay: { date: string; profit: number };
@@ -30,86 +46,20 @@ interface TrendData {
   expenses: number;
 }
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+/* ───────────────────────────────────────────── */
+
+function formatDate(dateStr: string) {
+  const date = new Date(dateStr + "T00:00:00");
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }
 
-function SimpleChart({
-  title,
-  data,
-  maxValue,
-}: {
-  title: string;
-  data: { label: string; value: number; color?: string }[];
-  maxValue: number;
-}) {
-  const maxBarWidth = 200;
+/* ───────────────────────────────────────────── */
 
-  return (
-    <View style={styles.chartContainer}>
-      <Text style={styles.chartTitle}>{title}</Text>
-      {data.map((item, idx) => (
-        <View key={idx} style={styles.chartBar}>
-          <Text style={styles.chartLabel}>{item.label}</Text>
-          <View style={styles.barBackground}>
-            <View
-              style={[
-                styles.bar,
-                {
-                  width: `${Math.max((item.value / maxValue) * 100, 5)}%`,
-                  backgroundColor: item.color || Colors.primary,
-                },
-              ]}
-            />
-          </View>
-          <Text style={styles.chartValue}>{formatCurrency(item.value)}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function PieChart({ data }: { data: CategoryAnalysis[] }) {
-  const totalPercentage = data.reduce((sum, item) => sum + item.percentage, 0);
-
-  return (
-    <View style={styles.pieContainer}>
-      <Text style={styles.chartTitle}>Expense Breakdown</Text>
-      {data.map((item, idx) => (
-        <View key={idx} style={styles.pieRow}>
-          <View
-            style={[
-              styles.pieLegend,
-              { backgroundColor: getCategoryColor(item.category) },
-            ]}
-          />
-          <View style={styles.pieLabel}>
-            <Text style={styles.pieLabelText}>
-              {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
-            </Text>
-            <Text style={styles.pieLabelValue}>{item.percentage}%</Text>
-          </View>
-          <View style={styles.pieBar}>
-            <View
-              style={[
-                styles.pieBarFill,
-                {
-                  width: `${item.percentage}%`,
-                  backgroundColor: getCategoryColor(item.category),
-                },
-              ]}
-            />
-          </View>
-          <Text style={styles.pieAmount}>{formatCurrency(item.totalAmount)}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function getCategoryColor(category: string): string {
-  const colors: Record<string, string> = {
+function getCategoryColor(category: string) {
+  const map: Record<string, string> = {
     fuel: Colors.fuel,
     toll: Colors.toll,
     parking: Colors.parking,
@@ -117,8 +67,10 @@ function getCategoryColor(category: string): string {
     repair: Colors.repair,
     other: Colors.other,
   };
-  return colors[category] || Colors.textSecondary;
+  return map[category] || Colors.primary;
 }
+
+/* ───────────────────────────────────────────── */
 
 export default function AnalyticsScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -139,45 +91,61 @@ export default function AnalyticsScreen() {
       setDailyStats(daily);
       setCategoryData(categories);
     } catch (err) {
-      console.error('Error loading analytics:', err);
+      console.error("Analytics error:", err);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useFocusEffect(useCallback(() => {
-    loadAnalytics();
-  }, [loadAnalytics]));
+  useFocusEffect(
+    useCallback(() => {
+      loadAnalytics();
+    }, [loadAnalytics])
+  );
 
-  async function handleRefresh() {
+  const handleRefresh = async () => {
     setRefreshing(true);
     await loadAnalytics();
     setRefreshing(false);
-  }
+  };
 
-  const maxProfit = Math.max(
-    ...(trendData.map((d) => d.profit) || [1]),
-    dailyStats?.bestDay.profit || 1
-  );
-
-  const maxExpenses =
-    Math.max(...(categoryData.map((c) => c.totalAmount) || [1])) || 1;
+  const maxProfit =
+    Math.max(...trendData.map((d) => d.profit), 1) || 1;
 
   if (loading) {
     return (
-      <ScreenBackground>
-        <SafeAreaView style={styles.safe}>
-          <Text style={styles.loadingText}>Loading analytics...</Text>
-        </SafeAreaView>
-      </ScreenBackground>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        <Text style={[styles.loadingText, { color: Colors.textPrimary }]}>
+          Loading analytics...
+        </Text>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScreenBackground>
     <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      {/* HERO GRADIENT */}
+      <LinearGradient
+        colors={Gradients.bluePrimary}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
+        <View style={styles.heroContent}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={styles.backBtn}
+          >
+            <Text style={styles.backText}>‹</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>📊 Analytics</Text>
+        </View>
+      </LinearGradient>
+
+      {/* FLOATING CARD CONTENT */}
       <ScrollView
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -186,344 +154,295 @@ export default function AnalyticsScreen() {
           />
         }
       >
-        {/* Header */}
-        <Animated.View entering={FadeInDown} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>📊 Analytics</Text>
-          <View style={{ width: 48 }} />
-        </Animated.View>
-
-        {/* Daily Stats */}
-        {dailyStats && (
-          <Animated.View
-            entering={FadeInDown.delay(100)}
-            style={styles.section}
-          >
-            <HighContrastCard>
-              <Text style={styles.sectionTitle}>📈 Daily Performance</Text>
+        <View style={styles.floatingCard}>
+          {/* DAILY STATS */}
+          {dailyStats && (
+            <Animated.View entering={FadeInDown.delay(100)} style={styles.section}>
+              <Text style={styles.sectionTitle}>Daily Performance</Text>
 
               <View style={styles.statsGrid}>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Best Day</Text>
-                  <Text style={[styles.statValue, { color: Colors.primary }]}>
-                    {formatCurrency(dailyStats.bestDay.profit)}
-                  </Text>
-                  <Text style={styles.statDate}>
-                    {formatDate(dailyStats.bestDay.date)}
-                  </Text>
-                </View>
-
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Worst Day</Text>
-                  <Text
-                    style={[
-                      styles.statValue,
-                      { color: dailyStats.worstDay.profit < 0 ? Colors.danger : Colors.primary },
-                    ]}
-                  >
-                    {formatCurrency(dailyStats.worstDay.profit)}
-                  </Text>
-                  <Text style={styles.statDate}>
-                    {formatDate(dailyStats.worstDay.date)}
-                  </Text>
-                </View>
-
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Daily Average</Text>
-                  <Text style={[styles.statValue, { color: Colors.accent }]}>
-                    {formatCurrency(dailyStats.averageDailyProfit)}
-                  </Text>
-                  <Text style={styles.statDate}>
-                    {dailyStats.totalDays} days tracked
-                  </Text>
-                </View>
+                <StatBox
+                  label="Best"
+                  value={dailyStats.bestDay.profit}
+                  date={dailyStats.bestDay.date}
+                />
+                <StatBox
+                  label="Worst"
+                  value={dailyStats.worstDay.profit}
+                  date={dailyStats.worstDay.date}
+                />
+                <StatBox
+                  label="Average"
+                  value={dailyStats.averageDailyProfit}
+                  date={`${dailyStats.totalDays} days`}
+                />
               </View>
-            </HighContrastCard>
-          </Animated.View>
-        )}
+            </Animated.View>
+          )}
 
-        {/* Profit Trend */}
-        {trendData.length > 0 && (
-          <Animated.View
-            entering={FadeInDown.delay(200)}
-            style={styles.section}
-          >
-            <SimpleChart
-              title="📈 Profit Trend (Last 30 Days)"
-              data={trendData.map((d) => ({
-                label: formatDate(d.date),
-                value: d.profit,
-                color: d.profit >= 0 ? Colors.primary : Colors.danger,
-              }))}
-              maxValue={maxProfit}
-            />
-          </Animated.View>
-        )}
+          {/* TREND */}
+          {trendData.length > 0 && (
+            <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
+              <Text style={styles.sectionTitle}>Profit Trend</Text>
 
-        {/* Category Breakdown */}
-        {categoryData.length > 0 && (
-          <Animated.View
-            entering={FadeInDown.delay(300)}
-            style={styles.section}
-          >
-            <HighContrastCard>
-              <PieChart data={categoryData} />
+              <View style={styles.trendContainer}>
+                {trendData.slice(0, 10).map((d, i) => (
+                  <View key={i} style={styles.chartRow}>
+                    <Text style={styles.chartLabel}>
+                      {formatDate(d.date)}
+                    </Text>
 
-              <View style={styles.categoryList}>
-                <Text style={styles.categoryListTitle}>Expense Details</Text>
-                {categoryData.map((cat, idx) => (
-                  <View key={idx} style={styles.categoryItem}>
-                    <View
-                      style={[
-                        styles.categoryDot,
-                        { backgroundColor: getCategoryColor(cat.category) },
-                      ]}
-                    />
-                    <View style={styles.categoryInfo}>
-                      <Text style={styles.categoryName}>
-                        {cat.category.charAt(0).toUpperCase() + cat.category.slice(1)}
-                      </Text>
-                      <Text style={styles.categoryStats}>
-                        {cat.tripCount} trips • {formatCurrency(cat.averagePerTrip)}/trip avg
-                      </Text>
+                    <View style={styles.barBg}>
+                      <View
+                        style={[
+                          styles.bar,
+                          {
+                            width: `${
+                              Math.max((d.profit / maxProfit) * 100, 5)
+                            }%`,
+                            backgroundColor:
+                              d.profit >= 0
+                                ? Colors.primary
+                                : Colors.danger,
+                          },
+                        ]}
+                      />
                     </View>
-                    <Text style={styles.categoryAmount}>
-                      {formatCurrency(cat.totalAmount)}
+
+                    <Text style={styles.chartValue}>
+                      {formatCurrency(d.profit)}
                     </Text>
                   </View>
                 ))}
               </View>
-            </HighContrastCard>
-          </Animated.View>
-        )}
+            </Animated.View>
+          )}
 
-        {/* Empty State */}
-        {trendData.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📭</Text>
-            <Text style={styles.emptyTitle}>No data available</Text>
-            <Text style={styles.emptySubtitle}>
-              Log some trips to see analytics
-            </Text>
-          </View>
-        )}
+          {/* CATEGORY */}
+          {categoryData.length > 0 && (
+            <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
+              <Text style={styles.sectionTitle}>Categories</Text>
 
-        <View style={{ height: Spacing.xxxl }} />
+              <View style={styles.categoryContainer}>
+                {categoryData.map((c, i) => (
+                  <View key={i} style={styles.categoryRow}>
+                    <View
+                      style={[
+                        styles.dot,
+                        { backgroundColor: getCategoryColor(c.category) },
+                      ]}
+                    />
+                    <Text style={styles.categoryName}>
+                      {c.category}
+                    </Text>
+                    <Text style={styles.categoryAmount}>
+                      {formatCurrency(c.totalAmount)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </Animated.View>
+          )}
+
+          <View style={{ height: Spacing.xxxxl }} />
+        </View>
       </ScrollView>
     </SafeAreaView>
-    </ScreenBackground>
   );
 }
+
+/* ───────── COMPONENTS ───────── */
+
+function StatBox({
+  label,
+  value,
+  date,
+}: {
+  label: string;
+  value: number;
+  date: string;
+}) {
+  return (
+    <View style={styles.statBox}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{formatCurrency(value)}</Text>
+      <Text style={styles.statDate}>
+        {date.includes("-") ? formatDate(date) : date}
+      </Text>
+    </View>
+  );
+}
+
+/* ───────── STYLES ───────── */
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: Colors.background,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
+
+  /* HERO SECTION */
+  hero: {
+    paddingTop: Spacing.xxxl,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
+
+  heroContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.lg,
+  },
+
   backBtn: {
-    width: 48,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: Spacing.xxxl,
+    height: Spacing.xxxl,
+    justifyContent: "center",
+    alignItems: "center",
   },
+
   backText: {
-    fontSize: FontSize.title,
-    color: Colors.primary,
+    fontSize: FontSize.headerIcon,
+    color: Colors.textInverse,
     fontWeight: FontWeight.bold,
   },
+
   title: {
     ...TypographyScale.headline,
-    color: Colors.textPrimary,
+    color: Colors.textInverse,
+    flex: 1,
   },
+
+  /* FLOATING CARD */
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxxxl,
+  },
+
+  floatingCard: {
+    marginTop: -Spacing.xl,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    ...getShadow(Shadow.large),
+  },
+
+  /* SECTIONS */
   section: {
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    marginTop: Spacing.lg,
+    marginBottom: Spacing.lg,
+    gap: Spacing.lg,
   },
+
   sectionTitle: {
     ...TypographyScale.title,
     color: Colors.textPrimary,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
+
+  /* STATS GRID */
   statsGrid: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
+    flexDirection: "row",
+    gap: Spacing.sm,
   },
+
   statBox: {
     flex: 1,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.md,
     padding: Spacing.md,
-    alignItems: 'center',
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.surface,
+    alignItems: "center",
     gap: Spacing.xs,
     borderWidth: 1,
     borderColor: Colors.borderLight,
-    ...Shadow.card,
+    ...getShadow(Shadow.small),
   },
+
   statLabel: {
     ...TypographyScale.small,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
+
   statValue: {
     ...TypographyScale.subtitle,
     color: Colors.primary,
   },
+
   statDate: {
     ...TypographyScale.caption,
     color: Colors.textMuted,
   },
-  chartContainer: {
-    gap: Spacing.lg,
-    backgroundColor: Colors.card,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadow.card,
+
+  /* TREND CHART */
+  trendContainer: {
+    gap: Spacing.md,
   },
-  chartTitle: {
-    ...TypographyScale.subtitle,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+
+  chartRow: {
+    gap: Spacing.md,
   },
-  chartBar: {
-    gap: Spacing.xs,
-  },
+
   chartLabel: {
     ...TypographyScale.small,
-    color: Colors.textSecondary,
-  },
-  barBackground: {
-    height: 24,
-    backgroundColor: Colors.surface,
-    borderRadius: 4,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  bar: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  chartValue: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
-  },
-  pieContainer: {
-    gap: Spacing.lg,
-    paddingBottom: Spacing.lg,
-  },
-  pieRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  pieLegend: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-  },
-  pieLabel: {
-    width: 80,
-  },
-  pieLabelText: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
-  },
-  pieLabelValue: {
-    ...TypographyScale.body,
-    color: Colors.primary,
-  },
-  pieBar: {
-    flex: 1,
-    height: 16,
-    backgroundColor: Colors.surface,
-    borderRadius: 4,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  pieBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  pieAmount: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
-    width: 70,
-    textAlign: 'right',
-  },
-  categoryList: {
-    gap: Spacing.md,
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  categoryListTitle: {
-    ...TypographyScale.body,
-    color: Colors.textPrimary,
-  },
-  categoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  categoryDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  categoryInfo: {
-    flex: 1,
-  },
-  categoryName: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
-  },
-  categoryStats: {
-    ...TypographyScale.caption,
     color: Colors.textMuted,
   },
+
+  barBg: {
+    height: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.sm,
+    overflow: "hidden",
+  },
+
+  bar: {
+    height: "100%",
+  },
+
+  chartValue: {
+    ...TypographyScale.small,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.semibold,
+  },
+
+  /* CATEGORY LIST */
+  categoryContainer: {
+    gap: Spacing.sm,
+  },
+
+  categoryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+
+  dot: {
+    width: Spacing.sm,
+    height: Spacing.sm,
+    borderRadius: BorderRadius.full,
+  },
+
+  categoryName: {
+    flex: 1,
+    ...TypographyScale.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.medium,
+  },
+
   categoryAmount: {
-    ...TypographyScale.body,
-    color: Colors.primary,
-  },
-  loadingText: {
-    ...TypographyScale.body,
-    color: Colors.textPrimary,
-    textAlign: 'center',
-    marginTop: Spacing.xxxl,
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xxxl,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.md,
-  },
-  emptyTitle: {
-    ...TypographyScale.body,
-    color: Colors.textPrimary,
-  },
-  emptySubtitle: {
     ...TypographyScale.small,
     color: Colors.textSecondary,
-    marginTop: Spacing.xs,
+    fontWeight: FontWeight.semibold,
+  },
+
+  loadingText: {
+    textAlign: "center",
+    marginTop: Spacing.xxxl,
+    ...TypographyScale.body,
   },
 });

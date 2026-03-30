@@ -1,28 +1,35 @@
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
-    BorderRadius,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
-    TypographyScale,
+  BorderRadius,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
 } from "@/constants/theme";
 import { getAllExpenses } from "@/lib/expenseService";
 import type { Expense } from "@/lib/types";
 import { router, useFocusEffect } from "expo-router";
+
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    FlatList, Image, Pressable,
-    StyleSheet,
-    Text,
-    View
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function ReceiptTile({ expense }: { expense: Expense }) {
-  if (!expense.receipt_uri) return null;
+/* ---------------- TILE ---------------- */
 
+const ReceiptTile = React.memo(({ expense }: { expense: Expense }) => {
   return (
     <Pressable
       onPress={() =>
@@ -37,25 +44,37 @@ function ReceiptTile({ expense }: { expense: Expense }) {
       ]}
     >
       <Image
-        source={{ uri: expense.receipt_uri }}
+        source={{ uri: expense.receipt_uri! }}
         style={styles.tileImage}
-        resizeMode="cover"
       />
     </Pressable>
   );
-}
+});
+
+/* ---------------- SCREEN ---------------- */
 
 export default function ReceiptsScreen() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
+  /* ---------- FILTER RECEIPTS ---------- */
   const receipts = useMemo(
-    () => expenses.filter((item) => !!item.receipt_uri),
+    () => expenses.filter((item) => item.receipt_uri),
     [expenses]
   );
 
+  /* ---------- LOAD ---------- */
   const loadReceipts = useCallback(async () => {
-    const all = await getAllExpenses();
-    setExpenses(all);
+    try {
+      setLoading(true);
+      const all = await getAllExpenses();
+      setExpenses(all);
+    } catch (e) {
+      console.error("Failed to load receipts:", e);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useFocusEffect(
@@ -64,51 +83,100 @@ export default function ReceiptsScreen() {
     }, [loadReceipts])
   );
 
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadReceipts();
+    setRefreshing(false);
+  }, [loadReceipts]);
+
+  /* ---------------- RENDER ---------------- */
+
+  if (loading) {
+    return (
+      <ScreenBackground>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+          </View>
+        </SafeAreaView>
+      </ScreenBackground>
+    );
+  }
+
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
-        </Pressable>
-        <Text style={styles.title}>Receipt Gallery</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backText}>‹</Text>
+          </Pressable>
 
-      {receipts.length === 0 ? (
-        <View style={styles.emptyWrap}>
-          <Text style={styles.emptyIcon}>🧾</Text>
-          <Text style={styles.emptyTitle}>No Receipts Yet</Text>
-          <Text style={styles.emptyText}>Scan receipts to see them here</Text>
+          <View style={{ alignItems: "center" }}>
+            <Text style={styles.title}>Receipt Gallery</Text>
+            <Text style={styles.subtitle}>
+              {receipts.length} receipts
+            </Text>
+          </View>
+
+          <View style={{ width: 44 }} />
         </View>
-      ) : (
-        <FlatList
-          data={receipts}
-          keyExtractor={(item) => String(item.id)}
-          numColumns={3}
-          contentContainerStyle={styles.grid}
-          columnWrapperStyle={styles.row}
-          renderItem={({ item }) => <ReceiptTile expense={item} />}
-        />
-      )}
-    </SafeAreaView>
+
+        {/* EMPTY */}
+        {receipts.length === 0 ? (
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyIcon}>🧾</Text>
+            <Text style={styles.emptyTitle}>No Receipts Yet</Text>
+            <Text style={styles.emptyText}>
+              Scan receipts to build your gallery
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={receipts}
+            keyExtractor={(item) => String(item.id)}
+            numColumns={3}
+            renderItem={({ item }) => <ReceiptTile expense={item} />}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.grid}
+            columnWrapperStyle={styles.row}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={Colors.primary}
+              />
+            }
+            // Performance optimizations
+            removeClippedSubviews={true}
+            initialNumToRender={9}
+            maxToRenderPerBatch={12}
+            windowSize={10}
+            updateCellsBatchingPeriod={50}
+          />
+        )}
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
+
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: "transparent",
   },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    marginBottom: Spacing.md,
+    paddingTop: 60,
+    paddingBottom: Spacing.lg,
   },
+
   backBtn: {
     width: 44,
     height: 44,
@@ -116,59 +184,76 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: BorderRadius.sm,
     backgroundColor: Colors.surface,
-    ...Shadow.small,
+    ...getShadow(Shadow.small),
   },
+
   backText: {
     fontSize: 28,
     color: Colors.textPrimary,
     fontWeight: FontWeight.bold,
   },
+
   title: {
     ...TypographyScale.title,
     color: Colors.textPrimary,
   },
-  grid: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxl,
-    gap: Spacing.md,
-    marginTop: Spacing.lg,
+
+  subtitle: {
+    ...TypographyScale.small,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
+
+  grid: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.xxl,
+  },
+
   row: {
     justifyContent: "space-between",
     marginBottom: Spacing.md,
   },
+
   tile: {
-    width: "32%",
+    width: "31%",
     aspectRatio: 1,
     borderRadius: BorderRadius.md,
     overflow: "hidden",
-    borderWidth: 0,
     backgroundColor: Colors.card,
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
   },
+
   tilePressedState: {
     opacity: 0.75,
-    ...Shadow.small,
   },
+
   tileImage: {
     width: "100%",
     height: "100%",
   },
+
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   emptyWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.lg,
   },
+
   emptyIcon: {
     fontSize: FontSize.largeIcon,
-    marginBottom: Spacing.sm,
   },
+
   emptyTitle: {
     ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    textAlign: "center",
   },
+
   emptyText: {
     ...TypographyScale.small,
     color: Colors.textSecondary,

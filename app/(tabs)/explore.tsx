@@ -1,24 +1,85 @@
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
-    BorderRadius,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
-    TypographyScale,
+  BorderRadius,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
 } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+/* ───────────── COMPONENTS ───────────── */
+
+function TipCard({
+  icon,
+  title,
+  desc,
+  onPress,
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+  onPress?: () => void;
+}) {
+  return (
+    <TouchableOpacity
+      style={styles.tipCard}
+      activeOpacity={0.85}
+      onPress={onPress}
+    >
+      <Text style={styles.tipIcon}>{icon}</Text>
+      <Text style={styles.tipTitle}>{title}</Text>
+      <Text style={styles.tipDesc}>{desc}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function ActionCard({
+  icon,
+  title,
+  desc,
+  route,
+}: {
+  icon: string;
+  title: string;
+  desc: string;
+  route: string;
+}) {
+  return (
+    <>
+      <TouchableOpacity
+        style={styles.actionCard}
+        activeOpacity={0.75}
+        onPress={() => router.push(route as any)}
+      >
+        <View style={styles.actionCardLeft}>
+          <Text style={styles.actionCardIcon}>{icon}</Text>
+          <View>
+            <Text style={styles.actionCardTitle}>{title}</Text>
+            <Text style={styles.actionCardDesc}>{desc}</Text>
+          </View>
+        </View>
+        <Text style={styles.actionCardArrow}>→</Text>
+      </TouchableOpacity>
+      <View style={styles.cardDivider} />
+    </>
+  );
+}
+
+/* ───────────── SCREEN ───────────── */
 
 export default function ExploreScreen() {
   return (
@@ -26,196 +87,102 @@ export default function ExploreScreen() {
       <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <LinearGradient
           colors={["#6FA0C8", "#5A8FB5"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
           style={styles.container}
         >
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* HEADER - Premium title section */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* HEADER */}
           <View style={styles.header}>
             <Text style={styles.headerSmall}>Explore</Text>
             <Text style={styles.headerMain}>Featured & Tips</Text>
           </View>
 
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* FLOATING CARD - White card with all content */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* CONTENT CARD */}
           <View style={styles.floatingCard}>
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
             >
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              {/* FEATURED TIPS SECTION */}
-              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* PRO TIPS */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>💡 Pro Tips</Text>
 
                 <View style={styles.tipsGrid}>
-                  {/* Tip Card 1 */}
-                  <TouchableOpacity
-                    style={styles.tipCard}
-                    activeOpacity={0.85}
-                    onPress={() => {}}
-                  >
-                    <View style={styles.tipIcon}>⛽</View>
-                    <Text style={styles.tipTitle}>Track Fuel Costs</Text>
-                    <Text style={styles.tipDesc}>
-                      Save fuel receipts for better margins
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Tip Card 2 */}
-                  <TouchableOpacity
-                    style={styles.tipCard}
-                    activeOpacity={0.85}
-                    onPress={() => {}}
-                  >
-                    <View style={styles.tipIcon}>📊</View>
-                    <Text style={styles.tipTitle}>Analyze Trends</Text>
-                    <Text style={styles.tipDesc}>
-                      View monthly reports for insights
-                    </Text>
-                  </TouchableOpacity>
+                  <TipCard
+                    icon="⛽"
+                    title="Track Fuel"
+                    desc="Save fuel receipts"
+                    onPress={() => router.push("/scan-receipt")}
+                  />
+                  <TipCard
+                    icon="📊"
+                    title="Analyze"
+                    desc="Monthly reports"
+                    onPress={() => router.push("/monthly-summary")}
+                  />
                 </View>
 
                 <View style={styles.tipsGrid}>
-                  {/* Tip Card 3 */}
-                  <TouchableOpacity
-                    style={styles.tipCard}
-                    activeOpacity={0.85}
-                    onPress={() => {}}
-                  >
-                    <View style={styles.tipIcon}>🔔</View>
-                    <Text style={styles.tipTitle}>Set Reminders</Text>
-                    <Text style={styles.tipDesc}>
-                      Never forget to log your expenses
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* Tip Card 4 */}
-                  <TouchableOpacity
-                    style={styles.tipCard}
-                    activeOpacity={0.85}
-                    onPress={() => {}}
-                  >
-                    <View style={styles.tipIcon}>📱</View>
-                    <Text style={styles.tipTitle}>Quick Logging</Text>
-                    <Text style={styles.tipDesc}>
-                      Use camera scan for faster entry
-                    </Text>
-                  </TouchableOpacity>
+                  <TipCard
+                    icon="🔔"
+                    title="Reminders"
+                    desc="Never forget logs"
+                  />
+                  <TipCard
+                    icon="📸"
+                    title="Scan Fast"
+                    desc="Camera capture"
+                    onPress={() => router.push("/scan-receipt")}
+                  />
                 </View>
               </View>
 
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              {/* QUICK STATS SECTION */}
-              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* STATS */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>📈 Key Metrics</Text>
 
                 <View style={styles.statsContainer}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Features</Text>
-                    <Text style={styles.statValue}>8+</Text>
-                    <Text style={styles.statHint}>Tracking tools</Text>
-                  </View>
-
-                  <View style={styles.statDivider} />
-
-                  <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Coverage</Text>
-                    <Text style={styles.statValue}>All</Text>
-                    <Text style={styles.statHint}>Expense types</Text>
-                  </View>
-
-                  <View style={styles.statDivider} />
-
-                  <View style={styles.statItem}>
-                    <Text style={styles.statLabel}>Reports</Text>
-                    <Text style={styles.statValue}>∞</Text>
-                    <Text style={styles.statHint}>Monthly views</Text>
-                  </View>
+                  <Stat label="Features" value="8+" hint="Tools" />
+                  <Divider />
+                  <Stat label="Coverage" value="All" hint="Types" />
+                  <Divider />
+                  <Stat label="Reports" value="∞" hint="Monthly" />
                 </View>
               </View>
 
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              {/* FEATURED ACTIONS SECTION */}
-              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* ACTIONS */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>🚀 Quick Actions</Text>
 
-                {/* Action Card 1 */}
-                <TouchableOpacity
-                  style={styles.actionCard}
-                  activeOpacity={0.75}
-                  onPress={() => router.push("/history")}
-                >
-                  <View style={styles.actionCardLeft}>
-                    <Text style={styles.actionCardIcon}>📋</Text>
-                    <View>
-                      <Text style={styles.actionCardTitle}>View History</Text>
-                      <Text style={styles.actionCardDesc}>
-                        Browse all receipts & BOLs
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.actionCardArrow}>→</Text>
-                </TouchableOpacity>
-
-                <View style={styles.cardDivider} />
-
-                {/* Action Card 2 */}
-                <TouchableOpacity
-                  style={styles.actionCard}
-                  activeOpacity={0.75}
-                  onPress={() => router.push("/monthly-summary")}
-                >
-                  <View style={styles.actionCardLeft}>
-                    <Text style={styles.actionCardIcon}>📊</Text>
-                    <View>
-                      <Text style={styles.actionCardTitle}>Monthly Reports</Text>
-                      <Text style={styles.actionCardDesc}>
-                        Detailed profit analysis
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.actionCardArrow}>→</Text>
-                </TouchableOpacity>
-
-                <View style={styles.cardDivider} />
-
-                {/* Action Card 3 */}
-                <TouchableOpacity
-                  style={styles.actionCard}
-                  activeOpacity={0.75}
-                  onPress={() => router.push("/analytics")}
-                >
-                  <View style={styles.actionCardLeft}>
-                    <Text style={styles.actionCardIcon}>📈</Text>
-                    <View>
-                      <Text style={styles.actionCardTitle}>Analytics</Text>
-                      <Text style={styles.actionCardDesc}>
-                        Deep dive into metrics
-                      </Text>
-                    </View>
-                  </View>
-                  <Text style={styles.actionCardArrow}>→</Text>
-                </TouchableOpacity>
+                <View style={styles.actionCardsContainer}>
+                  <ActionCard
+                    icon="📋"
+                    title="History"
+                    desc="Receipts & BOLs"
+                    route="/history"
+                  />
+                  <ActionCard
+                    icon="📊"
+                    title="Reports"
+                    desc="Profit analysis"
+                    route="/monthly-summary"
+                  />
+                  <ActionCard
+                    icon="📈"
+                    title="Analytics"
+                    desc="Deep insights"
+                    route="/analytics"
+                  />
+                </View>
               </View>
 
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              {/* TIPS BOX SECTION */}
-              {/* ═══════════════════════════════════════════════════════════════ */}
+              {/* TIP BOX */}
               <View style={styles.section}>
                 <View style={styles.tipsBox}>
                   <Text style={styles.tipsBoxIcon}>💬</Text>
                   <View style={styles.tipsBoxContent}>
                     <Text style={styles.tipsBoxTitle}>Pro Tip</Text>
                     <Text style={styles.tipsBoxDesc}>
-                      Logging expenses within 24 hours ensures accuracy and helps
-                      with tax deductions
+                      Log expenses within 24 hours for accurate tracking &
+                      tax benefits.
                     </Text>
                   </View>
                 </View>
@@ -228,28 +195,45 @@ export default function ExploreScreen() {
   );
 }
 
+/* ───────────── SMALL COMPONENTS ───────────── */
+
+function Stat({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <View style={styles.statItem}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statHint}>{hint}</Text>
+    </View>
+  );
+}
+
+function Divider() {
+  return <View style={styles.statDivider} />;
+}
+
+/* ───────────── STYLES ───────────── */
+
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-  },
+  safe: { flex: 1 },
 
-  container: {
-    flex: 1,
-  },
-
-  // ─── HEADER ────────────────────────────────────────────────────────
+  container: { flex: 1 },
 
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingTop: 60,
   },
 
   headerSmall: {
     fontSize: FontSize.caption,
     color: "rgba(255,255,255,0.7)",
-    fontWeight: FontWeight.medium,
-    marginBottom: Spacing.xs,
   },
 
   headerMain: {
@@ -258,42 +242,29 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.extrabold,
   },
 
-  // ─── FLOATING CARD ────────────────────────────────────────────────
-
   floatingCard: {
     flex: 1,
     backgroundColor: Colors.card,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     marginTop: Spacing.xl,
-    overflow: "hidden",
-    ...Shadow.large,
   },
 
   scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxxxl,
+    padding: Spacing.lg,
+    gap: Spacing.xl,
   },
 
-  // ─── SECTIONS ──────────────────────────────────────────────────
-
-  section: {
-    marginBottom: Spacing.xl,
-  },
+  section: {},
 
   sectionTitle: {
     ...TypographyScale.subtitle,
-    color: Colors.textPrimary,
     marginBottom: Spacing.md,
   },
 
-  // ─── TIPS GRID ─────────────────────────────────────────────────
-
   tipsGrid: {
     flexDirection: "row",
-    gap: Spacing.lg,
-    marginBottom: Spacing.lg,
+    gap: Spacing.md,
   },
 
   tipCard: {
@@ -302,85 +273,60 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     alignItems: "center",
-    gap: Spacing.sm,
-    ...Shadow.card,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    ...getShadow(Shadow.card),
   },
 
-  tipIcon: {
-    fontSize: FontSize.section,
-  },
+  tipIcon: { fontSize: FontSize.section },
 
   tipTitle: {
     ...TypographyScale.small,
-    color: Colors.textPrimary,
-    textAlign: "center",
+    fontWeight: FontWeight.bold,
   },
 
   tipDesc: {
     fontSize: FontSize.caption,
     color: Colors.textMuted,
     textAlign: "center",
-    lineHeight: 15,
   },
-
-  // ─── STATS CONTAINER ────────────────────────────────────────────
 
   statsContainer: {
+    flexDirection: "row",
     backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    ...Shadow.card,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    padding: Spacing.lg,
   },
 
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
+  statItem: { flex: 1, alignItems: "center" },
 
-  statLabel: {
-    ...TypographyScale.caption,
-    color: Colors.textMuted,
-  },
+  statLabel: { ...TypographyScale.caption },
 
   statValue: {
     ...TypographyScale.headline,
     color: Colors.secondary,
   },
 
-  statHint: {
-    fontSize: FontSize.caption,
-    color: Colors.textMuted,
-  },
+  statHint: { ...TypographyScale.caption },
 
   statDivider: {
     width: 1,
-    height: 50,
     backgroundColor: Colors.borderLight,
   },
 
-  // ─── ACTION CARDS ──────────────────────────────────────────────
+  actionCardsContainer: {
+    borderRadius: BorderRadius.lg,
+    overflow: "hidden",
+    backgroundColor: Colors.surfaceAlt,
+  },
 
   actionCard: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
+    padding: Spacing.lg,
   },
 
   actionCardLeft: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.lg,
+    gap: Spacing.md,
     flex: 1,
   },
 
@@ -390,58 +336,36 @@ const styles = StyleSheet.create({
 
   actionCardTitle: {
     ...TypographyScale.body,
-    color: Colors.textPrimary,
   },
 
   actionCardDesc: {
     ...TypographyScale.caption,
     color: Colors.textMuted,
-    marginTop: Spacing.xs,
   },
 
   actionCardArrow: {
-    fontSize: FontSize.body,
+    fontSize: 18,
     color: Colors.secondary,
-    fontWeight: FontWeight.bold,
   },
 
   cardDivider: {
     height: 1,
     backgroundColor: Colors.borderLight,
-    marginHorizontal: Spacing.lg,
   },
-
-  // ─── ACTION CARDS CONTAINER ────────────────────────────────────
-
-  actionCardsContainer: {
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
-    overflow: "hidden",
-    ...Shadow.card,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-
-  // ─── TIPS BOX ──────────────────────────────────────────────────
 
   tipsBox: {
-    backgroundColor: "rgba(111, 160, 200, 0.1)",
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
     flexDirection: "row",
-    gap: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.secondary + "33",
+    gap: Spacing.md,
+    padding: Spacing.lg,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: BorderRadius.lg,
   },
 
   tipsBoxIcon: {
     fontSize: FontSize.largeIcon,
   },
 
-  tipsBoxContent: {
-    flex: 1,
-    gap: Spacing.sm,
-  },
+  tipsBoxContent: { flex: 1 },
 
   tipsBoxTitle: {
     ...TypographyScale.body,
@@ -449,8 +373,6 @@ const styles = StyleSheet.create({
   },
 
   tipsBoxDesc: {
-    fontSize: FontSize.body,
-    color: Colors.textMuted,
-    lineHeight: 20,
+    ...TypographyScale.small,
   },
 });

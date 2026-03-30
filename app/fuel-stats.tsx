@@ -1,25 +1,29 @@
 import HighContrastCard from "@/components/HighContrastCard";
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     Colors,
     FontWeight,
+    Gradients,
     Shadow,
     Spacing,
     TypographyScale
 } from "@/constants/theme";
 import { getFuelStats } from "@/lib/fuelService";
 import { router } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
     Pressable,
+    ScrollView,
     StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
-    View,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -67,68 +71,80 @@ export default function FuelStatsScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-
-          <Text style={styles.title}>Fuel Efficiency</Text>
-          <View style={{ width: 36 }} />
-        </View>
-
-        <HighContrastCard style={styles.card}>
-          <Text style={styles.label}>Miles Driven (This Month)</Text>
-          <TextInput
-            value={milesDriven}
-            onChangeText={setMilesDriven}
-            keyboardType="decimal-pad"
-            placeholder="e.g. 7200"
-            placeholderTextColor={Colors.textMuted}
-            style={styles.input}
-          />
-
-          <Pressable
-            onPress={handleCalculate}
-            disabled={loading}
-            style={({ pressed }) => [
-              styles.calculateBtn,
-              pressed && { opacity: 0.85 },
-              loading && { opacity: 0.7 },
-            ]}
-          >
-            {loading ? (
-              <ActivityIndicator color={Colors.textPrimary} />
-            ) : (
-              <Text style={styles.calculateBtnText}>Calculate</Text>
-            )}
-          </Pressable>
-        </HighContrastCard>
-
-        <HighContrastCard style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Fuel This Month</Text>
-            <Text style={styles.rowValue}>{formatCurrency(stats.fuelThisMonth)}</Text>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        <LinearGradient
+          colors={Gradients.bluePrimary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>Fuel Efficiency</Text>
+            <View style={styles.spacer} />
           </View>
+        </LinearGradient>
 
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Miles Driven</Text>
-            <Text style={styles.rowValue}>{stats.milesDriven.toLocaleString()}</Text>
-          </View>
+        <ScrollView
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
+          <View style={styles.floatingCard}>
+            <HighContrastCard style={styles.card}>
+              <Text style={styles.label}>Miles Driven (This Month)</Text>
+              <TextInput
+                value={milesDriven}
+                onChangeText={setMilesDriven}
+                keyboardType="decimal-pad"
+                placeholder="e.g. 7200"
+                placeholderTextColor={Colors.textMuted}
+                style={styles.input}
+              />
 
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Fuel Cost Per Mile</Text>
-            <Text style={styles.rowValue}>{formatCurrency(stats.fuelCostPerMile)}</Text>
-          </View>
+              <Pressable
+                onPress={handleCalculate}
+                disabled={loading}
+                style={({ pressed }) => [
+                  styles.calculateBtn,
+                  pressed && { opacity: 0.85 },
+                  loading && { opacity: 0.7 },
+                ]}
+              >
+                {loading ? (
+                  <ActivityIndicator color={Colors.textPrimary} />
+                ) : (
+                  <Text style={styles.calculateBtnText}>Calculate</Text>
+                )}
+              </Pressable>
+            </HighContrastCard>
 
-          <View style={[styles.row, styles.rowLast]}>
-            <Text style={styles.rowLabel}>Fuel Cost Per Trip</Text>
-            <Text style={styles.rowValue}>{formatCurrency(stats.fuelCostPerTrip)}</Text>
+            <HighContrastCard style={styles.card}>
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Fuel This Month</Text>
+                <Text style={styles.rowValue}>{formatCurrency(stats.fuelThisMonth)}</Text>
+              </View>
+
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Miles Driven</Text>
+                <Text style={styles.rowValue}>{stats.milesDriven.toLocaleString()}</Text>
+              </View>
+
+              <View style={styles.row}>
+                <Text style={styles.rowLabel}>Fuel Cost Per Mile</Text>
+                <Text style={styles.rowValue}>{formatCurrency(stats.fuelCostPerMile)}</Text>
+              </View>
+
+              <View style={[styles.row, styles.rowLast]}>
+                <Text style={styles.rowLabel}>Fuel Cost Per Trip</Text>
+                <Text style={styles.rowValue}>{formatCurrency(stats.fuelCostPerTrip)}</Text>
+              </View>
+            </HighContrastCard>
           </View>
-        </HighContrastCard>
-      </View>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -138,17 +154,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  content: {
-    padding: Spacing.lg,
-    paddingBottom: 40,
-    gap: Spacing.xl,
-    marginTop: Spacing.lg,
+  hero: {
+    paddingTop: Spacing.xxxl,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.md,
   },
   backBtn: {
     width: 36,
@@ -158,20 +172,42 @@ const styles = StyleSheet.create({
   },
   backText: {
     fontSize: 28,
-    color: Colors.textPrimary,
+    color: Colors.textInverse,
     fontWeight: FontWeight.bold,
   },
   title: {
     ...TypographyScale.headline,
-    color: Colors.textPrimary,
+    color: Colors.textInverse,
+  },
+  spacer: {
+    width: 36,
+  },
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxxxl,
+    gap: Spacing.lg,
+  },
+  floatingCard: {
+    flex: 1,
+    marginTop: -Spacing.xl,
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.xl,
+    ...getShadow(Shadow.large),
+    padding: Spacing.lg,
+    gap: Spacing.lg,
   },
   card: {
     gap: Spacing.lg,
-    ...Shadow.card,
+    backgroundColor: Colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    borderRadius: BorderRadius.md,
+    ...getShadow(Shadow.small),
   },
   label: {
     ...TypographyScale.small,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
   input: {
     backgroundColor: Colors.surface,
@@ -184,7 +220,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   calculateBtn: {
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.primary,
     minHeight: 56,
     borderRadius: BorderRadius.md,
     alignItems: "center",
@@ -194,6 +230,7 @@ const styles = StyleSheet.create({
   calculateBtnText: {
     ...TypographyScale.body,
     color: Colors.background,
+    fontWeight: FontWeight.bold,
   },
   row: {
     flexDirection: "row",
@@ -205,7 +242,7 @@ const styles = StyleSheet.create({
   },
   rowLabel: {
     ...TypographyScale.small,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
   rowValue: {
     ...TypographyScale.subtitle,

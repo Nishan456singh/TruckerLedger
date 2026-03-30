@@ -1,4 +1,5 @@
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     CategoryMeta,
@@ -11,6 +12,7 @@ import {
 } from "@/constants/theme";
 import { getCurrentMonthCategoryTotals } from "@/lib/expenseService";
 import { router, useFocusEffect } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useMemo, useState } from "react";
 import {
     ActivityIndicator,
@@ -85,57 +87,66 @@ export default function MonthlySummaryScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-      <Animated.View entering={FadeInDown.springify()} style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
-        </TouchableOpacity>
-
-        <View style={styles.headerTextWrap}>
-          <Text style={styles.title}>Monthly Summary</Text>
-          <Text style={styles.subtitle}>{monthLabel}</Text>
-        </View>
-      </Animated.View>
-
-      {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator size="small" color={Colors.primary} />
-          <Text style={styles.loadingText}>Loading month totals...</Text>
-        </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        <LinearGradient
+          colors={[Colors.secondary, Colors.secondary]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
         >
-          <View style={styles.totalCard}>
-            <Text style={styles.totalLabel}>Total This Month</Text>
-            <Text style={styles.totalValue}>{formatCurrency(totalMonth)}</Text>
+          <Animated.View entering={FadeInDown.springify()} style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+              <Text style={styles.backText}>‹</Text>
+            </TouchableOpacity>
+
+            <View style={styles.headerTextWrap}>
+              <Text style={styles.title}>Monthly Summary</Text>
+              <Text style={styles.subtitle}>{monthLabel}</Text>
+            </View>
+          </Animated.View>
+        </LinearGradient>
+
+        {loading ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator size="small" color={Colors.primary} />
+            <Text style={styles.loadingText}>Loading month totals...</Text>
           </View>
+        ) : (
+          <View style={styles.floatingContainer}>
+            <ScrollView
+              contentContainerStyle={styles.content}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.totalCard}>
+                <Text style={styles.totalLabel}>Total This Month</Text>
+                <Text style={styles.totalValue}>{formatCurrency(totalMonth)}</Text>
+              </View>
 
-          {ORDERED_CATEGORIES.map((category, index) => {
-            const meta = CategoryMeta[category];
-            const amount = totals[category] ?? 0;
+              {ORDERED_CATEGORIES.map((category, index) => {
+                const meta = CategoryMeta[category];
+                const amount = totals[category] ?? 0;
 
-            return (
-              <Animated.View
-                key={category}
-                entering={FadeInDown.delay(80 + index * 50).springify()}
-                style={styles.row}
-              >
-                <View style={styles.rowLeft}>
-                  <Text style={styles.rowIcon}>{meta.icon}</Text>
-                  <Text style={styles.rowLabel}>{meta.label}</Text>
-                </View>
+                return (
+                  <Animated.View
+                    key={category}
+                    entering={FadeInDown.delay(80 + index * 50).springify()}
+                    style={styles.row}
+                  >
+                    <View style={styles.rowLeft}>
+                      <Text style={styles.rowIcon}>{meta.icon}</Text>
+                      <Text style={styles.rowLabel}>{meta.label}</Text>
+                    </View>
 
-                <Text style={[styles.rowValue, { color: meta.color }]}>
-                  {formatCurrency(amount)}
-                </Text>
-              </Animated.View>
-            );
-          })}
-        </ScrollView>
-      )}
-    </SafeAreaView>
+                    <Text style={[styles.rowValue, { color: meta.color }]}>
+                      {formatCurrency(amount)}
+                    </Text>
+                  </Animated.View>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -145,21 +156,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
+  hero: {
+    paddingTop: Spacing.xxxl,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     gap: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    width: 56,
+    height: 56,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.surface,
-    ...Shadow.small,
+    backgroundColor: Colors.textInverse,
+    ...getShadow(Shadow.small),
   },
   backText: {
     fontSize: 28,
@@ -171,12 +185,21 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TypographyScale.headline,
-    color: Colors.textPrimary,
+    color: Colors.textInverse,
   },
   subtitle: {
     marginTop: Spacing.xs,
     ...TypographyScale.small,
-    color: Colors.textMuted,
+    color: Colors.textInverse,
+  },
+  floatingContainer: {
+    flex: 1,
+    marginTop: -Spacing.xl,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    backgroundColor: Colors.background,
+    ...getShadow(Shadow.large),
+    overflow: "hidden",
   },
   loadingWrap: {
     flex: 1,
@@ -191,18 +214,16 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxl,
+    paddingBottom: Spacing.xxxxl,
     gap: Spacing.lg,
-    marginTop: Spacing.lg,
   },
   totalCard: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.borderLight,
     padding: Spacing.lg,
-    marginBottom: Spacing.md,
-    ...Shadow.card,
+    ...getShadow(Shadow.small),
   },
   totalLabel: {
     ...TypographyScale.caption,
@@ -216,7 +237,7 @@ const styles = StyleSheet.create({
     color: Colors.accent,
   },
   row: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.borderLight,
@@ -225,7 +246,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    ...Shadow.card,
+    ...getShadow(Shadow.small),
   },
   rowLeft: {
     flexDirection: "row",
@@ -233,7 +254,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   rowIcon: {
-    fontSize: 22,
+    fontSize: 24,
   },
   rowLabel: {
     ...TypographyScale.body,

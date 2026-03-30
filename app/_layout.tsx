@@ -6,7 +6,7 @@ import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useMemo, useState } from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import Animated, { FadeOut } from "react-native-reanimated";
@@ -23,6 +23,7 @@ const APP_ROUTES = new Set([
   "(tabs)",
   "add-expense",
   "analytics",
+  "bol-detail",
   "bol-history",
   "cloud-settings",
   "expense-detail",
@@ -33,6 +34,7 @@ const APP_ROUTES = new Set([
   "monthly-summary",
   "profile",
   "receipts",
+  "scan-bol",
   "scan-receipt",
   "trip-profit",
 ]);
@@ -207,6 +209,7 @@ function RootLayoutInner() {
         <Stack.Screen name="monthly-summary" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="receipts" />
+        <Stack.Screen name="scan-bol" />
         <Stack.Screen name="scan-receipt" />
         <Stack.Screen name="trip-profit" />
 

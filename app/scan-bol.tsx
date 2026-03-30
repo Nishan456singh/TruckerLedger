@@ -1,74 +1,46 @@
 import PrimaryButton from "@/components/PrimaryButton";
 import ScreenBackground from "@/components/ScreenBackground";
 import { getShadow } from "@/constants/shadowUtils";
-
 import {
-    BorderRadius,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
-    TypographyScale,
+  BorderRadius,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
 } from "@/constants/theme";
-
-import { addExpense } from "@/lib/expenseService";
+import { parseBOL } from "@/lib/bol/bolParser";
+import { createBOL } from "@/lib/bolService";
 import { extractReceiptText } from "@/lib/receipt/ocrService";
-import { parseReceipt } from "@/lib/receipt/receiptParser";
 import { saveImageLocally } from "@/lib/storage/imageStorage";
-import type { Category } from "@/lib/types";
-
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-
 import React, { useCallback, useRef, useState } from "react";
-
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 
-/* ---------------- HELPERS ---------------- */
+/* ───────────────────────────── */
 
 function todayISO(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-function parseAmount(value: string): number {
-  const cleaned = value.replace(/[^\d.]/g, "");
-  const parsed = Number(cleaned);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
+/* ───────────────────────────── */
 
-const CATEGORY_EMOJIS: Record<Category, string> = {
-  fuel: "⛽",
-  food: "🍔",
-  repair: "🔧",
-  toll: "🛣️",
-  parking: "🅿️",
-  other: "📦",
-};
-
-/**
- * CAPTURE & SAVE IMAGE
- * Uses new unified storage system with compression
- */
-
-/* ---------------- SCREEN ---------------- */
-
-export default function ScanReceiptScreen() {
+export default function ScanBOLScreen() {
   const cameraRef = useRef<CameraView>(null);
-
   const [permission, requestPermission] = useCameraPermissions();
 
   const [isCapturing, setIsCapturing] = useState(false);
@@ -77,14 +49,48 @@ export default function ScanReceiptScreen() {
 
   const [imageUri, setImageUri] = useState<string | null>(null);
 
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState<Category>("fuel");
-  const [note, setNote] = useState("");
+  const [pickupLocation, setPickupLocation] = useState("");
+  const [deliveryLocation, setDeliveryLocation] = useState("");
+  const [loadAmount, setLoadAmount] = useState("");
+  const [broker, setBroker] = useState("");
   const [date, setDate] = useState(todayISO());
-
   const [ocrStatus, setOcrStatus] = useState("");
 
-  /* ---------------- CAPTURE ---------------- */
+  /* ───────── OCR ───────── */
+
+  const performOCR = useCallback(async (uri: string) => {
+    setIsOCRing(true);
+    setOcrStatus("Extracting text...");
+
+    try {
+      const ocrResult = await extractReceiptText(uri);
+
+      if (!ocrResult.success) {
+        setOcrStatus("Fill manually");
+        return;
+      }
+
+      setOcrStatus("Parsing data...");
+
+      const parsed = parseBOL(ocrResult.fullText);
+
+      if (parsed.pickupLocation) setPickupLocation(parsed.pickupLocation);
+      if (parsed.deliveryLocation)
+        setDeliveryLocation(parsed.deliveryLocation);
+      if (parsed.loadAmount) setLoadAmount(String(parsed.loadAmount));
+      if (parsed.broker) setBroker(parsed.broker);
+      if (parsed.date) setDate(parsed.date);
+
+      setOcrStatus("");
+    } catch (err) {
+      console.error(err);
+      setOcrStatus("OCR failed");
+    } finally {
+      setIsOCRing(false);
+    }
+  }, []);
+
+  /* ───────── CAPTURE ───────── */
 
   const handleCapture = useCallback(async () => {
     if (!cameraRef.current || isCapturing) return;
@@ -98,93 +104,57 @@ export default function ScanReceiptScreen() {
       });
 
       // Save to local storage with compression
-      const result = await saveImageLocally(photo.uri, "receipts");
+      const result = await saveImageLocally(photo.uri, "bols");
 
       if (!result.success || !result.path) {
-        Alert.alert("Error", result.error || "Failed to save receipt image");
+        Alert.alert("Error", result.error || "Failed to save BOL image");
         return;
       }
 
       setImageUri(result.path);
 
       // Perform OCR on the saved image
-      performOCR(result.path);
+      await performOCR(result.path);
     } catch (e) {
-      console.error("[ScanReceipt] Capture error:", e);
-      Alert.alert("Error", "Failed to capture receipt");
+      console.error("[ScanBOL] Capture error:", e);
+      Alert.alert("Error", "Failed to capture BOL");
     } finally {
       setIsCapturing(false);
     }
-  }, [isCapturing]);
+  }, [isCapturing, performOCR]);
 
-  /* ---------------- OCR ---------------- */
-
-  const performOCR = useCallback(async (uri: string) => {
-    setIsOCRing(true);
-    setOcrStatus("Reading receipt...");
-
-    try {
-      const res = await extractReceiptText(uri);
-
-      if (!res.success) {
-        setOcrStatus("Couldn't read receipt");
-        return;
-      }
-
-      setOcrStatus("Parsing data...");
-
-      const parsed = parseReceipt(res.fullText);
-
-      if (parsed.amount) setAmount(String(parsed.amount));
-      if (parsed.category) setCategory(parsed.category);
-      if (parsed.date) setDate(parsed.date);
-      if (parsed.vendor) setNote(parsed.vendor);
-
-      setOcrStatus("");
-    } catch (e) {
-      console.error(e);
-      setOcrStatus("OCR failed");
-    } finally {
-      setIsOCRing(false);
-    }
-  }, []);
-
-  /* ---------------- SAVE ---------------- */
+  /* ───────── SAVE ───────── */
 
   const handleSave = useCallback(async () => {
-    const parsed = parseAmount(amount);
-
-    if (parsed <= 0) {
-      Alert.alert("Invalid amount");
-      return;
-    }
-
     if (!imageUri) {
-      Alert.alert("Capture receipt first");
+      Alert.alert("Capture image first");
       return;
     }
+
+    setIsSaving(true);
 
     try {
-      setIsSaving(true);
-
-      await addExpense({
-        amount: parsed,
-        category,
-        note: note.trim(),
+      await createBOL({
+        pickup_location: pickupLocation,
+        delivery_location: deliveryLocation,
+        load_amount: Number(loadAmount) || null,
+        broker,
         date,
-        receipt_uri: imageUri,
+        image_uri: imageUri,
+        ocr_text: "",
       });
 
-      Alert.alert("Saved!");
+      Alert.alert("Saved successfully!");
       router.back();
-    } catch (e) {
+    } catch (err) {
+      console.error(err);
       Alert.alert("Save failed");
     } finally {
       setIsSaving(false);
     }
-  }, [amount, category, date, note, imageUri]);
+  }, [imageUri, pickupLocation, deliveryLocation, loadAmount, broker, date]);
 
-  /* ---------------- PERMISSIONS ---------------- */
+  /* ───────── PERMISSIONS ───────── */
 
   if (!permission) {
     return (
@@ -193,7 +163,7 @@ export default function ScanReceiptScreen() {
           <View style={styles.centerContainer}>
             <ActivityIndicator
               size="large"
-              color={Colors.accent}
+              color={Colors.secondary}
               style={{ marginBottom: Spacing.lg }}
             />
             <Text style={styles.loadingText}>Loading camera...</Text>
@@ -210,7 +180,7 @@ export default function ScanReceiptScreen() {
           <View style={styles.centerContainer}>
             <Text style={styles.permissionTitle}>Camera Access Required</Text>
             <Text style={styles.permissionText}>
-              We need access to your camera to scan receipts.
+              We need access to your camera to scan BOLs.
             </Text>
             <PrimaryButton
               label="Grant Camera Access"
@@ -222,24 +192,24 @@ export default function ScanReceiptScreen() {
     );
   }
 
-  /* ---------------- EDIT SCREEN ---------------- */
+  /* ───────── FORM VIEW ───────── */
 
   if (imageUri) {
     return (
       <ScreenBackground>
         <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
           <LinearGradient
-            colors={["#FF8C42", "#E67E2F"]}
+            colors={["#6FA0C8", "#5A8FB5"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroContainer}
           >
             {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* HERO SECTION - Receipt scanning status */}
+            {/* HERO SECTION - BOL scanning status */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             <View style={styles.heroContent}>
-              <Text style={styles.heroLabel}>Receipt Scan</Text>
-              <Text style={styles.heroValue}>📸</Text>
+              <Text style={styles.heroLabel}>Bill of Lading</Text>
+              <Text style={styles.heroValue}>📄</Text>
               {ocrStatus ? (
                 <Text style={styles.ocrStatusText}>{ocrStatus}</Text>
               ) : (
@@ -251,20 +221,59 @@ export default function ScanReceiptScreen() {
             {/* FLOATING CARD - Form content */}
             {/* ═══════════════════════════════════════════════════════════════ */}
             <View style={styles.floatingCard}>
-              <KeyboardAvoidingView style={styles.keyboardAvoidView} behavior="padding">
+              <KeyboardAvoidingView
+                style={styles.keyboardAvoidView}
+                behavior="padding"
+              >
                 <ScrollView
                   showsVerticalScrollIndicator={false}
                   contentContainerStyle={styles.scrollContent}
                 >
-                  {/* Amount Input */}
+                  {/* Pickup Location Input */}
                   <View style={styles.formGroup}>
-                    <Text style={styles.label}>Amount</Text>
+                    <Text style={styles.label}>Pickup Location</Text>
                     <TextInput
-                      value={amount}
-                      onChangeText={setAmount}
+                      value={pickupLocation}
+                      onChangeText={setPickupLocation}
+                      placeholder="Where you picked up"
+                      placeholderTextColor={Colors.textMuted}
+                      style={styles.input}
+                    />
+                  </View>
+
+                  {/* Delivery Location Input */}
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>Delivery Location</Text>
+                    <TextInput
+                      value={deliveryLocation}
+                      onChangeText={setDeliveryLocation}
+                      placeholder="Where you're delivering"
+                      placeholderTextColor={Colors.textMuted}
+                      style={styles.input}
+                    />
+                  </View>
+
+                  {/* Load Amount Input */}
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>Load Amount</Text>
+                    <TextInput
+                      value={loadAmount}
+                      onChangeText={setLoadAmount}
                       placeholder="$0.00"
                       placeholderTextColor={Colors.textMuted}
                       keyboardType="decimal-pad"
+                      style={styles.input}
+                    />
+                  </View>
+
+                  {/* Broker Input */}
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>Broker</Text>
+                    <TextInput
+                      value={broker}
+                      onChangeText={setBroker}
+                      placeholder="Broker name or ID"
+                      placeholderTextColor={Colors.textMuted}
                       style={styles.input}
                     />
                   </View>
@@ -281,24 +290,10 @@ export default function ScanReceiptScreen() {
                     />
                   </View>
 
-                  {/* Note Input */}
-                  <View style={styles.formGroup}>
-                    <Text style={styles.label}>Vendor / Note</Text>
-                    <TextInput
-                      value={note}
-                      onChangeText={setNote}
-                      placeholder="Where did you shop?"
-                      placeholderTextColor={Colors.textMuted}
-                      style={styles.input}
-                      multiline
-                      numberOfLines={3}
-                    />
-                  </View>
-
                   {/* Save Button */}
                   <View style={styles.buttonGroup}>
                     <PrimaryButton
-                      label="Save Receipt"
+                      label={isSaving ? "Saving..." : "Save BOL"}
                       onPress={handleSave}
                       loading={isSaving}
                       disabled={isSaving || isOCRing}
@@ -321,21 +316,23 @@ export default function ScanReceiptScreen() {
     );
   }
 
-  /* ---------------- CAMERA SCREEN ---------------- */
+  /* ───────── CAMERA VIEW ───────── */
 
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
         <LinearGradient
-          colors={["#FF8C42", "#E67E2F"]}
+          colors={["#6FA0C8", "#5A8FB5"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.cameraContainer}
         >
           {/* Camera Hero Label */}
           <View style={styles.cameraHeader}>
-            <Text style={styles.cameraHeaderText}>Scan Receipt</Text>
-            <Text style={styles.cameraHeaderSubtext}>Position your receipt in the frame</Text>
+            <Text style={styles.cameraHeaderText}>Scan BOL</Text>
+            <Text style={styles.cameraHeaderSubtext}>
+              Position your BOL in the frame
+            </Text>
           </View>
 
           {/* Camera View */}
@@ -355,7 +352,7 @@ export default function ScanReceiptScreen() {
   );
 }
 
-/* ---------------- STYLES ---------------- */
+/* ───────── STYLES ───────── */
 
 const styles = StyleSheet.create({
   /* ─── LAYOUT FOUNDATION ─────────────────────────────────────────────── */

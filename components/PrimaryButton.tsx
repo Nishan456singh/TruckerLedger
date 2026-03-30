@@ -1,4 +1,5 @@
 import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
+import { getShadow } from '@/constants/shadowUtils';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import {
@@ -123,11 +124,11 @@ const styles = StyleSheet.create({
   // Variants
   primary: {
     backgroundColor: Colors.primary,
-    ...Shadow.button,
+    ...getShadow(Shadow.button),
   },
   accent: {
     backgroundColor: Colors.accent,
-    ...Shadow.accent,
+    ...getShadow(Shadow.accent),
   },
   danger: {
     backgroundColor: Colors.danger,
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: Colors.card,
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
   },
 
   // Sizes

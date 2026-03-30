@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import { getDatabase } from "./db";
+import { deleteImage } from "./storage/imageStorage";
 import type { BOLInput, BOLRecord } from "./types";
 
 const WEB = Platform.OS === "web";
@@ -162,27 +163,52 @@ export async function getBOLsByLocation(location: string): Promise<BOLRecord[]> 
 }
 
 export async function getBOLById(id: number): Promise<BOLRecord | null> {
-  if (WEB) return null;
+  try {
+    if (!id || Number.isNaN(id)) {
+      console.warn("⚠️ Invalid BOL ID:", id);
+      return null;
+    }
 
-  const db = await getDatabase();
+    if (WEB) {
+      console.warn("⚠️ getBOLById not supported on web");
+      return null;
+    }
 
-  const row = await db.getFirstAsync<BOLRecord>(
-    `SELECT
-      id,
-      pickup_location,
-      delivery_location,
-      load_amount,
-      date,
-      broker,
-      image_uri,
-      ocr_text,
-      created_at
-    FROM bols
-    WHERE id = ?`,
-    [id]
-  );
+    const db = await getDatabase();
 
-  return row ?? null;
+    const row = await db.getFirstAsync<BOLRecord>(
+      `SELECT
+        id,
+        pickup_location,
+        delivery_location,
+        load_amount,
+        date,
+        broker,
+        image_uri,
+        ocr_text,
+        created_at
+      FROM bols
+      WHERE id = ?
+      LIMIT 1`,
+      [id]
+    );
+
+    if (!row) {
+      console.warn("⚠️ No BOL found for ID:", id);
+      return null;
+    }
+
+    return {
+      ...row,
+      load_amount:
+        typeof row.load_amount === "number"
+          ? row.load_amount
+          : Number(row.load_amount ?? 0),
+    };
+  } catch (error) {
+    console.error("❌ getBOLById failed:", error);
+    return null;
+  }
 }
 
 export async function updateBOL(id: number, input: Partial<BOLInput>): Promise<void> {
@@ -244,6 +270,24 @@ export async function deleteBOL(id: number): Promise<void> {
   if (WEB) throw new Error("BOL deletion requires the mobile app.");
 
   const db = await getDatabase();
+
+  // Get BOL to find image URI
+  const bol = await db.getFirstAsync<{ image_uri: string | null }>(
+    `SELECT image_uri FROM bols WHERE id = ?`,
+    [id]
+  );
+
+  // Delete image file if it exists
+  if (bol?.image_uri) {
+    try {
+      await deleteImage(bol.image_uri);
+    } catch (err) {
+      console.error("[BOLService] Error deleting image:", err);
+      // Don't fail the whole delete if image cleanup fails
+    }
+  }
+
+  // Delete database record
   await db.runAsync(`DELETE FROM bols WHERE id = ?`, [id]);
 }
 

@@ -1,8 +1,10 @@
 import PremiumButton from "@/components/PremiumButton";
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     Colors,
+    ColorUtilities,
     FontSize,
     FontWeight,
     Shadow,
@@ -397,8 +399,8 @@ const styles = StyleSheet.create({
   heroSection: {
     flex: 0.5,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.xxxl,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },
 
@@ -416,7 +418,7 @@ const styles = StyleSheet.create({
   },
 
   heroBackText: {
-    fontSize: 24,
+    fontSize: FontSize.section,
     fontWeight: FontWeight.bold,
     color: Colors.textPrimary,
   },
@@ -435,12 +437,12 @@ const styles = StyleSheet.create({
 
   heroProfitLabel: {
     ...TypographyScale.caption,
-    color: "rgba(17, 17, 17, 0.65)",
+    color: Colors.textInverse,
   },
 
   heroHint: {
     fontSize: FontSize.caption,
-    color: "rgba(17, 17, 17, 0.7)",
+    color: Colors.textInverse,
     fontWeight: FontWeight.semibold,
     marginTop: Spacing.sm,
   },
@@ -470,7 +472,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.15)",
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    borderRadius: 20,
+    borderRadius: BorderRadius.sm,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.25)",
     alignItems: "center",
@@ -479,7 +481,7 @@ const styles = StyleSheet.create({
 
   metricPillLabel: {
     fontSize: FontSize.caption,
-    color: "rgba(17, 17, 17, 0.6)",
+    color: Colors.textInverse,
     fontWeight: FontWeight.medium,
     marginBottom: Spacing.xs,
   },
@@ -493,19 +495,19 @@ const styles = StyleSheet.create({
   // ─── FLOATING CARD ──────────────────────────────────────────
 
   floatingCardContainer: {
-    flex: 0.55,
-    marginTop: -Spacing.lg,
+    flex: 1,
+    marginTop: -Spacing.xl,
     marginHorizontal: Spacing.md,
     backgroundColor: Colors.card,
     borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    ...Shadow.large,
+    ...getShadow(Shadow.large),
   },
 
   cardContent: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.xxxxl,
     gap: Spacing.lg,
     marginTop: Spacing.lg,
   },
@@ -533,7 +535,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.borderLight,
     paddingHorizontal: Spacing.md,
-    ...Shadow.small,
+    ...getShadow(Shadow.small),
   },
 
   inputPrefix: {
@@ -568,7 +570,7 @@ const styles = StyleSheet.create({
   },
 
   expenseIcon: {
-    fontSize: 18,
+    fontSize: FontSize.body,
   },
 
   expenseLabel: {
@@ -585,7 +587,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.borderLight,
-    ...Shadow.small,
+    ...getShadow(Shadow.small),
   },
 
   summaryTitle: {
@@ -609,7 +611,7 @@ const styles = StyleSheet.create({
   },
 
   summaryIcon: {
-    fontSize: 24,
+    fontSize: FontSize.statIcon,
   },
 
   summaryRowLabel: {
@@ -635,7 +637,7 @@ const styles = StyleSheet.create({
   },
 
   summaryRowHighlight: {
-    backgroundColor: "rgba(244, 194, 27, 0.05)",
+    backgroundColor: Colors.primary + '0D',
     marginHorizontal: -Spacing.lg,
     paddingHorizontal: Spacing.lg,
     borderTopWidth: 1,

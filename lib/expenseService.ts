@@ -1,5 +1,6 @@
 import { Platform } from "react-native";
 import { getDatabase } from "./db";
+import { deleteImage } from "./storage/imageStorage";
 import type { Category, DashboardStats, Expense, ExpenseInput } from "./types";
 
 const WEB = Platform.OS === "web";
@@ -235,6 +236,23 @@ export async function deleteExpense(id: number): Promise<void> {
 
   const db = await getDatabase();
 
+  // Get expense to find image URI
+  const expense = await db.getFirstAsync<{ receipt_uri: string | null }>(
+    `SELECT COALESCE(receipt_uri, receipt_image) AS receipt_uri FROM expenses WHERE id = ?`,
+    [id]
+  );
+
+  // Delete image file if it exists
+  if (expense?.receipt_uri) {
+    try {
+      await deleteImage(expense.receipt_uri);
+    } catch (err) {
+      console.error("[ExpenseService] Error deleting image:", err);
+      // Don't fail the whole delete if image cleanup fails
+    }
+  }
+
+  // Delete database record
   await db.runAsync(`DELETE FROM expenses WHERE id = ?`, [id]);
 }
 

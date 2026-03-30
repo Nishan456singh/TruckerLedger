@@ -99,6 +99,7 @@ export const Shadow = {
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.08)',
   },
   card: {
     shadowColor: '#000',
@@ -106,6 +107,7 @@ export const Shadow = {
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 2,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
   },
   medium: {
     shadowColor: '#000',
@@ -113,6 +115,7 @@ export const Shadow = {
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.12)',
   },
   cardElevated: {
     shadowColor: '#000',
@@ -120,6 +123,7 @@ export const Shadow = {
     shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 4,
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
   },
   large: {
     shadowColor: '#000',
@@ -127,6 +131,7 @@ export const Shadow = {
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
+    boxShadow: '0 8px 16px rgba(0, 0, 0, 0.15)',
   },
   xl: {
     shadowColor: '#000',
@@ -134,6 +139,7 @@ export const Shadow = {
     shadowOpacity: 0.2,
     shadowRadius: 24,
     elevation: 12,
+    boxShadow: '0 12px 24px rgba(0, 0, 0, 0.2)',
   },
   button: {
     shadowColor: '#F4C21B',
@@ -141,6 +147,7 @@ export const Shadow = {
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 6,
+    boxShadow: '0 4px 12px rgba(244, 194, 27, 0.25)',
   },
   buttonPressed: {
     shadowColor: '#F4C21B',
@@ -148,6 +155,7 @@ export const Shadow = {
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 3,
+    boxShadow: '0 2px 6px rgba(244, 194, 27, 0.15)',
   },
   accent: {
     shadowColor: '#6FA0C8',
@@ -155,6 +163,7 @@ export const Shadow = {
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 4,
+    boxShadow: '0 4px 10px rgba(111, 160, 200, 0.15)',
   },
   danger: {
     shadowColor: '#C3224E',
@@ -162,6 +171,7 @@ export const Shadow = {
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 4,
+    boxShadow: '0 4px 10px rgba(195, 34, 78, 0.15)',
   },
 };
 

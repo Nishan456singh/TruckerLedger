@@ -1,5 +1,6 @@
 import HighContrastCard from "@/components/HighContrastCard";
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     Colors,
@@ -9,10 +10,21 @@ import {
     Spacing,
     TypographyScale
 } from "@/constants/theme";
-import { getBOLHistory, getBOLsByBroker, getBOLsByLocation, searchBOLs } from "@/lib/bolService";
+
+import {
+    getBOLHistory,
+    getBOLsByBroker,
+    getBOLsByLocation,
+    searchBOLs,
+} from "@/lib/bolService";
+
 import type { BOLRecord } from "@/lib/types";
+
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
+
 import React, { useCallback, useState } from "react";
+
 import {
     ActivityIndicator,
     ScrollView,
@@ -22,6 +34,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
 function formatCurrency(value: number | null): string {
@@ -30,8 +43,6 @@ function formatCurrency(value: number | null): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
   }).format(value);
 }
 
@@ -39,7 +50,9 @@ export default function BOLHistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<BOLRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<"all" | "broker" | "location">("all");
+  const [filterType, setFilterType] = useState<
+    "all" | "broker" | "location"
+  >("all");
 
   const loadBols = useCallback(async () => {
     setLoading(true);
@@ -50,6 +63,7 @@ export default function BOLHistoryScreen() {
         setItems(rows);
       } else {
         let rows: BOLRecord[] = [];
+
         if (filterType === "broker") {
           rows = await getBOLsByBroker(searchQuery);
         } else if (filterType === "location") {
@@ -57,6 +71,7 @@ export default function BOLHistoryScreen() {
         } else {
           rows = await searchBOLs(searchQuery);
         }
+
         setItems(rows);
       }
     } catch (error) {
@@ -80,100 +95,145 @@ export default function BOLHistoryScreen() {
 
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>BOL History</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        <View style={styles.container}>
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* HERO SECTION (Blue - BOL themed)                              */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
 
-      <View style={styles.searchWrap}>
-        <View style={styles.searchContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search BOLs..."
-            placeholderTextColor={Colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-          {searchQuery ? (
-            <TouchableOpacity onPress={handleClearSearch}>
-              <Text style={styles.clearIcon}>✕</Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
+          <LinearGradient
+            colors={[Colors.secondary, '#5A7FB0']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroSection}
+          >
+            {/* Top Bar */}
+            <View style={styles.heroTopBar}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.heroBackBtn}
+              >
+                <Text style={styles.heroBackText}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroTitle}>BOL History</Text>
+              <View style={{ width: 40 }} />
+            </View>
 
-        {searchQuery && (
-          <View style={styles.filterButtons}>
-            <TouchableOpacity
-              style={[styles.filterBtn, filterType === "all" && styles.filterBtnActive]}
-              onPress={() => setFilterType("all")}
-            >
-              <Text style={[styles.filterBtnText, filterType === "all" && styles.filterBtnTextActive]}>All</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.filterBtn, filterType === "broker" && styles.filterBtnActive]}
-              onPress={() => setFilterType("broker")}
-            >
-              <Text style={[styles.filterBtnText, filterType === "broker" && styles.filterBtnTextActive]}>Broker</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.filterBtn, filterType === "location" && styles.filterBtnActive]}
-              onPress={() => setFilterType("location")}
-            >
-              <Text style={[styles.filterBtnText, filterType === "location" && styles.filterBtnTextActive]}>Location</Text>
-            </TouchableOpacity>
+            {/* Centered Title & Count Display */}
+            <View style={styles.heroCenter}>
+              <Text style={styles.heroCenterIcon}>📋</Text>
+              <Text style={styles.heroCenterLabel}>
+                {items.length} BOL{items.length !== 1 ? 's' : ''}
+              </Text>
+              <Text style={styles.heroCenterSubtitle}>
+                {searchQuery ? "Search Results" : "All Shipments"}
+              </Text>
+            </View>
+          </LinearGradient>
+
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* FLOATING CARD (Search, Filters, & Content)                    */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+
+          <View style={styles.floatingCardContainer}>
+            {/* SEARCH BAR */}
+            <View style={styles.searchSection}>
+              <View style={styles.searchContainer}>
+                <Text style={styles.searchIcon}>🔍</Text>
+
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search BOLs..."
+                  placeholderTextColor={Colors.textMuted}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+
+                {searchQuery ? (
+                  <TouchableOpacity onPress={handleClearSearch}>
+                    <Text style={styles.clearIcon}>✕</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+
+              {/* FILTER PILLS */}
+              {searchQuery && (
+                <View style={styles.filterButtons}>
+                  {["all", "broker", "location"].map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.filterBtn,
+                        filterType === type && styles.filterBtnActive,
+                      ]}
+                      onPress={() => setFilterType(type as any)}
+                    >
+                      <Text
+                        style={[
+                          styles.filterBtnText,
+                          filterType === type && styles.filterBtnTextActive,
+                        ]}
+                      >
+                        {type.toUpperCase()}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* CONTENT */}
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.loadingText}>Loading...</Text>
+              </View>
+            ) : items.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyIcon}>📋</Text>
+                <Text style={styles.emptyTitle}>
+                  {searchQuery ? "No results found" : "No BOL records"}
+                </Text>
+              </View>
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.contentList}
+              >
+                {items.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    activeOpacity={0.85}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/bol-detail",
+                        params: { id: String(item.id) },
+                      })
+                    }
+                  >
+                    <HighContrastCard style={styles.card}>
+                      <View style={styles.cardHeader}>
+                        <Text style={styles.cardDate}>{item.date}</Text>
+                        <Text style={styles.cardAmount}>
+                          {formatCurrency(item.load_amount)}
+                        </Text>
+                      </View>
+
+                      <Text style={styles.cardLocation}>
+                        📍 {item.pickup_location} → {item.delivery_location}
+                      </Text>
+
+                      <Text style={styles.cardBroker}>
+                        🤝 {item.broker || "No broker"}
+                      </Text>
+                    </HighContrastCard>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
           </View>
-        )}
-      </View>
-
-      {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color={Colors.primary} size="large" />
-          <Text style={styles.loadingText}>Loading BOL history...</Text>
         </View>
-      ) : items.length === 0 ? (
-        <View style={styles.emptyWrap}>
-          <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyTitle}>{searchQuery ? "No results found" : "No BOL records yet"}</Text>
-          <Text style={styles.emptyText}>{searchQuery ? "Try different search terms" : "Scan your first BOL to build load history."}</Text>
-        </View>
-      ) : (
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text style={styles.resultCount}>{items.length} BOL{items.length !== 1 ? "s" : ""} found</Text>
-          {items.map((item) => (
-            <HighContrastCard key={item.id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardDate}>{item.date || "No date"}</Text>
-                <Text style={styles.cardAmount}>{formatCurrency(item.load_amount)}</Text>
-              </View>
-
-              <View style={styles.row}>
-                <Text style={styles.label}>📍 From</Text>
-                <Text style={styles.value}>{item.pickup_location || "-"}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.row}>
-                <Text style={styles.label}>📍 To</Text>
-                <Text style={styles.value}>{item.delivery_location || "-"}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.row}>
-                <Text style={styles.label}>🤝 Broker</Text>
-                <Text style={styles.value}>{item.broker || "-"}</Text>
-              </View>
-            </HighContrastCard>
-          ))}
-        </ScrollView>
-      )}
-    </SafeAreaView>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
@@ -183,174 +243,223 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "transparent",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+
+  container: {
+    flex: 1,
+    position: "relative",
   },
-  backBtn: {
-    width: 36,
-    height: 36,
+
+  // ─── HERO SECTION ───────────────────────────────────────────
+
+  heroSection: {
+    flex: 0.4,
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xxxl,
+    paddingBottom: Spacing.lg,
+    justifyContent: "space-between",
+  },
+
+  heroTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  heroBackBtn: {
+    width: 40,
+    height: 40,
     alignItems: "center",
     justifyContent: "center",
   },
-  backText: {
-    fontSize: 28,
-    color: Colors.textPrimary,
+
+  heroBackText: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  heroTitle: {
+    ...TypographyScale.subtitle,
+    color: Colors.textInverse,
+  },
+
+  heroCenter: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+  },
+
+  heroCenterIcon: {
+    fontSize: FontSize.largeIcon,
+  },
+
+  heroCenterLabel: {
+    ...TypographyScale.subtitle,
+    color: Colors.textInverse,
     fontWeight: FontWeight.bold,
   },
-  title: {
-    ...TypographyScale.title,
-    color: Colors.textPrimary,
+
+  heroCenterSubtitle: {
+    fontSize: FontSize.caption,
+    color: "rgba(255, 255, 255, 0.8)",
+    fontWeight: FontWeight.medium,
+    marginTop: Spacing.xs,
   },
-  searchWrap: {
+
+  // ─── FLOATING CARD ──────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 0.65,
+    marginTop: -Spacing.xl,
+    marginHorizontal: Spacing.md,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.xl,
+    overflow: "hidden",
+    ...getShadow(Shadow.large),
+  },
+
+  searchSection: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.lg,
     gap: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+    paddingBottom: Spacing.md,
   },
+
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.borderLight,
     paddingHorizontal: Spacing.md,
-    ...Shadow.small,
+    paddingVertical: Spacing.sm,
   },
-  searchIcon: {
-    fontSize: FontSize.body,
-    marginRight: Spacing.sm,
-  },
+
   searchInput: {
     flex: 1,
     color: Colors.textPrimary,
+    marginLeft: Spacing.sm,
     ...TypographyScale.body,
-    paddingVertical: Spacing.md,
   },
-  clearIcon: {
+
+  searchIcon: {
     fontSize: FontSize.body,
-    color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
   },
+
+  clearIcon: {
+    color: Colors.textMuted,
+    fontSize: FontSize.section,
+    marginLeft: Spacing.sm,
+  },
+
   filterButtons: {
     flexDirection: "row",
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
+
   filterBtn: {
     flex: 1,
-    paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.borderLight,
-    alignItems: "center",
-    justifyContent: "center",
     backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
   },
+
   filterBtnActive: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
+
   filterBtnText: {
+    textAlign: "center",
+    color: Colors.textMuted,
     ...TypographyScale.small,
-    color: Colors.textSecondary,
+    fontWeight: FontWeight.semibold,
   },
+
   filterBtnTextActive: {
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
   },
-  loadingWrap: {
-    flex: 1,
+
+  loadingContainer: {
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: Spacing.xxxxl,
     gap: Spacing.md,
   },
+
   loadingText: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
+    ...TypographyScale.body,
   },
-  emptyWrap: {
-    flex: 1,
+
+  emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: Spacing.xxxxl,
     gap: Spacing.md,
-    paddingHorizontal: Spacing.lg,
   },
+
   emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.sm,
+    fontSize: FontSize.largeIcon,
   },
+
   emptyTitle: {
-    ...TypographyScale.subtitle,
-    color: Colors.textPrimary,
-    textAlign: "center",
+    color: Colors.textMuted,
+    ...TypographyScale.body,
+    fontWeight: FontWeight.semibold,
   },
-  emptyText: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  content: {
+
+  contentList: {
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxxxl,
     gap: Spacing.lg,
-    marginTop: Spacing.lg,
   },
-  resultCount: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-    fontWeight: FontWeight.medium,
-  },
+
   card: {
-    gap: Spacing.md,
-    ...Shadow.card,
+    backgroundColor: Colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    ...getShadow(Shadow.small),
   },
+
   cardHeader: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: Spacing.sm,
-    paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    alignItems: "center",
+    marginBottom: Spacing.md,
   },
+
   cardDate: {
+    color: Colors.textMuted,
     ...TypographyScale.small,
-    color: Colors.textPrimary,
-    fontWeight: FontWeight.bold,
-  },
-  cardAmount: {
-    ...TypographyScale.small,
-    color: Colors.accent,
-    fontWeight: FontWeight.bold,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.borderTiny,
-    marginVertical: Spacing.xs,
-  },
-  label: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
-    fontWeight: FontWeight.medium,
-  },
-  value: {
-    ...TypographyScale.small,
-    color: Colors.textPrimary,
     fontWeight: FontWeight.semibold,
-    flex: 1,
-    textAlign: "right",
+  },
+
+  cardAmount: {
+    color: Colors.primary,
+    ...TypographyScale.subtitle,
+    fontWeight: FontWeight.bold,
+  },
+
+  cardLocation: {
+    color: Colors.textPrimary,
+    ...TypographyScale.body,
+    marginBottom: Spacing.sm,
+  },
+
+  cardBroker: {
+    color: Colors.textMuted,
+    ...TypographyScale.small,
   },
 });

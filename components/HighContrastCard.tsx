@@ -1,4 +1,5 @@
 import { BorderRadius, Shadow, Spacing } from '@/constants/theme';
+import { getShadow } from '@/constants/shadowUtils';
 import React from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
@@ -23,7 +24,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(0, 0, 0, 0.08)",
     borderRadius: BorderRadius.lg,
     overflow: "hidden",
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
   },
   padded: {
     padding: Spacing.lg,

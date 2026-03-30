@@ -6,6 +6,7 @@ import {
     Shadow,
     Spacing,
 } from '@/constants/theme';
+import { getShadow } from '@/constants/shadowUtils';
 import { Image } from 'expo-image';
 import React, { useState } from 'react';
 import {
@@ -111,7 +112,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     minHeight: 200,
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
   },
   image: {
     width: '100%',

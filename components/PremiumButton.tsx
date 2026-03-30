@@ -1,4 +1,5 @@
 import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
+import { getShadow } from '@/constants/shadowUtils';
 import { SCALE_VALUES, SPRING_CONFIGS } from '@/lib/animationUtils';
 import { pressHaptic } from '@/lib/hapticUtils';
 import React, { useCallback, useMemo } from 'react';
@@ -117,7 +118,7 @@ export default function PremiumButton({
 
   const shadowStyle = useMemo(() => {
     if (disabled || variant === 'outline') return {};
-    return { ...Shadow.medium };
+    return { ...getShadow(Shadow.medium) };
   }, [disabled, variant]);
 
   return (

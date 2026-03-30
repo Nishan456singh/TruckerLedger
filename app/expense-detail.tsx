@@ -1,26 +1,27 @@
 import CategorySelector from "@/components/CategorySelector";
+import ImageViewerModal from "@/components/ImageViewerModal";
 import PrimaryButton from "@/components/PrimaryButton";
 import ReceiptPreview from "@/components/ReceiptPreview";
 import ScreenBackground from "@/components/ScreenBackground";
 
+import { getShadow } from "@/constants/shadowUtils";
 import {
-    BorderRadius,
-    CategoryMeta,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
-    TypographyScale
+  BorderRadius,
+  CategoryMeta,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
 } from "@/constants/theme";
 
-import type { Category, Expense } from "@/lib/types";
-
 import {
-    deleteExpense,
-    getExpenseById,
-    updateExpense,
+  deleteExpense,
+  getExpenseById,
+  updateExpense,
 } from "@/lib/expenseService";
+import type { Category, Expense } from "@/lib/types";
 
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
@@ -30,31 +31,24 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { FadeInDown } from "react-native-reanimated";
-
 import { SafeAreaView } from "react-native-safe-area-context";
+
+/* HELPERS */
 
 function todayISO(): string {
   return new Date().toISOString().split("T")[0];
-}
-
-function yesterdayISO(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
 }
 
 function formatCurrency(v: number): string {
@@ -64,20 +58,7 @@ function formatCurrency(v: number): string {
   }).format(v);
 }
 
-function formatDateDisplay(iso: string): string {
-  const today = todayISO();
-  const yesterday = yesterdayISO();
-
-  if (iso === today) return "Today";
-  if (iso === yesterday) return "Yesterday";
-
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+/* SCREEN */
 
 export default function ExpenseDetailScreen() {
   const params = useLocalSearchParams<{ id?: string; fromScan?: string }>();
@@ -85,16 +66,16 @@ export default function ExpenseDetailScreen() {
   const [expense, setExpense] = useState<Expense | null>(null);
   const [editing, setEditing] = useState(params.fromScan === "1");
 
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<Category>("other");
   const [date, setDate] = useState(todayISO());
   const [note, setNote] = useState("");
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
 
-  const [showReceiptFull, setShowReceiptFull] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const [viewerUri, setViewerUri] = useState<string | null>(null);
 
   const amountRef = useRef<TextInput>(null);
 
@@ -110,12 +91,7 @@ export default function ExpenseDetailScreen() {
 
   async function loadExpense(id: number) {
     const data = await getExpenseById(id);
-
-    if (!data) {
-      Alert.alert("Not found", "Expense could not be found.");
-      router.back();
-      return;
-    }
+    if (!data) return router.back();
 
     setExpense(data);
     setAmount(String(data.amount));
@@ -128,14 +104,9 @@ export default function ExpenseDetailScreen() {
   async function handleSave() {
     if (!expense) return;
 
-    const parsedAmount = Number(amount.replace(/[^\d.]/g, ""));
-
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      await Haptics.notificationAsync(
-        Haptics.NotificationFeedbackType.Error
-      );
-
-      Alert.alert("Invalid amount", "Please enter a valid amount.");
+    const parsed = Number(amount.replace(/[^\d.]/g, ""));
+    if (!parsed || parsed <= 0) {
+      Alert.alert("Invalid amount");
       return;
     }
 
@@ -143,10 +114,10 @@ export default function ExpenseDetailScreen() {
 
     try {
       await updateExpense(expense.id, {
-        amount: parsedAmount,
+        amount: parsed,
         category,
         date,
-        note: note.trim(),
+        note,
         receipt_uri: receiptUri,
       });
 
@@ -154,11 +125,8 @@ export default function ExpenseDetailScreen() {
         Haptics.NotificationFeedbackType.Success
       );
 
-      await loadExpense(expense.id);
-
       setEditing(false);
-    } catch {
-      Alert.alert("Error", "Failed to update expense.");
+      loadExpense(expense.id);
     } finally {
       setSaving(false);
     }
@@ -167,51 +135,28 @@ export default function ExpenseDetailScreen() {
   async function handleDelete() {
     if (!expense) return;
 
-    Alert.alert(
-      "Delete Expense",
-      "Are you sure you want to delete this expense?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setDeleting(true);
-
-            try {
-              await deleteExpense(expense.id);
-
-              await Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Warning
-              );
-
-              router.back();
-            } catch {
-              setDeleting(false);
-              Alert.alert("Error", "Failed to delete expense.");
-            }
-          },
+    Alert.alert("Delete Expense", "Are you sure?", [
+      { text: "Cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          setDeleting(true);
+          await deleteExpense(expense.id);
+          router.back();
         },
-      ]
-    );
+      },
+    ]);
   }
 
   async function handlePickImage() {
-    const { status } =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== "granted") {
-      Alert.alert("Permission needed", "Photo access required.");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.85,
+    const res = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"], // ✅ FIXED (no deprecated API)
+      quality: 0.8,
     });
 
-    if (!result.canceled && result.assets?.[0]) {
-      setReceiptUri(result.assets[0].uri);
+    if (!res.canceled) {
+      setReceiptUri(res.assets[0].uri);
     }
   }
 
@@ -225,268 +170,151 @@ export default function ExpenseDetailScreen() {
     );
   }
 
-  const meta =
-    CategoryMeta[expense.category as Category] || CategoryMeta.other;
+  const meta = CategoryMeta[category];
 
-  const isScannedEntry = params.fromScan === "1" || !!expense.ocr_text;
-  const detectedVendor = note.startsWith("Vendor:")
-    ? note.replace("Vendor:", "").trim()
-    : "";
-  const editCategoryMeta = CategoryMeta[category] || CategoryMeta.other;
+  /* ================= VIEW MODE ================= */
 
   if (!editing) {
     return (
       <ScreenBackground>
         <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
           <View style={styles.container}>
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* HERO SECTION (50% - Category-color themed)                     */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-
+            {/* HERO */}
             <LinearGradient
               colors={[meta.color, meta.color + "CC"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroSection}
+              style={styles.hero}
             >
-              {/* Top Bar */}
-              <View style={styles.heroTopBar}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={styles.heroBackBtn}
-                >
-                  <Text style={styles.heroBackText}>✕</Text>
-                </TouchableOpacity>
-                <Text style={styles.heroTitle}>Expense Details</Text>
-                <TouchableOpacity onPress={() => setEditing(true)}>
-                  <Text style={styles.heroEditText}>Edit</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Centered Amount Display */}
-              <View style={styles.heroAmountCenter}>
-                <Text style={styles.heroAmountValue}>
-                  {formatCurrency(expense.amount)}
+              <View style={styles.topBar}>
+                <Text style={styles.close} onPress={() => router.back()}>
+                  ✕
                 </Text>
-                <Text style={styles.heroAmountEmoji}>{meta.icon}</Text>
+
+                <Text style={styles.title}>Expense</Text>
+
+                <Text style={styles.edit} onPress={() => setEditing(true)}>
+                  Edit
+                </Text>
               </View>
 
-              {/* Category Pill */}
-              <View style={styles.heroCategoryPill}>
-                <Text style={styles.heroCategoryLabel}>{meta.label}</Text>
-              </View>
+              <Text style={styles.amount}>
+                {formatCurrency(Number(amount))}
+              </Text>
+
+              <Text style={styles.category}>
+                {meta.icon} {meta.label}
+              </Text>
             </LinearGradient>
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* FLOATING CARD (50%+ - Details & Actions)                       */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* CARD */}
+            <View style={styles.card}>
+              <ScrollView contentContainerStyle={styles.content}>
+                <Text style={styles.section}>Details</Text>
 
-            <View style={styles.floatingCardContainer}>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.cardContent}
-              >
-                {/* Details Section */}
-                <Animated.View entering={FadeInDown}>
-                  <Text style={styles.cardSectionTitle}>📋 Details</Text>
-                  <View style={styles.detailsBlock}>
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Date</Text>
-                      <Text style={styles.detailValue}>{formatDateDisplay(expense.date)}</Text>
-                    </View>
-                    <View style={styles.detailDivider} />
-                    <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Category</Text>
-                      <Text style={styles.detailValue}>{meta.icon} {meta.label}</Text>
-                    </View>
-                    {expense.note && (
-                      <>
-                        <View style={styles.detailDivider} />
-                        <View style={styles.detailRow}>
-                          <Text style={styles.detailLabel}>Note</Text>
-                          <Text style={[styles.detailValue, { maxWidth: "50%", textAlign: "right" }]}>
-                            {expense.note}
-                          </Text>
-                        </View>
-                      </>
-                    )}
-                  </View>
-                </Animated.View>
+                <View style={styles.block}>
+                  <Row label="Date" value={date} />
+                  <Divider />
+                  <Row label="Note" value={note || "-"} />
+                </View>
 
-                {/* Receipt Preview */}
                 {receiptUri && (
-                  <Animated.View entering={FadeInDown.delay(50)}>
-                    <Text style={[styles.cardSectionTitle, { marginTop: Spacing.lg }]}>
-                      📸 Receipt
-                    </Text>
-                    <View style={styles.receiptContainer}>
-                      <TouchableOpacity
-                        onPress={() => setShowReceiptFull(true)}
-                        activeOpacity={0.8}
-                      >
-                        <ReceiptPreview uri={receiptUri} />
-                      </TouchableOpacity>
-                    </View>
-                  </Animated.View>
+                  <>
+                    <Text style={styles.section}>Receipt</Text>
+                    <TouchableOpacity
+                      onPress={() => setViewerUri(receiptUri)}
+                    >
+                      <ReceiptPreview uri={receiptUri} />
+                    </TouchableOpacity>
+                  </>
                 )}
               </ScrollView>
 
-              {/* Delete Button */}
-              <Animated.View entering={FadeInDown.delay(100)} style={styles.cardFooter}>
-                <PrimaryButton
-                  label="🗑️ Delete Expense"
-                  variant="danger"
-                  onPress={handleDelete}
-                  loading={deleting}
-                  fullWidth
-                />
-              </Animated.View>
+              <PrimaryButton
+                label="Delete Expense"
+                variant="accent"
+                onPress={handleDelete}
+                loading={deleting}
+              />
             </View>
           </View>
 
-          {receiptUri && (
-            <Modal visible={showReceiptFull} transparent animationType="fade">
-              <View style={styles.modalBg}>
-                <TouchableOpacity
-                  style={styles.modalClose}
-                  onPress={() => setShowReceiptFull(false)}
-                >
-                  <Text style={styles.modalCloseText}>✕</Text>
-                </TouchableOpacity>
-
-                <ReceiptPreview uri={receiptUri} />
-              </View>
-            </Modal>
-          )}
+          <ImageViewerModal
+            visible={!!viewerUri}
+            uri={viewerUri}
+            onClose={() => setViewerUri(null)}
+          />
         </SafeAreaView>
       </ScreenBackground>
     );
   }
 
+  /* ================= EDIT MODE ================= */
+
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={{ flex: 1 }}
         >
           <View style={styles.container}>
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* HERO SECTION (40% - Category-themed for context)              */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
-
             <LinearGradient
               colors={[meta.color, meta.color + "CC"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.editHeroSection}
+              style={styles.hero}
             >
-              {/* Top Bar */}
-              <View style={styles.editHeroTopBar}>
-                <TouchableOpacity
-                  onPress={() => setEditing(false)}
-                  style={styles.editHeroBackBtn}
-                >
-                  <Text style={styles.editHeroBackText}>✕</Text>
-                </TouchableOpacity>
-                <Text style={styles.editHeroTitle}>Edit Expense</Text>
-                <View style={{ width: 40 }} />
-              </View>
+              <Text style={styles.close} onPress={() => setEditing(false)}>
+                ✕
+              </Text>
 
-              {/* Category indicator */}
-              <View style={styles.editHeroCategoryRow}>
-                <Text style={styles.editHeroIcon}>{editCategoryMeta.icon}</Text>
-                <Text style={styles.editHeroCategoryName}>{editCategoryMeta.label}</Text>
-              </View>
+              <Text style={styles.title}>Edit Expense</Text>
             </LinearGradient>
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* FLOATING CARD (60%+ - Edit Form)                              */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+            <View style={styles.card}>
+              <ScrollView contentContainerStyle={styles.content}>
+                {/* AMOUNT */}
+                <View style={styles.amountWrap}>
+                  <Text style={styles.dollar}>$</Text>
+                  <TextInput
+                    ref={amountRef}
+                    value={amount}
+                    onChangeText={setAmount}
+                    style={styles.inputBig}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
 
-            <View style={styles.editFloatingCardContainer}>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.editCardContent}
-              >
-                {/* Amount Input */}
-                <Animated.View entering={FadeInDown}>
-                  <View style={styles.amountContainer}>
-                    <Text style={styles.currencySign}>$</Text>
-                    <TextInput
-                      ref={amountRef}
-                      style={styles.amountInput}
-                      value={amount}
-                      onChangeText={setAmount}
-                      keyboardType="decimal-pad"
-                      placeholder="0.00"
-                      placeholderTextColor={Colors.textMuted}
-                    />
-                  </View>
-                </Animated.View>
+                {/* CATEGORY */}
+                <CategorySelector
+                  selected={category}
+                  onChange={setCategory}
+                />
 
-                {/* Category Selector */}
-                <Animated.View entering={FadeInDown.delay(50)}>
-                  <Text style={styles.editSectionTitle}>📁 Category</Text>
-                  <CategorySelector selected={category} onChange={setCategory} />
-                </Animated.View>
+                {/* DATE */}
+                <TextInput
+                  value={date}
+                  onChangeText={setDate}
+                  style={styles.input}
+                />
 
-                {/* Date & Note Fields */}
-                <Animated.View entering={FadeInDown.delay(100)} style={styles.fieldsBlock}>
-                  <View>
-                    <Text style={styles.editFieldLabel}>📅 Date</Text>
-                    <TextInput
-                      style={styles.editInput}
-                      value={date}
-                      onChangeText={setDate}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={Colors.textMuted}
-                    />
-                  </View>
+                {/* NOTE */}
+                <TextInput
+                  value={note}
+                  onChangeText={setNote}
+                  style={[styles.input, { height: 80 }]}
+                  multiline
+                />
 
-                  <View>
-                    <Text style={styles.editFieldLabel}>📝 Note (Optional)</Text>
-                    <TextInput
-                      style={[styles.editInput, { height: 80, paddingTop: Spacing.xl, textAlignVertical: "top" }]}
-                      value={note}
-                      onChangeText={setNote}
-                      placeholder="Add notes about this expense"
-                      placeholderTextColor={Colors.textMuted}
-                      multiline
-                    />
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={handlePickImage}
-                    style={styles.attachReceiptBtn}
-                  >
-                    <Text style={styles.attachReceiptIcon}>📎</Text>
-                    <View style={styles.attachReceiptText}>
-                      <Text style={styles.attachReceiptLabel}>Attach Receipt</Text>
-                      <Text style={styles.attachReceiptStatus}>
-                        {receiptUri ? "✓ Receipt attached" : "Optional"}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                </Animated.View>
-              </ScrollView>
-
-              {/* Footer with Save/Cancel */}
-              <Animated.View entering={FadeInDown.delay(150)} style={styles.editCardFooter}>
+                {/* SAVE */}
                 <PrimaryButton
-                  label="💾 Save Changes"
+                  label="Save Changes"
                   onPress={handleSave}
                   loading={saving}
-                  disabled={saving || Number(amount) <= 0}
-                  fullWidth
                 />
-                <TouchableOpacity
-                  style={styles.editCancelBtn}
-                  onPress={() => setEditing(false)}
-                >
-                  <Text style={styles.editCancelBtnText}>Cancel</Text>
+
+                {/* ATTACH */}
+                <TouchableOpacity onPress={handlePickImage}>
+                  <Text style={styles.link}>Attach Receipt</Text>
                 </TouchableOpacity>
-              </Animated.View>
+              </ScrollView>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -495,372 +323,157 @@ export default function ExpenseDetailScreen() {
   );
 }
 
+/* COMPONENTS */
+
+function Row({ label, value }: any) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.value}>{value}</Text>
+    </View>
+  );
+}
+
+const Divider = () => <View style={styles.divider} />;
+
+/* STYLES */
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "transparent" },
+  safe: { flex: 1 },
+  container: { flex: 1 },
 
-  container: {
-    flex: 1,
-    position: "relative",
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+
+  loadingText: {
+    ...TypographyScale.body,
+    color: Colors.textMuted,
   },
 
-  // ─── VIEW MODE: HERO SECTION ─────────────────────────────────────────
-
-  heroSection: {
-    flex: 0.5,
+  hero: {
+    paddingTop: 70,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
-    paddingBottom: Spacing.md,
-    justifyContent: "space-between",
+    paddingBottom: 50,
   },
 
-  heroTopBar: {
+  topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
   },
 
-  heroBackBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  heroBackText: {
+  close: {
+    color: "#fff",
     fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
+    fontWeight: "bold",
   },
 
-  heroTitle: {
+  edit: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+
+  title: {
+    color: "#fff",
     fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
-  },
-
-  heroEditText: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-    color: Colors.textInverse,
-  },
-
-  heroAmountCenter: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
-  },
-
-  heroAmountValue: {
-    fontSize: TypographyScale.display.fontSize,
-    lineHeight: TypographyScale.display.lineHeight,
-    fontWeight: TypographyScale.display.fontWeight,
-    color: Colors.textInverse,
-  },
-
-  heroAmountEmoji: {
-    fontSize: FontSize.largeIcon,
+    fontWeight: "700",
     marginTop: Spacing.sm,
   },
 
-  heroCategoryPill: {
-    alignSelf: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    ...Shadow.small,
-  },
-
-  heroCategoryLabel: {
-    fontSize: TypographyScale.subtitle.fontSize,
-    fontWeight: TypographyScale.subtitle.fontWeight,
-    color: Colors.textInverse,
-  },
-
-  // ─── VIEW MODE: FLOATING CARD ────────────────────────────────────────
-
-  floatingCardContainer: {
-    flex: 0.55,
-    marginTop: -Spacing.lg,
-    marginHorizontal: Spacing.md,
-    backgroundColor: Colors.card,
-    borderRadius: 32,
-    overflow: "hidden",
-    ...Shadow.large,
-  },
-
-  cardContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.lg,
+  amount: {
+    fontSize: 42,
+    color: "#fff",
+    fontWeight: "800",
     marginTop: Spacing.lg,
   },
 
-  cardSectionTitle: {
-    fontSize: TypographyScale.subtitle.fontSize,
-    fontWeight: TypographyScale.subtitle.fontWeight,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+  category: {
+    color: "#fff",
+    marginTop: Spacing.sm,
+    fontSize: FontSize.body,
   },
 
-  detailsBlock: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+  card: {
+    flex: 1,
+    marginTop: -Spacing.xl,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    gap: 0,
-    ...Shadow.small,
+    ...getShadow(Shadow.large),
   },
 
-  detailRow: {
+  content: {
+    gap: Spacing.lg,
+    paddingBottom: Spacing.lg,
+  },
+
+  section: {
+    ...TypographyScale.subtitle,
+    color: Colors.textPrimary,
+  },
+
+  block: {
+    backgroundColor: Colors.surface,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    ...getShadow(Shadow.small),
+  },
+
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: Spacing.md,
+    alignItems: "flex-start",
   },
 
-  detailLabel: {
-    fontSize: TypographyScale.small.fontSize,
+  label: {
     color: Colors.textMuted,
-    fontWeight: TypographyScale.small.fontWeight,
   },
 
-  detailValue: {
-    fontSize: TypographyScale.body.fontSize,
+  value: {
     color: Colors.textPrimary,
-    fontWeight: TypographyScale.body.fontWeight,
+    fontWeight: "600",
+    maxWidth: "55%",
+    textAlign: "right",
   },
 
-  detailDivider: {
+  divider: {
     height: 1,
     backgroundColor: Colors.border,
+    marginVertical: Spacing.sm,
   },
 
-  receiptContainer: {
-    borderRadius: BorderRadius.lg,
-    overflow: "hidden",
-    ...Shadow.medium,
+  amountWrap: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: Colors.surface,
-    padding: Spacing.xs,
-  },
-
-  modalBg: {
-    flex: 1,
-    backgroundColor: Colors.overlay,
-    padding: Spacing.xl,
-  },
-
-  modalClose: {
-    position: "absolute",
-    top: 50,
-    right: 20,
-    zIndex: 100,
-  },
-
-  modalCloseText: {
-    color: Colors.textInverse,
-    fontSize: TypographyScale.title.fontSize,
-    fontWeight: FontWeight.bold,
-  },
-
-  cardFooter: {
+    borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-
-  // ─── EDIT MODE: HERO SECTION ─────────────────────────────────────────
-
-  editHeroSection: {
-    flex: 0.35,
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
-    paddingBottom: Spacing.md,
-    justifyContent: "space-between",
-  },
-
-  editHeroTopBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-
-  editHeroBackBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  editHeroBackText: {
-    fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
-  },
-
-  editHeroTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
-  },
-
-  editHeroCategoryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "center",
-    gap: Spacing.sm,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    ...Shadow.small,
-  },
-
-  editHeroIcon: {
-    fontSize: FontSize.largeIcon,
-  },
-
-  editHeroCategoryName: {
-    fontSize: TypographyScale.subtitle.fontSize,
-    fontWeight: TypographyScale.subtitle.fontWeight,
-    color: Colors.textInverse,
-  },
-
-  // ─── EDIT MODE: FLOATING CARD ────────────────────────────────────────
-
-  editFloatingCardContainer: {
-    flex: 0.65,
-    marginTop: -Spacing.lg,
-    marginHorizontal: Spacing.md,
-    backgroundColor: Colors.card,
-    borderRadius: 32,
-    overflow: "hidden",
-    ...Shadow.large,
-  },
-
-  editCardContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.lg,
-    marginTop: Spacing.lg,
-  },
-
-  editSectionTitle: {
-    fontSize: TypographyScale.subtitle.fontSize,
-    fontWeight: TypographyScale.subtitle.fontWeight,
-    color: Colors.textPrimary,
+    ...getShadow(Shadow.small),
     marginBottom: Spacing.md,
   },
 
-  amountContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.xl,
-    paddingHorizontal: Spacing.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadow.small,
-  },
-
-  currencySign: {
-    fontSize: TypographyScale.headline.fontSize,
+  dollar: {
+    fontSize: 28,
     color: Colors.textMuted,
-    fontWeight: FontWeight.bold,
   },
 
-  amountInput: {
+  inputBig: {
     flex: 1,
-    fontSize: TypographyScale.display.fontSize,
-    fontWeight: TypographyScale.display.fontWeight,
+    fontSize: 40,
+    fontWeight: "800",
     color: Colors.textPrimary,
     paddingVertical: Spacing.lg,
   },
 
-  fieldsBlock: {
-    gap: Spacing.lg,
-  },
-
-  editFieldLabel: {
-    fontSize: TypographyScale.small.fontSize,
-    fontWeight: TypographyScale.small.fontWeight,
-    color: Colors.textMuted,
-    marginBottom: Spacing.sm,
-  },
-
-  editInput: {
+  input: {
     backgroundColor: Colors.surface,
+    padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: TypographyScale.body.fontSize,
-    color: Colors.textPrimary,
-    ...Shadow.small,
+    marginBottom: Spacing.md,
   },
 
-  attachReceiptBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    ...Shadow.small,
-  },
-
-  attachReceiptIcon: {
-    fontSize: 24,
-  },
-
-  attachReceiptText: {
-    flex: 1,
-  },
-
-  attachReceiptLabel: {
-    fontSize: TypographyScale.body.fontSize,
-    fontWeight: TypographyScale.body.fontWeight,
-    color: Colors.textPrimary,
-  },
-
-  attachReceiptStatus: {
-    fontSize: TypographyScale.small.fontSize,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
-
-  editCardFooter: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    gap: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-
-  editCancelBtn: {
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    ...Shadow.small,
-  },
-
-  editCancelBtnText: {
-    fontSize: TypographyScale.body.fontSize,
-    color: Colors.textMuted,
-    fontWeight: TypographyScale.body.fontWeight,
+  link: {
+    textAlign: "center",
+    color: Colors.primary,
+    marginTop: Spacing.lg,
+    fontWeight: FontWeight.semibold,
   },
 });

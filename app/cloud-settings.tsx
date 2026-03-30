@@ -1,7 +1,17 @@
-import HighContrastCard from '@/components/HighContrastCard';
 import PrimaryButton from '@/components/PrimaryButton';
 import ScreenBackground from '@/components/ScreenBackground';
-import { BorderRadius, Colors, FontSize, Shadow, Spacing, TypographyScale } from '@/constants/theme';
+
+import { getShadow } from '@/constants/shadowUtils';
+import {
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
+    TypographyScale
+} from '@/constants/theme';
+
 import { useAuth } from '@/lib/auth/AuthContext';
 import {
     createBackup,
@@ -9,14 +19,18 @@ import {
     getBackupStatus,
     isAuthenticated,
 } from '@/lib/backup/appwriteBackup';
+
 import { getBOLHistory } from '@/lib/bolService';
 import { getAllExpenses } from '@/lib/expenseService';
 import { getTrips } from '@/lib/tripService';
+
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+
+import React, { useCallback, useEffect, useState } from 'react';
+
 import {
     Alert,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Switch,
@@ -24,32 +38,46 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CloudSettingsScreen() {
   const { user, logout } = useAuth();
+
   const [backupStatus, setBackupStatus] = useState({
     lastBackupTime: null as number | null,
     backupSize: 0,
     itemsBackedUp: 0,
-    isDriving: false,
   });
+
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
   const [cloudConnected, setCloudConnected] = useState(false);
 
-  // Check authentication on mount
-  React.useEffect(() => {
-    async function checkAuth() {
-      const authenticated = await isAuthenticated();
-      setCloudConnected(authenticated);
-      if (authenticated) {
-        const status = await getBackupStatus();
-        setBackupStatus(status);
+  /* ───────────────────────────── */
+  /* INIT AUTH + STATUS */
+  /* ───────────────────────────── */
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const authenticated = await isAuthenticated();
+        setCloudConnected(authenticated);
+
+        if (authenticated) {
+          const status = await getBackupStatus();
+          setBackupStatus(status);
+        }
+      } catch (err) {
+        console.error('Auth check failed:', err);
       }
-    }
-    checkAuth();
+    })();
   }, []);
+
+  /* ───────────────────────────── */
+  /* BACKUP */
+  /* ───────────────────────────── */
 
   const handleBackupNow = useCallback(async () => {
     if (!cloudConnected) {
@@ -58,6 +86,7 @@ export default function CloudSettingsScreen() {
     }
 
     setIsBackingUp(true);
+
     try {
       const [trips, expenses, bols] = await Promise.all([
         getTrips(),
@@ -68,47 +97,54 @@ export default function CloudSettingsScreen() {
       const result = await createBackup(trips, expenses, bols);
 
       if (result.success) {
-        // Get fresh backup status
         const freshStatus = await getBackupStatus();
         setBackupStatus(freshStatus);
 
-        const itemCount = trips.length + expenses.length + bols.length;
+        const totalItems = trips.length + expenses.length + bols.length;
+
         Alert.alert(
           'Backup Complete',
-          `Backed up ${itemCount} items (${formatBytes(freshStatus.backupSize)})`
+          `Backed up ${totalItems} items (${formatBytes(freshStatus.backupSize)})`
         );
       } else {
         Alert.alert('Backup Failed', result.error || 'Unknown error');
       }
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Backup failed');
+      Alert.alert(
+        'Error',
+        error instanceof Error ? error.message : 'Backup failed'
+      );
     } finally {
       setIsBackingUp(false);
     }
-  }, [cloudConnected]); // Remove backupStatus dependency
+  }, [cloudConnected]);
 
-  const handleLogout = useCallback(async () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure? Your local data stays on this device.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          onPress: async () => {
-            await logout();
-            router.replace('/login');
-          },
-          style: 'destructive',
+  /* ───────────────────────────── */
+  /* LOGOUT */
+  /* ───────────────────────────── */
+
+  const handleLogout = useCallback(() => {
+    Alert.alert('Logout', 'Your local data will remain on device.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: async () => {
+          await logout();
+          router.replace('/login');
         },
-      ]
-    );
+      },
+    ]);
   }, [logout]);
+
+  /* ───────────────────────────── */
+  /* HELPERS */
+  /* ───────────────────────────── */
 
   const formatLastBackup = (timestamp: number | null) => {
     if (!timestamp) return 'Never';
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
+
+    return new Date(timestamp).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -116,342 +152,380 @@ export default function CloudSettingsScreen() {
     });
   };
 
+  /* ───────────────────────────── */
+  /* UI */
+  /* ───────────────────────────── */
+
   return (
     <ScreenBackground>
-    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Header */}
-        <Animated.View entering={FadeInDown} style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.title}>⚙️ Settings</Text>
-          <View style={{ width: 48 }} />
-        </Animated.View>
+      <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
+        <View style={styles.container}>
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* HERO SECTION (Settings themed - Blue)                          */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
 
-        {/* Account Section */}
-        <Animated.View entering={FadeInDown.delay(100)} style={styles.section}>
-          <HighContrastCard>
-            <Text style={styles.sectionTitle}>👤 Account</Text>
-            <View style={styles.accountInfo}>
-              <Text style={styles.label}>Signed in as</Text>
-              <Text style={styles.value}>{user?.email}</Text>
-              <Text style={styles.name}>{user?.name}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.logoutBtn}
-              onPress={handleLogout}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.logoutBtnText}>Logout</Text>
-            </TouchableOpacity>
-          </HighContrastCard>
-        </Animated.View>
-
-        {/* Cloud Backup Section */}
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
-          <HighContrastCard>
-            <View style={styles.cloudHeader}>
-              <Text style={styles.sectionTitle}>☁️ Cloud Backup</Text>
-              <View
-                style={[
-                  styles.statusBadge,
-                  { backgroundColor: cloudConnected ? Colors.primary : Colors.textMuted },
-                ]}
+          <LinearGradient
+            colors={[Colors.secondary, '#5A8FB5']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroSection}
+          >
+            {/* Top Bar */}
+            <View style={styles.heroTopBar}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={styles.heroBackBtn}
               >
-                <Text style={styles.statusBadgeText}>
-                  {cloudConnected ? 'Connected' : 'Offline'}
-                </Text>
-              </View>
+                <Text style={styles.heroBackText}>✕</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroTitle}>⚙️ Settings</Text>
+              <View style={{ width: 40 }} />
             </View>
 
-            {cloudConnected ? (
-              <>
-                {/* Backup Status */}
-                <View style={styles.statusInfo}>
-                  <View style={styles.statusItem}>
-                    <Text style={styles.statusLabel}>Last Backup</Text>
-                    <Text style={styles.statusValue}>
-                      {formatLastBackup(backupStatus.lastBackupTime)}
-                    </Text>
+            {/* Subtitle */}
+            <View style={styles.heroSubtitleContainer}>
+              <Text style={styles.heroSubtitle}>Account & Cloud Backup</Text>
+            </View>
+          </LinearGradient>
+
+          {/* ═══════════════════════════════════════════════════════════════ */}
+          {/* FLOATING CARD (Content sections)                               */}
+          {/* ═══════════════════════════════════════════════════════════════ */}
+
+          <View style={styles.floatingCardContainer}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.cardContent}
+            >
+              {/* ACCOUNT SECTION */}
+              <Animated.View entering={FadeInDown}>
+                <Text style={styles.cardSectionTitle}>👤 Account</Text>
+                <View style={styles.cardBlock}>
+                  <View style={styles.accountRow}>
+                    <Text style={styles.accountLabel}>Signed in as</Text>
+                    <Text style={styles.accountValue}>{user?.email || '—'}</Text>
                   </View>
-                  <View style={styles.statusItem}>
-                    <Text style={styles.statusLabel}>Items</Text>
-                    <Text style={styles.statusValue}>{backupStatus.itemsBackedUp}</Text>
-                  </View>
-                  <View style={styles.statusItem}>
-                    <Text style={styles.statusLabel}>Size</Text>
-                    <Text style={styles.statusValue}>
-                      {formatBytes(backupStatus.backupSize)}
-                    </Text>
+                  <View style={styles.accountDivider} />
+                  <View style={styles.accountRow}>
+                    <Text style={styles.accountLabel}>Name</Text>
+                    <Text style={styles.accountValue}>{user?.name || '—'}</Text>
                   </View>
                 </View>
 
-                {/* Backup Now Button */}
                 <PrimaryButton
-                  label={isBackingUp ? 'Backing up...' : 'Backup Now'}
-                  onPress={handleBackupNow}
-                  loading={isBackingUp}
-                  disabled={isBackingUp}
-                  style={styles.backupBtn}
+                  label="Logout"
+                  onPress={handleLogout}
+                  style={styles.logoutBtn}
                 />
+              </Animated.View>
 
-                {/* Auto Backup Toggle */}
-                <View style={styles.autoBackupToggle}>
-                  <View>
-                    <Text style={styles.autoBackupLabel}>Auto-backup</Text>
-                    <Text style={styles.autoBackupSubtitle}>
-                      Weekly backup (when WiFi available)
+              {/* CLOUD BACKUP SECTION */}
+              <Animated.View entering={FadeInDown.delay(100)}>
+                <View style={styles.cloudHeaderContainer}>
+                  <Text style={styles.cardSectionTitle}>☁️ Cloud Backup</Text>
+                  <View
+                    style={[
+                      styles.statusBadge,
+                      {
+                        backgroundColor: cloudConnected
+                          ? Colors.success
+                          : Colors.textMuted,
+                      },
+                    ]}
+                  >
+                    <Text style={styles.statusBadgeText}>
+                      {cloudConnected ? 'Connected' : 'Offline'}
                     </Text>
                   </View>
-                  <Switch
-                    value={autoBackupEnabled}
-                    onValueChange={setAutoBackupEnabled}
-                    trackColor={{ false: Colors.border, true: Colors.primary }}
-                    thumbColor={autoBackupEnabled ? Colors.primary : Colors.textMuted}
-                  />
                 </View>
 
-                {/* Info */}
-                <View style={styles.infoBox}>
-                  <Text style={styles.infoIcon}>ℹ️</Text>
-                  <Text style={styles.infoText}>
-                    Your local data is always your source of truth. Cloud backups are optional.
-                  </Text>
-                </View>
-              </>
-            ) : (
-              <View style={styles.offlineInfo}>
-                <Text style={styles.offlineIcon}>🔒</Text>
-                <Text style={styles.offlineTitle}>Cloud backup is optional</Text>
-                <Text style={styles.offlineSubtitle}>
-                  Your data stays local on this device. Sign in to enable cloud backup.
-                </Text>
-              </View>
-            )}
-          </HighContrastCard>
-        </Animated.View>
+                {cloudConnected ? (
+                  <>
+                    {/* Backup Status */}
+                    <View style={styles.cardBlock}>
+                      <View style={styles.statusRow}>
+                        <Text style={styles.statusLabel}>Last Backup</Text>
+                        <Text style={styles.statusValue}>
+                          {formatLastBackup(backupStatus.lastBackupTime)}
+                        </Text>
+                      </View>
+                      <View style={styles.statusDivider} />
+                      <View style={styles.statusRow}>
+                        <Text style={styles.statusLabel}>Items</Text>
+                        <Text style={styles.statusValue}>
+                          {backupStatus.itemsBackedUp}
+                        </Text>
+                      </View>
+                      <View style={styles.statusDivider} />
+                      <View style={styles.statusRow}>
+                        <Text style={styles.statusLabel}>Size</Text>
+                        <Text style={styles.statusValue}>
+                          {formatBytes(backupStatus.backupSize)}
+                        </Text>
+                      </View>
+                    </View>
 
-        {/* App Info Section */}
-        <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
-          <HighContrastCard>
-            <Text style={styles.sectionTitle}>ℹ️ App Info</Text>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoItemLabel}>Version</Text>
-              <Text style={styles.infoItemValue}>1.0.0</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoItemLabel}>Storage Method</Text>
-              <Text style={styles.infoItemValue}>Local SQLite + Cloud</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Text style={styles.infoItemLabel}>Data Policy</Text>
-              <Text style={styles.infoItemValue}>Offline-first, optional sync</Text>
-            </View>
-          </HighContrastCard>
-        </Animated.View>
+                    {/* Backup Button */}
+                    <PrimaryButton
+                      label={isBackingUp ? 'Backing up...' : 'Backup Now'}
+                      onPress={handleBackupNow}
+                      disabled={isBackingUp}
+                    />
 
-        <View style={{ height: Spacing.xxxl }} />
-      </ScrollView>
-    </SafeAreaView>
+                    {/* Auto-backup Toggle */}
+                    <View style={styles.autoBackupContainer}>
+                      <View>
+                        <Text style={styles.autoBackupLabel}>Auto-backup</Text>
+                        <Text style={styles.autoBackupSubtitle}>
+                          Weekly on WiFi
+                        </Text>
+                      </View>
+                      <Switch
+                        value={autoBackupEnabled}
+                        onValueChange={setAutoBackupEnabled}
+                        trackColor={{ false: Colors.borderLight, true: Colors.primary }}
+                        thumbColor={autoBackupEnabled ? Colors.primary : Colors.textMuted}
+                      />
+                    </View>
+                  </>
+                ) : (
+                  <View style={styles.offlineContainer}>
+                    <Text style={styles.offlineIcon}>🔒</Text>
+                    <Text style={styles.offlineTitle}>
+                      Cloud backup optional
+                    </Text>
+                    <Text style={styles.offlineSubtitle}>
+                      Your data stays secure on your device
+                    </Text>
+                  </View>
+                )}
+              </Animated.View>
+
+              <View style={{ height: Spacing.xxxxl }} />
+            </ScrollView>
+          </View>
+        </View>
+      </SafeAreaView>
     </ScreenBackground>
   );
 }
 
+/* ───────────────────────────── */
+/* STYLES */
+/* ───────────────────────────── */
+
 const styles = StyleSheet.create({
-  safe: {
+  safe: { flex: 1 },
+
+  container: {
     flex: 1,
-    backgroundColor: "transparent",
+    position: 'relative',
   },
-  content: {
+
+  // ─── HERO SECTION ───────────────────────────────────────────
+
+  heroSection: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    gap: Spacing.xl,
-    marginTop: Spacing.lg,
+    paddingTop: Spacing.xxxl,
+    paddingBottom: Spacing.lg,
   },
-  header: {
+
+  heroTopBar: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.xl,
-  },
-  backBtn: {
-    width: 48,
-    height: 48,
-    justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    marginBottom: Spacing.lg,
   },
-  backText: {
+
+  heroBackBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  heroBackText: {
+    fontSize: FontSize.section,
+    fontWeight: FontWeight.bold,
+    color: Colors.textInverse,
+  },
+
+  heroTitle: {
     ...TypographyScale.title,
-    color: Colors.primary,
+    color: Colors.textInverse,
   },
-  title: {
-    ...TypographyScale.headline,
-    color: Colors.textPrimary,
+
+  heroSubtitleContainer: {
+    alignItems: 'center',
   },
-  section: {
-    gap: Spacing.md,
+
+  heroSubtitle: {
+    fontSize: FontSize.body,
+    fontWeight: FontWeight.medium,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
-  sectionTitle: {
+
+  // ─── FLOATING CARD ──────────────────────────────────────────
+
+  floatingCardContainer: {
+    flex: 1,
+    marginTop: -Spacing.xl,
+    backgroundColor: Colors.card,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    ...getShadow(Shadow.large),
+  },
+
+  cardContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxxxl,
+    gap: Spacing.lg,
+  },
+
+  cardSectionTitle: {
     ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
-  cloudHeader: {
+
+  // ─── CARD BLOCKS ────────────────────────────────────────────
+
+  cardBlock: {
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    overflow: 'hidden',
+    marginBottom: Spacing.lg,
+    ...getShadow(Shadow.small),
+  },
+
+  // ─── ACCOUNT SECTION ────────────────────────────────────────
+
+  accountRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
-  statusBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.full,
-    ...Shadow.small,
-  },
-  statusBadgeText: {
-    color: Colors.textInverse,
-    ...TypographyScale.caption,
-  },
-  accountInfo: {
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  label: {
-    ...TypographyScale.caption,
+
+  accountLabel: {
+    ...TypographyScale.small,
     color: Colors.textMuted,
   },
-  value: {
+
+  accountValue: {
     ...TypographyScale.body,
     color: Colors.textPrimary,
   },
-  name: {
-    ...TypographyScale.small,
-    color: Colors.textMuted,
+
+  accountDivider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
   },
+
   logoutBtn: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.danger,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Shadow.small,
+    marginTop: Spacing.md,
   },
-  logoutBtnText: {
-    color: Colors.textInverse,
-    ...TypographyScale.small,
-  },
-  statusInfo: {
+
+  // ─── CLOUD BACKUP SECTION ──────────────────────────────────
+
+  cloudHeaderContainer: {
     flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.xl,
-  },
-  statusItem: {
-    flex: 1,
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.md,
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadow.small,
+    marginBottom: Spacing.lg,
   },
-  statusLabel: {
+
+  statusBadge: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+  },
+
+  statusBadgeText: {
     ...TypographyScale.caption,
+    color: Colors.textInverse,
+    fontWeight: FontWeight.semibold,
+  },
+
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+
+  statusLabel: {
+    ...TypographyScale.small,
     color: Colors.textMuted,
   },
+
   statusValue: {
     ...TypographyScale.body,
     color: Colors.primary,
+    fontWeight: FontWeight.semibold,
   },
-  backupBtn: {
-    marginBottom: Spacing.lg,
+
+  statusDivider: {
+    height: 1,
+    backgroundColor: Colors.borderLight,
   },
-  autoBackupToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+
+  autoBackupContainer: {
     backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.sm,
-    marginBottom: Spacing.xl,
+    borderRadius: BorderRadius.md,
     borderWidth: 1,
     borderColor: Colors.borderLight,
-    ...Shadow.small,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    marginTop: Spacing.lg,
+    ...getShadow(Shadow.small),
   },
+
   autoBackupLabel: {
     ...TypographyScale.body,
     color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
   },
+
   autoBackupSubtitle: {
     ...TypographyScale.small,
     color: Colors.textMuted,
-    marginTop: Spacing.xs,
   },
-  infoBox: {
-    flexDirection: 'row',
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.sm,
-    padding: Spacing.lg,
-    gap: Spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.secondary,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...Shadow.small,
-  },
-  infoIcon: {
-    fontSize: FontSize.headerIcon,
-  },
-  infoText: {
-    flex: 1,
-    ...TypographyScale.small,
-    color: Colors.textMuted,
-  },
-  offlineInfo: {
+
+  offlineContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.md,
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing.xxxl,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    ...getShadow(Shadow.small),
   },
+
   offlineIcon: {
     fontSize: FontSize.largeIcon,
+    marginBottom: Spacing.md,
   },
+
   offlineTitle: {
     ...TypographyScale.subtitle,
     color: Colors.textPrimary,
-    textAlign: 'center',
+    marginBottom: Spacing.sm,
   },
+
   offlineSubtitle: {
     ...TypographyScale.small,
     color: Colors.textMuted,
-    textAlign: 'center',
-  },
-  infoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  infoItemLabel: {
-    ...TypographyScale.small,
-    color: Colors.textMuted,
-  },
-  infoItemValue: {
-    ...TypographyScale.body,
-    color: Colors.primary,
   },
 });

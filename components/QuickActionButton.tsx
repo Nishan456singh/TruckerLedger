@@ -1,4 +1,5 @@
 import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
+import { getShadow } from '@/constants/shadowUtils';
 import { SCALE_VALUES, SPRING_CONFIGS } from '@/lib/animationUtils';
 import { pressHaptic } from '@/lib/hapticUtils';
 import React, { useCallback, useMemo } from 'react';
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.sm,
     overflow: 'hidden',
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
   },
   disabled: {
     opacity: 0.55,

@@ -1,5 +1,6 @@
 import PrimaryButton from "@/components/PrimaryButton";
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     Colors,
@@ -366,7 +367,7 @@ export default function ProfileScreen() {
                 </View>
               </Animated.View>
 
-              {/* Account Section */}
+            {/* Account Section */}
               <Animated.View entering={FadeInDown.delay(100)}>
                 <Text style={styles.cardSectionTitle}>🔐 Account</Text>
                 <View style={styles.accountBlock}>
@@ -398,7 +399,7 @@ export default function ProfileScreen() {
             <Animated.View entering={FadeInDown.delay(200)} style={styles.cardFooter}>
               <PrimaryButton
                 label="🚪 Sign Out"
-                variant="danger"
+                variant="accent"
                 onPress={handleLogout}
                 fullWidth
               />
@@ -424,11 +425,9 @@ const styles = StyleSheet.create({
   // ─── HERO SECTION ───────────────────────────────────────────
 
   heroSection: {
-    flex: 0.45,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
-    paddingBottom: Spacing.md,
-    justifyContent: "space-between",
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
 
   heroTopBar: {
@@ -505,28 +504,26 @@ const styles = StyleSheet.create({
   // ─── FLOATING CARD ──────────────────────────────────────────
 
   floatingCardContainer: {
-    flex: 0.55,
-    marginTop: -Spacing.lg,
-    marginHorizontal: Spacing.md,
+    flex: 1,
+    marginTop: -Spacing.xxl,
     backgroundColor: Colors.card,
-    borderRadius: 32,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
     overflow: "hidden",
-    ...Shadow.large,
+    ...getShadow(Shadow.large),
   },
 
   cardContent: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xxxxl,
     gap: Spacing.lg,
-    marginTop: Spacing.lg,
   },
 
   cardSectionTitle: {
     ...TypographyScale.title,
     color: Colors.textPrimary,
-    marginBottom: Spacing.lg,
-    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
   },
 
   // ─── STATS SECTION ───────────────────────────────────────────
@@ -536,7 +533,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: 0,
     overflow: "hidden",
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
   },
 
   statRow: {
@@ -580,7 +577,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.md,
-    ...Shadow.small,
+    ...getShadow(Shadow.small),
   },
 
   toolIcon: {
@@ -600,7 +597,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     padding: 0,
     overflow: "hidden",
-    ...Shadow.card,
+    ...getShadow(Shadow.card),
   },
 
   accountRow: {
@@ -640,7 +637,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.borderLight,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
-    ...Shadow.small,
+    ...getShadow(Shadow.small),
   },
 
   settingsIcon: {
@@ -656,9 +653,8 @@ const styles = StyleSheet.create({
 
   cardFooter: {
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xl,
+    paddingVertical: Spacing.lg,
     borderTopWidth: 1,
     borderTopColor: Colors.borderLight,
-    gap: Spacing.md,
   },
 });

@@ -1,5 +1,6 @@
 import ExpenseCard from "@/components/ExpenseCard";
 import ScreenBackground from "@/components/ScreenBackground";
+import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     CategoryMeta,
@@ -21,7 +22,6 @@ import React, { useCallback, useState } from "react";
 import {
     Alert,
     ScrollView,
-    SectionList,
     StyleSheet,
     Text,
     TextInput,
@@ -215,11 +215,11 @@ export default function ExpenseHistoryScreen() {
       <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
         <View style={styles.container}>
           {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* HERO SECTION (50% - Red/Expense themed)                        */}
+          {/* HERO SECTION (Red/Expense themed)                             */}
           {/* ═══════════════════════════════════════════════════════════════ */}
 
           <LinearGradient
-            colors={[Colors.accent, '#A01B3A']}
+            colors={[Colors.accent, "#A01B3A"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroSection}
@@ -233,7 +233,7 @@ export default function ExpenseHistoryScreen() {
                 <Text style={styles.heroBackText}>✕</Text>
               </TouchableOpacity>
               <Text style={styles.heroTitle}>Expense History</Text>
-              <View style={{ width: 40 }} />
+              <View style={{ width: Spacing.xl }} />
             </View>
 
             {/* Centered Total Display */}
@@ -245,151 +245,162 @@ export default function ExpenseHistoryScreen() {
           </LinearGradient>
 
           {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* FLOATING CARD (50%+ - Content)                                */}
+          {/* FLOATING CARD (Content)                                        */}
           {/* ═══════════════════════════════════════════════════════════════ */}
 
           <View style={styles.floatingCardContainer}>
-            {/* Search Container */}
-            <Animated.View entering={FadeInDown} style={styles.searchRow}>
-              <View style={styles.searchContainer}>
-                <Text style={styles.searchIcon}>🔍</Text>
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search expenses..."
-                  placeholderTextColor={Colors.textMuted}
-                  value={search}
-                  onChangeText={setSearch}
-                />
-                {search.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearch("")}>
-                    <Text style={styles.searchClear}>✕</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </Animated.View>
-
-            {/* Category Filters */}
-            <Animated.View entering={FadeInDown.delay(50)} style={styles.filterSection}>
-              <Text style={styles.filterLabel}>Category</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterRow}
-              >
-                {categories.map((cat) => {
-                  const meta = cat === "all" ? null : CategoryMeta[cat];
-                  return (
-                    <FilterChip
-                      key={cat}
-                      label={cat === "all" ? "All" : meta?.label ?? cat}
-                      icon={meta?.icon}
-                      active={selectedCategory === cat}
-                      onPress={() => setSelectedCategory(cat)}
-                    />
-                  );
-                })}
-              </ScrollView>
-            </Animated.View>
-
-            {/* Date Range Filters */}
-            <Animated.View entering={FadeInDown.delay(100)} style={styles.filterSection}>
-              <Text style={styles.filterLabel}>Period</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.filterRow}
-              >
-                <FilterChip
-                  label="All Time"
-                  icon="📅"
-                  active={dateRange === "all"}
-                  onPress={() => setDateRange("all")}
-                />
-                <FilterChip
-                  label="This Month"
-                  icon="📆"
-                  active={dateRange === "month"}
-                  onPress={() => setDateRange("month")}
-                />
-                <FilterChip
-                  label="Last 7 Days"
-                  icon="📊"
-                  active={dateRange === "week"}
-                  onPress={() => setDateRange("week")}
-                />
-              </ScrollView>
-            </Animated.View>
-
-            {/* Export Button */}
-            <Animated.View entering={FadeInDown.delay(150)} style={styles.actionRow}>
-              <TouchableOpacity
-                onPress={handleExportCsv}
-                activeOpacity={0.8}
-                style={styles.exportBtn}
-                disabled={exporting}
-              >
-                <Text style={styles.exportBtnIcon}>📤</Text>
-                <Text style={styles.exportBtnText}>
-                  {exporting ? "Exporting..." : "Export CSV"}
-                </Text>
-              </TouchableOpacity>
-            </Animated.View>
-
-            {/* List or Empty State */}
-            {sections.length === 0 ? (
-              <View style={styles.empty}>
-                <Text style={styles.emptyIcon}>📭</Text>
-                <Text style={styles.emptyTitle}>
-                  {search || selectedCategory !== "all" || dateRange !== "all"
-                    ? "No matching expenses"
-                    : "No expenses yet"}
-                </Text>
-                <Text style={styles.emptyDesc}>
-                  {search || selectedCategory !== "all" || dateRange !== "all"
-                    ? "Try adjusting your filters"
-                    : "Add your first expense from the dashboard"}
-                </Text>
-              </View>
-            ) : (
-              <SectionList
-                sections={sections}
-                keyExtractor={(item) => String(item.id)}
-                contentContainerStyle={styles.listContent}
-                scrollEnabled={false}
-                renderSectionHeader={({ section }) => (
-                  <Animated.View entering={FadeInDown} style={styles.sectionHeader}>
-                    <Text style={styles.sectionDate}>
-                      {formatSectionDate(section.title)}
-                    </Text>
-                    <Text style={styles.sectionTotal}>
-                      {formatCurrency(section.total)}
-                    </Text>
-                  </Animated.View>
-                )}
-                renderItem={({ item, index }) => (
-                  <Animated.View entering={FadeInDown.delay(index * 40)}>
-                    <TouchableOpacity
-                      style={styles.expenseItem}
-                      onPress={() =>
-                        router.push({
-                          pathname: "/expense-detail",
-                          params: { id: item.id },
-                        })
-                      }
-                      activeOpacity={0.7}
-                    >
-                      <ExpenseCard expense={item} />
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              scrollEventThrottle={16}
+              contentContainerStyle={styles.scrollContent}
+            >
+              {/* Search Container */}
+              <Animated.View entering={FadeInDown} style={styles.searchRow}>
+                <View style={styles.searchContainer}>
+                  <Text style={styles.searchIcon}>🔍</Text>
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search expenses..."
+                    placeholderTextColor={Colors.textMuted}
+                    value={search}
+                    onChangeText={setSearch}
+                  />
+                  {search.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearch("")}>
+                      <Text style={styles.searchClear}>✕</Text>
                     </TouchableOpacity>
-                  </Animated.View>
-                )}
-                ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
-                stickySectionHeadersEnabled={false}
-              />
-            )}
+                  )}
+                </View>
+              </Animated.View>
+
+              {/* Category Filters */}
+              <Animated.View entering={FadeInDown.delay(50)} style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Category</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.filterRow}
+                >
+                  {categories.map((cat) => {
+                    const meta = cat === "all" ? null : CategoryMeta[cat];
+                    return (
+                      <FilterChip
+                        key={cat}
+                        label={cat === "all" ? "All" : meta?.label ?? cat}
+                        icon={meta?.icon}
+                        active={selectedCategory === cat}
+                        onPress={() => setSelectedCategory(cat)}
+                      />
+                    );
+                  })}
+                </ScrollView>
+              </Animated.View>
+
+              {/* Date Range Filters */}
+              <Animated.View entering={FadeInDown.delay(100)} style={styles.filterSection}>
+                <Text style={styles.filterLabel}>Period</Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.filterRow}
+                >
+                  <FilterChip
+                    label="All Time"
+                    icon="📅"
+                    active={dateRange === "all"}
+                    onPress={() => setDateRange("all")}
+                  />
+                  <FilterChip
+                    label="This Month"
+                    icon="📆"
+                    active={dateRange === "month"}
+                    onPress={() => setDateRange("month")}
+                  />
+                  <FilterChip
+                    label="Last 7 Days"
+                    icon="📊"
+                    active={dateRange === "week"}
+                    onPress={() => setDateRange("week")}
+                  />
+                </ScrollView>
+              </Animated.View>
+
+              {/* Export Button */}
+              <Animated.View entering={FadeInDown.delay(150)} style={styles.actionRow}>
+                <TouchableOpacity
+                  onPress={handleExportCsv}
+                  activeOpacity={0.8}
+                  style={styles.exportBtn}
+                  disabled={exporting}
+                >
+                  <Text style={styles.exportBtnIcon}>📤</Text>
+                  <Text style={styles.exportBtnText}>
+                    {exporting ? "Exporting..." : "Export CSV"}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+
+              {/* List or Empty State */}
+              {sections.length === 0 ? (
+                <View style={styles.empty}>
+                  <Text style={styles.emptyIcon}>📭</Text>
+                  <Text style={styles.emptyTitle}>
+                    {search || selectedCategory !== "all" || dateRange !== "all"
+                      ? "No matching expenses"
+                      : "No expenses yet"}
+                  </Text>
+                  <Text style={styles.emptyDesc}>
+                    {search || selectedCategory !== "all" || dateRange !== "all"
+                      ? "Try adjusting your filters"
+                      : "Add your first expense from the dashboard"}
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.listContainer}>
+                  {sections.map((section, sectionIdx) => (
+                    <View key={sectionIdx}>
+                      <Animated.View
+                        entering={FadeInDown}
+                        style={styles.sectionHeader}
+                      >
+                        <Text style={styles.sectionDate}>
+                          {formatSectionDate(section.title)}
+                        </Text>
+                        <Text style={styles.sectionTotal}>
+                          {formatCurrency(section.total)}
+                        </Text>
+                      </Animated.View>
+
+                      {section.data.map((item, itemIdx) => (
+                        <Animated.View
+                          key={item.id}
+                          entering={FadeInDown.delay(itemIdx * 40)}
+                        >
+                          <TouchableOpacity
+                            style={styles.expenseItem}
+                            onPress={() =>
+                              router.push({
+                                pathname: "/expense-detail",
+                                params: { id: item.id },
+                              })
+                            }
+                            activeOpacity={0.7}
+                          >
+                            <ExpenseCard expense={item} />
+                          </TouchableOpacity>
+                        </Animated.View>
+                      ))}
+
+                      {sectionIdx < sections.length - 1 && (
+                        <View style={styles.sectionDivider} />
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
+            </ScrollView>
           </View>
         </View>
-
-        {/* Pull-to-refresh managed via ScrollView prop on list */}
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -410,10 +421,9 @@ const styles = StyleSheet.create({
   // ─── HERO SECTION ───────────────────────────────────────────
 
   heroSection: {
-    flex: 0.5,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl + Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingTop: Spacing.xxxl,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
   },
 
@@ -421,17 +431,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: Spacing.xxl,
   },
 
   heroBackBtn: {
-    width: 40,
-    height: 40,
+    width: Spacing.xl,
+    height: Spacing.xl,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: BorderRadius.lg,
   },
 
   heroBackText: {
-    fontSize: 24,
+    fontSize: FontSize.headline,
     fontWeight: FontWeight.bold,
     color: Colors.textInverse,
   },
@@ -442,15 +454,16 @@ const styles = StyleSheet.create({
   },
 
   heroTotalCenter: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.sm,
+    paddingVertical: Spacing.xl,
   },
 
   heroTotalLabel: {
     ...TypographyScale.body,
-    color: "rgba(255, 255, 255, 0.7)",
+    color: Colors.textInverse,
+    opacity: 0.7,
   },
 
   heroTotalValue: {
@@ -466,22 +479,27 @@ const styles = StyleSheet.create({
   // ─── FLOATING CARD ──────────────────────────────────────────
 
   floatingCardContainer: {
-    flex: 0.55,
-    marginTop: -Spacing.lg,
-    marginHorizontal: Spacing.md,
-    backgroundColor: Colors.card,
-    borderRadius: 32,
+    flex: 1,
+    marginTop: -Spacing.xl,
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: BorderRadius.xl,
     overflow: "hidden",
-    ...Shadow.large,
+    ...getShadow(Shadow.large),
+  },
+
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
+    paddingBottom: Spacing.xxxxl,
+    gap: Spacing.lg,
   },
 
   // ─── SEARCH ─────────────────────────────────────────────────
 
   searchRow: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingBottom: Spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
@@ -499,7 +517,7 @@ const styles = StyleSheet.create({
   },
 
   searchIcon: {
-    fontSize: 14,
+    fontSize: FontSize.body,
   },
 
   searchInput: {
@@ -509,14 +527,13 @@ const styles = StyleSheet.create({
   },
 
   searchClear: {
-    fontSize: 12,
+    fontSize: FontSize.small,
     color: Colors.textMuted,
   },
 
   // ─── FILTERS ────────────────────────────────────────────────
 
   filterSection: {
-    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
@@ -532,12 +549,12 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: "row",
     gap: Spacing.sm,
+    paddingEnd: Spacing.lg,
   },
 
   // ─── ACTION ROW ──────────────────────────────────────────────
 
   actionRow: {
-    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
@@ -548,20 +565,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.xs,
-    backgroundColor: Colors.accent + "15",
+    backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1.5,
-    borderColor: Colors.accent,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
     paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
   },
 
   exportBtnIcon: {
-    fontSize: 14,
+    fontSize: FontSize.body,
   },
 
   exportBtnText: {
     ...TypographyScale.small,
-    color: Colors.accent,
+    color: Colors.textPrimary,
   },
 
   // ─── FILTER CHIP ────────────────────────────────────────────
@@ -579,12 +597,12 @@ const styles = StyleSheet.create({
   },
 
   chipActive: {
-    backgroundColor: Colors.accent + "15",
+    backgroundColor: Colors.surfaceAlt,
     borderColor: Colors.accent,
   },
 
   chipIcon: {
-    fontSize: 12,
+    fontSize: FontSize.small,
   },
 
   chipLabel: {
@@ -598,10 +616,8 @@ const styles = StyleSheet.create({
 
   // ─── LIST CONTENT ───────────────────────────────────────────
 
-  listContent: {
-    paddingHorizontal: Spacing.lg,
+  listContainer: {
     paddingVertical: Spacing.md,
-    paddingBottom: Spacing.xl,
   },
 
   sectionHeader: {
@@ -623,8 +639,12 @@ const styles = StyleSheet.create({
     color: Colors.accent,
   },
 
+  sectionDivider: {
+    height: Spacing.xs,
+  },
+
   expenseItem: {
-    marginBottom: Spacing.md,
+    marginTop: Spacing.sm,
   },
 
   // ─── EMPTY STATE ────────────────────────────────────────────
@@ -632,13 +652,13 @@ const styles = StyleSheet.create({
   empty: {
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: Spacing.xxl + Spacing.lg,
+    paddingVertical: Spacing.xxl,
     paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
   },
 
   emptyIcon: {
-    fontSize: 56,
+    fontSize: FontSize.largeIcon,
     marginBottom: Spacing.sm,
   },
 
