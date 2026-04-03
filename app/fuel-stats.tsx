@@ -71,7 +71,7 @@ export default function FuelStatsScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <LinearGradient
           colors={Gradients.bluePrimary}
           start={{ x: 0, y: 0 }}

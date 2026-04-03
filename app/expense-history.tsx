@@ -212,7 +212,7 @@ export default function ExpenseHistoryScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <View style={styles.container}>
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* HERO SECTION (Red/Expense themed)                             */}

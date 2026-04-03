@@ -2,21 +2,21 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  RefreshControl,
-  SectionList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    SectionList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import Animated, {
-  useAnimatedScrollHandler,
-  useSharedValue,
-  useAnimatedStyle,
-  interpolate,
+    interpolate,
+    useAnimatedScrollHandler,
+    useAnimatedStyle,
+    useSharedValue,
 } from "react-native-reanimated";
 
 import BOLCard from "@/components/BOLCard";
@@ -26,10 +26,9 @@ import ScreenBackground from "@/components/ScreenBackground";
 import SearchBar from "@/components/SearchBar";
 
 import {
-  BorderRadius,
-  Colors,
-  FontWeight,
-  Spacing,
+    Colors,
+    FontWeight,
+    Spacing
 } from "@/constants/theme";
 
 import { getBOLHistory } from "@/lib/bolService";
@@ -192,84 +191,86 @@ export default function HistoryScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe}>
-        {/* HERO */}
-        <Animated.View style={[styles.heroWrapper, heroStyle]}>
-          <LinearGradient
-            colors={[Colors.accent, "#A01B3A"]}
-            style={styles.hero}
-          >
-            <View style={styles.heroTop}>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.back}>✕</Text>
-              </TouchableOpacity>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+        <View style={styles.container}>
+          {/* HERO */}
+          <Animated.View style={[styles.heroWrapper, heroStyle]}>
+            <LinearGradient
+              colors={[Colors.accent, "#A01B3A"]}
+              style={styles.hero}
+            >
+              <View style={styles.heroTop}>
+                <TouchableOpacity onPress={() => router.back()}>
+                  <Text style={styles.back}>✕</Text>
+                </TouchableOpacity>
 
-              <Text style={styles.heroTitle}>History</Text>
-              <View style={{ width: 40 }} />
-            </View>
-
-            <Text style={styles.totalValue}>
-              {formatCurrency(totalAmount)}
-            </Text>
-          </LinearGradient>
-        </Animated.View>
-
-        {/* LIST */}
-        <AnimatedSectionList
-          sections={sections}
-          keyExtractor={(item) => `${item.type}-${item.id}`}
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
-          contentContainerStyle={styles.content}
-          ListHeaderComponent={
-            <View style={styles.headerContent}>
-              <SearchBar
-                placeholder="Search..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-
-              <View style={styles.filterWrapper}>
-                <HistoryFilterPills
-                  activeFilter={filterType}
-                  onFilterChange={setFilterType}
-                />
+                <Text style={styles.heroTitle}>History</Text>
+                <View style={{ width: 40 }} />
               </View>
-            </View>
-          }
-          renderSectionHeader={({ section }) => (
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionDate}>
-                {formatDateLabel(section.title)}
+
+              <Text style={styles.totalValue}>
+                {formatCurrency(totalAmount)}
               </Text>
-              <Text style={styles.sectionTotal}>
-                {formatCurrency(section.total)}
-              </Text>
-            </View>
-          )}
-          renderItem={({ item }) => (
-            <View style={styles.item}>
-              {item.type === "expense" ? (
-                <ExpenseCard
-                  expense={item.data}
-                  onPress={() =>
-                    router.push(`/expense-detail?id=${item.data.id}`)
-                  }
+            </LinearGradient>
+          </Animated.View>
+
+          {/* LIST */}
+          <AnimatedSectionList
+            sections={sections}
+            keyExtractor={(item) => `${item.type}-${item.id}`}
+            onScroll={scrollHandler}
+            scrollEventThrottle={16}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            }
+            contentContainerStyle={styles.content}
+            ListHeaderComponent={
+              <View style={styles.headerContent}>
+                <SearchBar
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
                 />
-              ) : (
-                <BOLCard
-                  bol={item.data}
-                  onPress={() =>
-                    router.push(`/bol-detail?id=${item.data.id}`)
-                  }
-                />
-              )}
-            </View>
-          )}
-        />
+
+                <View style={styles.filterWrapper}>
+                  <HistoryFilterPills
+                    activeFilter={filterType}
+                    onFilterChange={setFilterType}
+                  />
+                </View>
+              </View>
+            }
+            renderSectionHeader={({ section }) => (
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionDate}>
+                  {formatDateLabel(section.title)}
+                </Text>
+                <Text style={styles.sectionTotal}>
+                  {formatCurrency(section.total)}
+                </Text>
+              </View>
+            )}
+            renderItem={({ item }) => (
+              <View style={styles.item}>
+                {item.type === "expense" ? (
+                  <ExpenseCard
+                    expense={item.data}
+                    onPress={() =>
+                      router.push(`/expense-detail?id=${item.data.id}`)
+                    }
+                  />
+                ) : (
+                  <BOLCard
+                    bol={item.data}
+                    onPress={() =>
+                      router.push(`/bol-detail?id=${item.data.id}`)
+                    }
+                  />
+                )}
+              </View>
+            )}
+          />
+        </View>
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -278,23 +279,29 @@ export default function HistoryScreen() {
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
+  safe: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
 
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
+  container: {
+    flex: 1,
+    position: "relative",
+  },
+
   heroWrapper: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
+    width: "100%",
     zIndex: 10,
   },
 
   hero: {
-    flex: 1,
-    paddingTop: 70,
+    paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
     justifyContent: "space-between",
+    minHeight: 180,
   },
 
   heroTop: {
@@ -318,13 +325,12 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 36,
     fontWeight: "800",
-    marginBottom: 10,
+    marginBottom: Spacing.sm,
   },
 
   content: {
-    paddingTop: 200,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: Spacing.xxxxl,
     gap: Spacing.md,
   },
 
@@ -348,12 +354,13 @@ const styles = StyleSheet.create({
   item: {
     marginBottom: Spacing.md,
   },
-  headerContent: {
-  marginBottom: Spacing.lg,
-},
 
-filterWrapper: {
-  marginTop: Spacing.md,
-  marginBottom: Spacing.lg, 
-},
+  headerContent: {
+    marginBottom: Spacing.lg,
+  },
+
+  filterWrapper: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
 });

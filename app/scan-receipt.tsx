@@ -189,7 +189,7 @@ export default function ScanReceiptScreen() {
   if (!permission) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <View style={styles.centerContainer}>
             <ActivityIndicator
               size="large"
@@ -206,7 +206,7 @@ export default function ScanReceiptScreen() {
   if (!permission.granted) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <View style={styles.centerContainer}>
             <Text style={styles.permissionTitle}>Camera Access Required</Text>
             <Text style={styles.permissionText}>
@@ -227,7 +227,7 @@ export default function ScanReceiptScreen() {
   if (imageUri) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <LinearGradient
             colors={["#FF8C42", "#E67E2F"]}
             start={{ x: 0, y: 0 }}
@@ -325,7 +325,7 @@ export default function ScanReceiptScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <LinearGradient
           colors={["#FF8C42", "#E67E2F"]}
           start={{ x: 0, y: 0 }}

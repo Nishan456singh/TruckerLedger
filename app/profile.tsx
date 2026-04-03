@@ -1,47 +1,55 @@
+// ✅ PROFILE SCREEN — CLEAN + PRODUCTION READY
+
 import PrimaryButton from "@/components/PrimaryButton";
 import ScreenBackground from "@/components/ScreenBackground";
 import { getShadow } from "@/constants/shadowUtils";
 import {
-    BorderRadius,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
-    TypographyScale
+  BorderRadius,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
 } from "@/constants/theme";
+
 import { useAuth } from "@/lib/auth/AuthContext";
 import { exportBOLs } from "@/lib/bolService";
 import {
-    exportExpenses,
-    getAllExpenses,
-    getDashboardStats,
-    getReceiptCount,
+  exportExpenses,
+  getAllExpenses,
+  getDashboardStats,
+  getReceiptCount,
 } from "@/lib/expenseService";
 import { exportTrips, getTripCount } from "@/lib/tripService";
-import { File, Paths } from "expo-file-system";
+
+import * as FileSystem from "expo-file-system"; // ✅ FIXED
+import * as Sharing from "expo-sharing";
+
 import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
-import * as Sharing from "expo-sharing";
+
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-function formatCurrency(value: number): string {
+/* ---------------- HELPERS ---------------- */
+
+function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
 }
@@ -54,44 +62,51 @@ function AvatarInitials({ name }: { name: string }) {
     .join("");
 
   return (
-    <View style={styles.heroAvatarFallback}>
-      <Text style={styles.heroAvatarFallbackText}>{initials}</Text>
+    <View style={styles.avatarFallback}>
+      <Text style={styles.avatarFallbackText}>{initials}</Text>
     </View>
   );
 }
 
+/* ---------------- MAIN ---------------- */
+
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+
   const [photoError, setPhotoError] = useState(false);
 
-  const [totalExpenses, setTotalExpenses] = useState(0);
-  const [thisMonth, setThisMonth] = useState(0);
-  const [receiptsScanned, setReceiptsScanned] = useState(0);
-  const [tripsLogged, setTripsLogged] = useState(0);
+  const [stats, setStats] = useState({
+    total: 0,
+    month: 0,
+    receipts: 0,
+    trips: 0,
+  });
 
-  const [exportingExpenses, setExportingExpenses] = useState(false);
-  const [exportingTrips, setExportingTrips] = useState(false);
-  const [exportingBOLs, setExportingBOLs] = useState(false);
+  const [loadingExport, setLoadingExport] = useState<string | null>(null);
 
-  const displayProvider = useMemo(
+  const provider = useMemo(
     () => (user?.provider === "apple" ? "Apple" : "Google"),
-    [user?.provider]
+    [user]
   );
 
+  /* ---------------- LOAD ---------------- */
+
   const loadStats = useCallback(async () => {
-    const [all, dashboard, receiptCount, tripCount] = await Promise.all([
+    const [all, dashboard, receipts, trips] = await Promise.all([
       getAllExpenses(),
       getDashboardStats(),
       getReceiptCount(),
       getTripCount(),
     ]);
 
-    const allTotal = all.reduce((sum, expense) => sum + expense.amount, 0);
+    const total = all.reduce((sum, e) => sum + e.amount, 0);
 
-    setTotalExpenses(allTotal);
-    setThisMonth(dashboard.monthTotal);
-    setReceiptsScanned(receiptCount);
-    setTripsLogged(tripCount);
+    setStats({
+      total,
+      month: dashboard.monthTotal,
+      receipts,
+      trips,
+    });
   }, []);
 
   useFocusEffect(
@@ -100,122 +115,60 @@ export default function ProfileScreen() {
     }, [loadStats])
   );
 
-  async function handleExportCsv() {
-    if (exportingExpenses) return;
+  /* ---------------- EXPORT ---------------- */
 
-    setExportingExpenses(true);
+  async function shareCSV(name: string, csv: string) {
+    const fileUri = FileSystem.cacheDirectory + `${name}_${Date.now()}.csv`;
+
+    await FileSystem.writeAsStringAsync(fileUri, csv);
+
+    await Sharing.shareAsync(fileUri, {
+      mimeType: "text/csv",
+    });
+  }
+
+  async function handleExport(type: "expenses" | "trips" | "bols") {
+    if (loadingExport) return;
+
+    setLoadingExport(type);
 
     try {
-      const csv = await exportExpenses();
+      let csv = "";
 
-      if (!csv || csv.trim() === "Date,Category,Amount,Note") {
-        Alert.alert("No Data", "You have no expenses to export yet.");
+      if (type === "expenses") csv = await exportExpenses();
+      if (type === "trips") csv = await exportTrips();
+      if (type === "bols") csv = await exportBOLs();
+
+      if (!csv || csv.length < 20) {
+        Alert.alert("No Data", "Nothing to export yet.");
         return;
       }
 
-      const shareAvailable = await Sharing.isAvailableAsync();
-      if (!shareAvailable) {
-        Alert.alert("Not Available", "Sharing is not available on this device.");
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        Alert.alert("Not Available", "Sharing not supported.");
         return;
       }
 
-      const file = new File(Paths.cache, `truckledger_expenses_${Date.now()}.csv`);
-      await file.write(csv);
+      await shareCSV(`truckledger_${type}`, csv);
 
-      await Sharing.shareAsync(file.uri, {
-        mimeType: "text/csv",
-        dialogTitle: "Export Expenses",
-        UTI: "public.comma-separated-values-text",
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to export expenses.";
-      Alert.alert("Export Failed", message);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (e) {
+      Alert.alert("Export Failed");
     } finally {
-      setExportingExpenses(false);
+      setLoadingExport(null);
     }
   }
 
-  async function handleExportTrips() {
-    if (exportingTrips) return;
+  /* ---------------- LOGOUT ---------------- */
 
-    setExportingTrips(true);
-
-    try {
-      const csv = await exportTrips();
-
-      if (!csv || csv.trim() === "Date,Income,Fuel,Tolls,Food,Parking,Repairs,Other,Total Expenses,Profit,Note") {
-        Alert.alert("No Data", "You have no trips to export yet.");
-        return;
-      }
-
-      const shareAvailable = await Sharing.isAvailableAsync();
-      if (!shareAvailable) {
-        Alert.alert("Not Available", "Sharing is not available on this device.");
-        return;
-      }
-
-      const file = new File(Paths.cache, `truckledger_trips_${Date.now()}.csv`);
-      await file.write(csv);
-
-      await Sharing.shareAsync(file.uri, {
-        mimeType: "text/csv",
-        dialogTitle: "Export Trips",
-        UTI: "public.comma-separated-values-text",
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to export trips.";
-      Alert.alert("Export Failed", message);
-    } finally {
-      setExportingTrips(false);
-    }
-  }
-
-  async function handleExportBOLs() {
-    if (exportingBOLs) return;
-
-    setExportingBOLs(true);
-
-    try {
-      const csv = await exportBOLs();
-
-      if (!csv || csv.trim() === "Date,Broker,Pickup Location,Delivery Location,Load Amount") {
-        Alert.alert("No Data", "You have no BOLs to export yet.");
-        return;
-      }
-
-      const shareAvailable = await Sharing.isAvailableAsync();
-      if (!shareAvailable) {
-        Alert.alert("Not Available", "Sharing is not available on this device.");
-        return;
-      }
-
-      const file = new File(Paths.cache, `truckledger_bols_${Date.now()}.csv`);
-      await file.write(csv);
-
-      await Sharing.shareAsync(file.uri, {
-        mimeType: "text/csv",
-        dialogTitle: "Export BOLs",
-        UTI: "public.comma-separated-values-text",
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to export BOLs.";
-      Alert.alert("Export Failed", message);
-    } finally {
-      setExportingBOLs(false);
-    }
-  }
-
-  async function handleLogout() {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+  function handleLogout() {
+    Alert.alert("Sign Out", "Are you sure?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Sign Out",
         style: "destructive",
         onPress: async () => {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           await logout();
           router.replace("/login");
         },
@@ -225,185 +178,88 @@ export default function ProfileScreen() {
 
   if (!user) return null;
 
+  /* ---------------- UI ---------------- */
+
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
-        <View style={styles.container}>
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* HERO SECTION (45% - Blue/Profile themed)                       */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+        <LinearGradient
+          colors={[Colors.secondary, "#5A8FB5"]}
+          style={styles.hero}
+        >
+          {/* HEADER */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.back}>✕</Text>
+            </TouchableOpacity>
 
-          <LinearGradient
-            colors={[Colors.secondary, '#5A8FB5']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroSection}
-          >
-            {/* Top Bar */}
-            <View style={styles.heroTopBar}>
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={styles.heroBackBtn}
-              >
-                <Text style={styles.heroBackText}>✕</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroTitle}>Profile</Text>
-              <View style={{ width: 40 }} />
-            </View>
+            <Text style={styles.title}>Profile</Text>
 
-            {/* Centered User Info */}
-            <View style={styles.heroUserCenter}>
-              {user.photo && !photoError ? (
-                <Image
-                  source={{ uri: user.photo }}
-                  style={styles.heroAvatar}
-                  contentFit="cover"
-                  onError={() => setPhotoError(true)}
-                />
-              ) : (
-                <AvatarInitials name={user.name} />
-              )}
+            <View style={{ width: 24 }} />
+          </View>
 
-              <Text style={styles.heroUserName}>{user.name}</Text>
-              <Text style={styles.heroUserSubtitle}>{displayProvider} Account</Text>
-            </View>
-          </LinearGradient>
-
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* FLOATING CARD (55%+ - Sections & Actions)                      */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
-
-          <View style={styles.floatingCardContainer}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.cardContent}
-            >
-              {/* Driver Stats Section */}
-              <Animated.View entering={FadeInDown}>
-                <Text style={styles.cardSectionTitle}>📊 Driver Stats</Text>
-                <View style={styles.statsBlock}>
-                  <View style={styles.statRow}>
-                    <Text style={styles.statLabel}>Total Expenses</Text>
-                    <Text style={styles.statValue}>{formatCurrency(totalExpenses)}</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statRow}>
-                    <Text style={styles.statLabel}>This Month</Text>
-                    <Text style={styles.statValue}>{formatCurrency(thisMonth)}</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statRow}>
-                    <Text style={styles.statLabel}>Receipts Scanned</Text>
-                    <Text style={styles.statValue}>{receiptsScanned}</Text>
-                  </View>
-                  <View style={styles.statDivider} />
-                  <View style={styles.statRow}>
-                    <Text style={styles.statLabel}>Trips Logged</Text>
-                    <Text style={styles.statValue}>{tripsLogged}</Text>
-                  </View>
-                </View>
-              </Animated.View>
-
-              {/* Tools Section */}
-              <Animated.View entering={FadeInDown.delay(50)}>
-                <Text style={styles.cardSectionTitle}>🧰 Tools</Text>
-                <View style={styles.toolsGrid}>
-                  <TouchableOpacity
-                    onPress={handleExportCsv}
-                    style={styles.toolButton}
-                    disabled={exportingExpenses}
-                  >
-                    <Text style={styles.toolIcon}>📋</Text>
-                    <Text style={styles.toolLabel}>
-                      {exportingExpenses ? "Exporting..." : "Export Expenses"}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleExportTrips}
-                    style={styles.toolButton}
-                    disabled={exportingTrips}
-                  >
-                    <Text style={styles.toolIcon}>🚚</Text>
-                    <Text style={styles.toolLabel}>
-                      {exportingTrips ? "Exporting..." : "Export Trips"}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={handleExportBOLs}
-                    style={styles.toolButton}
-                    disabled={exportingBOLs}
-                  >
-                    <Text style={styles.toolIcon}>📦</Text>
-                    <Text style={styles.toolLabel}>
-                      {exportingBOLs ? "Exporting..." : "Export BOLs"}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => router.push("/monthly-report")}
-                    style={styles.toolButton}
-                  >
-                    <Text style={styles.toolIcon}>📈</Text>
-                    <Text style={styles.toolLabel}>Monthly Report</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => router.push("/trip-profit")}
-                    style={styles.toolButton}
-                  >
-                    <Text style={styles.toolIcon}>💰</Text>
-                    <Text style={styles.toolLabel}>Trip Profit</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={() => router.push("/receipts")}
-                    style={styles.toolButton}
-                  >
-                    <Text style={styles.toolIcon}>📸</Text>
-                    <Text style={styles.toolLabel}>Receipts</Text>
-                  </TouchableOpacity>
-                </View>
-              </Animated.View>
-
-            {/* Account Section */}
-              <Animated.View entering={FadeInDown.delay(100)}>
-                <Text style={styles.cardSectionTitle}>🔐 Account</Text>
-                <View style={styles.accountBlock}>
-                  <View style={styles.accountRow}>
-                    <Text style={styles.accountLabel}>Email</Text>
-                    <Text style={styles.accountValue}>{user.email || "-"}</Text>
-                  </View>
-                  <View style={styles.accountDivider} />
-                  <View style={styles.accountRow}>
-                    <Text style={styles.accountLabel}>Provider</Text>
-                    <Text style={styles.accountValue}>{displayProvider}</Text>
-                  </View>
-                </View>
-              </Animated.View>
-
-              {/* Cloud Settings Button */}
-              <Animated.View entering={FadeInDown.delay(150)}>
-                <TouchableOpacity
-                  onPress={() => router.push("/cloud-settings")}
-                  style={styles.settingsButton}
-                >
-                  <Text style={styles.settingsIcon}>⚙️</Text>
-                  <Text style={styles.settingsLabel}>Cloud Settings & Backup</Text>
-                </TouchableOpacity>
-              </Animated.View>
-            </ScrollView>
-
-            {/* Logout Button */}
-            <Animated.View entering={FadeInDown.delay(200)} style={styles.cardFooter}>
-              <PrimaryButton
-                label="🚪 Sign Out"
-                variant="accent"
-                onPress={handleLogout}
-                fullWidth
+          {/* USER */}
+          <View style={styles.userCenter}>
+            {user.photo && !photoError ? (
+              <Image
+                source={{ uri: user.photo }}
+                style={styles.avatar}
+                onError={() => setPhotoError(true)}
               />
+            ) : (
+              <AvatarInitials name={user.name} />
+            )}
+
+            <Text style={styles.name}>{user.name}</Text>
+            <Text style={styles.subtitle}>{provider} Account</Text>
+          </View>
+        </LinearGradient>
+
+        {/* FLOATING CARD */}
+        <View style={styles.card}>
+          <ScrollView contentContainerStyle={styles.content}>
+            {/* STATS */}
+            <Animated.View entering={FadeInDown}>
+              <Text style={styles.sectionTitle}>📊 Stats</Text>
+
+              <View style={styles.block}>
+                <Row label="Total Expenses" value={formatCurrency(stats.total)} />
+                <Divider />
+                <Row label="This Month" value={formatCurrency(stats.month)} />
+                <Divider />
+                <Row label="Receipts" value={String(stats.receipts)} />
+                <Divider />
+                <Row label="Trips" value={String(stats.trips)} />
+              </View>
             </Animated.View>
+
+            {/* TOOLS */}
+            <Animated.View entering={FadeInDown.delay(80)}>
+              <Text style={styles.sectionTitle}>🧰 Tools</Text>
+
+              <View style={styles.grid}>
+                <Tool label="Expenses" icon="📋" onPress={() => handleExport("expenses")} loading={loadingExport === "expenses"} />
+                <Tool label="Trips" icon="🚚" onPress={() => handleExport("trips")} loading={loadingExport === "trips"} />
+                <Tool label="BOLs" icon="📦" onPress={() => handleExport("bols")} loading={loadingExport === "bols"} />
+                <Tool label="Reports" icon="📈" onPress={() => router.push("/monthly-report")} />
+              </View>
+            </Animated.View>
+
+            {/* ACCOUNT */}
+            <Animated.View entering={FadeInDown.delay(120)}>
+              <Text style={styles.sectionTitle}>🔐 Account</Text>
+
+              <View style={styles.block}>
+                <Row label="Email" value={user.email || "-"} />
+                <Divider />
+                <Row label="Provider" value={provider} />
+              </View>
+            </Animated.View>
+          </ScrollView>
+
+          {/* FOOTER */}
+          <View style={styles.footer}>
+            <PrimaryButton label="Sign Out" onPress={handleLogout} fullWidth />
           </View>
         </View>
       </SafeAreaView>
@@ -411,250 +267,150 @@ export default function ProfileScreen() {
   );
 }
 
+/* ---------------- COMPONENTS ---------------- */
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue}>{value}</Text>
+    </View>
+  );
+}
+
+function Divider() {
+  return <View style={styles.divider} />;
+}
+
+function Tool({ label, icon, onPress, loading }: any) {
+  return (
+    <TouchableOpacity style={styles.tool} onPress={onPress}>
+      <Text style={styles.toolIcon}>{icon}</Text>
+      <Text style={styles.toolText}>
+        {loading ? "Loading..." : label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+/* ---------------- STYLES ---------------- */
+
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "transparent",
-  },
+  safe: { flex: 1 },
 
-  container: {
-    flex: 1,
-    position: "relative",
-  },
-
-  // ─── HERO SECTION ───────────────────────────────────────────
-
-  heroSection: {
+  hero: {
+    paddingTop: Spacing.md,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
     paddingBottom: Spacing.xl,
   },
 
-  heroTopBar: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
 
-  heroBackBtn: {
-    width: 40,
-    height: 40,
+  back: { color: "white", fontSize: 22 },
+
+  title: {
+    color: "white",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+
+  userCenter: {
     alignItems: "center",
+    marginTop: Spacing.xl,
+    gap: Spacing.sm,
+  },
+
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+  },
+
+  avatarFallback: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: "rgba(255,255,255,0.2)",
     justifyContent: "center",
+    alignItems: "center",
   },
 
-  heroBackText: {
-    fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
+  avatarFallbackText: {
+    color: "white",
+    fontSize: 28,
+    fontWeight: "bold",
   },
 
-  heroTitle: {
-    fontSize: FontSize.section,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
+  name: {
+    color: "white",
+    fontSize: 22,
+    fontWeight: "bold",
   },
 
-  heroUserCenter: {
+  subtitle: {
+    color: "rgba(255,255,255,0.7)",
+  },
+
+  card: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.lg,
-  },
-
-  heroAvatar: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    borderWidth: 4,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-  },
-
-  heroAvatarFallback: {
-    width: 92,
-    height: 92,
-    borderRadius: 46,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderWidth: 4,
-    borderColor: "rgba(255, 255, 255, 0.4)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  heroAvatarFallbackText: {
-    fontSize: FontSize.title,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.textInverse,
-    letterSpacing: 0.5,
-  },
-
-  heroUserName: {
-    ...TypographyScale.headline,
-    color: Colors.textInverse,
-    letterSpacing: 0.3,
-  },
-
-  heroUserSubtitle: {
-    fontSize: FontSize.body,
-    color: "rgba(255, 255, 255, 0.7)",
-    fontWeight: FontWeight.medium,
-  },
-
-  // ─── FLOATING CARD ──────────────────────────────────────────
-
-  floatingCardContainer: {
-    flex: 1,
-    marginTop: -Spacing.xxl,
+    marginTop: -Spacing.lg,
     backgroundColor: Colors.card,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    overflow: "hidden",
-    ...getShadow(Shadow.large),
   },
 
-  cardContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxl,
-    paddingBottom: Spacing.xxxxl,
+  content: {
+    padding: Spacing.lg,
     gap: Spacing.lg,
   },
 
-  cardSectionTitle: {
-    ...TypographyScale.title,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+  sectionTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
   },
 
-  // ─── STATS SECTION ───────────────────────────────────────────
-
-  statsBlock: {
+  block: {
     backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
-    padding: 0,
-    overflow: "hidden",
-    ...getShadow(Shadow.card),
+    ...getShadow(Shadow.small),
   },
 
-  statRow: {
+  row: {
+    padding: Spacing.lg,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
   },
 
-  statLabel: {
-    ...TypographyScale.small,
-    color: Colors.textMuted,
-  },
+  rowLabel: { color: Colors.textMuted },
 
-  statValue: {
-    ...TypographyScale.subtitle,
-    color: Colors.textPrimary,
-  },
+  rowValue: { fontWeight: "bold" },
 
-  statDivider: {
-    height: 1,
-    backgroundColor: Colors.border,
-  },
+  divider: { height: 1, backgroundColor: Colors.border },
 
-  // ─── TOOLS GRID ──────────────────────────────────────────
-
-  toolsGrid: {
+  grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: Spacing.md,
   },
 
-  toolButton: {
+  tool: {
     width: "48%",
-    alignItems: "center",
-    gap: Spacing.md,
+    padding: Spacing.lg,
     backgroundColor: Colors.surfaceAlt,
     borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing.md,
+    alignItems: "center",
     ...getShadow(Shadow.small),
   },
 
-  toolIcon: {
-    fontSize: 36,
-  },
+  toolIcon: { fontSize: 26 },
 
-  toolLabel: {
-    ...TypographyScale.small,
-    color: Colors.textPrimary,
-    textAlign: "center",
-  },
+  toolText: { marginTop: 6 },
 
-  // ─── ACCOUNT SECTION ────────────────────────────────────────
-
-  accountBlock: {
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.lg,
-    padding: 0,
-    overflow: "hidden",
-    ...getShadow(Shadow.card),
-  },
-
-  accountRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-  },
-
-  accountLabel: {
-    ...TypographyScale.small,
-    color: Colors.textMuted,
-  },
-
-  accountValue: {
-    ...TypographyScale.body,
-    color: Colors.textPrimary,
-    maxWidth: "50%",
-    textAlign: "right",
-  },
-
-  accountDivider: {
-    height: 1,
-    backgroundColor: Colors.border,
-  },
-
-  // ─── SETTINGS BUTTON ────────────────────────────────────────
-
-  settingsButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    ...getShadow(Shadow.small),
-  },
-
-  settingsIcon: {
-    fontSize: 26,
-  },
-
-  settingsLabel: {
-    ...TypographyScale.body,
-    color: Colors.textPrimary,
-  },
-
-  // ─── FOOTER ──────────────────────────────────────────────────
-
-  cardFooter: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+  footer: {
+    padding: Spacing.lg,
   },
 });

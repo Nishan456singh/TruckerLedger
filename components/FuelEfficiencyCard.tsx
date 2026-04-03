@@ -67,7 +67,7 @@ export default React.memo(function FuelEfficiencyCard({
 
       <View style={styles.insight}>
         <Text style={styles.insightText}>
-          💡 You're spending{' '}
+          💡 You&apos;re spending{' '}
           <Text style={{ fontWeight: FontWeight.bold }}>
             {fuelAsPercentage.toFixed(1)}%
           </Text>

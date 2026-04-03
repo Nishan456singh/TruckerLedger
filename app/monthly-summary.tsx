@@ -87,7 +87,7 @@ export default function MonthlySummaryScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <LinearGradient
           colors={[Colors.secondary, Colors.secondary]}
           start={{ x: 0, y: 0 }}

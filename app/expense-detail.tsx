@@ -6,20 +6,20 @@ import ScreenBackground from "@/components/ScreenBackground";
 
 import { getShadow } from "@/constants/shadowUtils";
 import {
-  BorderRadius,
-  CategoryMeta,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-  TypographyScale,
+    BorderRadius,
+    CategoryMeta,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
+    TypographyScale,
 } from "@/constants/theme";
 
 import {
-  deleteExpense,
-  getExpenseById,
-  updateExpense,
+    deleteExpense,
+    getExpenseById,
+    updateExpense,
 } from "@/lib/expenseService";
 import type { Category, Expense } from "@/lib/types";
 
@@ -31,15 +31,15 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -177,7 +177,7 @@ export default function ExpenseDetailScreen() {
   if (!editing) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <View style={styles.container}>
             {/* HERO */}
             <LinearGradient
@@ -251,7 +251,7 @@ export default function ExpenseDetailScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
@@ -350,9 +350,9 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    paddingTop: 70,
+    paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: 50,
+    paddingBottom: Spacing.xl,
   },
 
   topBar: {

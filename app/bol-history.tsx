@@ -95,7 +95,7 @@ export default function BOLHistoryScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <View style={styles.container}>
           {/* ═══════════════════════════════════════════════════════════════ */}
           {/* HERO SECTION (Blue - BOL themed)                              */}

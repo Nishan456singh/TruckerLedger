@@ -1,13 +1,13 @@
 import ScreenBackground from "@/components/ScreenBackground";
 import { getShadow } from "@/constants/shadowUtils";
 import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-  TypographyScale,
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
+    TypographyScale,
 } from "@/constants/theme";
 import { getAllExpenses } from "@/lib/expenseService";
 import type { Expense } from "@/lib/types";
@@ -15,14 +15,14 @@ import { router, useFocusEffect } from "expo-router";
 
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    FlatList,
+    Image,
+    Pressable,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -50,6 +50,8 @@ const ReceiptTile = React.memo(({ expense }: { expense: Expense }) => {
     </Pressable>
   );
 });
+
+ReceiptTile.displayName = "ReceiptTile";
 
 /* ---------------- SCREEN ---------------- */
 
@@ -94,7 +96,7 @@ export default function ReceiptsScreen() {
   if (loading) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <View style={styles.center}>
             <ActivityIndicator size="large" color={Colors.primary} />
           </View>
@@ -105,7 +107,7 @@ export default function ReceiptsScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         {/* HEADER */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -173,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: Spacing.lg,
-    paddingTop: 60,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.lg,
   },
 

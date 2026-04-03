@@ -135,7 +135,7 @@ export default function DashboardScreen() {
   if (loading) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <View style={styles.centerContainer}>
             <ActivityIndicator
               size="large"
@@ -151,7 +151,7 @@ export default function DashboardScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <LinearGradient
           colors={["#C3224E", "#8E1B3B"]}
           start={{ x: 0, y: 0 }}
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: Spacing.lg,
-    paddingTop: 60,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
 

@@ -159,7 +159,7 @@ export default function ScanBOLScreen() {
   if (!permission) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <View style={styles.centerContainer}>
             <ActivityIndicator
               size="large"
@@ -176,7 +176,7 @@ export default function ScanBOLScreen() {
   if (!permission.granted) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <View style={styles.centerContainer}>
             <Text style={styles.permissionTitle}>Camera Access Required</Text>
             <Text style={styles.permissionText}>
@@ -197,7 +197,7 @@ export default function ScanBOLScreen() {
   if (imageUri) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <LinearGradient
             colors={["#6FA0C8", "#5A8FB5"]}
             start={{ x: 0, y: 0 }}
@@ -320,7 +320,7 @@ export default function ScanBOLScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "top", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <LinearGradient
           colors={["#6FA0C8", "#5A8FB5"]}
           start={{ x: 0, y: 0 }}

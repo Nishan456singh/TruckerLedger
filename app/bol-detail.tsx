@@ -114,7 +114,7 @@ export default function BOLDetailScreen() {
   if (loading) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <View style={styles.centerWrap}>
             <ActivityIndicator size="large" color={Colors.primary} />
             <Text style={styles.helperText}>Loading BOL...</Text>
@@ -127,7 +127,7 @@ export default function BOLDetailScreen() {
   if (error || !bol) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
           <LinearGradient
             colors={Gradients.bluePrimary}
             style={styles.hero}
@@ -158,7 +158,7 @@ export default function BOLDetailScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <View style={styles.container}>
           {/* HERO */}
           <LinearGradient

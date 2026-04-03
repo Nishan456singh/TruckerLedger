@@ -1,23 +1,23 @@
 import ScreenBackground from "@/components/ScreenBackground";
 import { getShadow } from "@/constants/shadowUtils";
 import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-  TypographyScale,
+    BorderRadius,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
+    TypographyScale,
 } from "@/constants/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -84,7 +84,7 @@ function ActionCard({
 export default function ExploreScreen() {
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <LinearGradient
           colors={["#6FA0C8", "#5A8FB5"]}
           style={styles.container}
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
 
   header: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: 60,
+    paddingTop: Spacing.lg,
   },
 
   headerSmall: {

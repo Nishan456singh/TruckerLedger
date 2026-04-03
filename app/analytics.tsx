@@ -114,7 +114,7 @@ export default function AnalyticsScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
         <Text style={[styles.loadingText, { color: Colors.textPrimary }]}>
           Loading analytics...
         </Text>
@@ -123,7 +123,7 @@ export default function AnalyticsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={["left", "right", "bottom"]}>
+    <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
       {/* HERO GRADIENT */}
       <LinearGradient
         colors={Gradients.bluePrimary}
