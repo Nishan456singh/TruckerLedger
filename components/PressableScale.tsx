@@ -4,7 +4,7 @@
  * Improves UX with immediate visual feedback
  */
 
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import {
     Pressable,
     StyleSheet,

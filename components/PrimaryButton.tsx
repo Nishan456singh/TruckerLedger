@@ -1,7 +1,6 @@
-import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
 import { getShadow } from '@/constants/shadowUtils';
+import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
-import React from 'react';
 import {
     ActivityIndicator,
     StyleSheet,

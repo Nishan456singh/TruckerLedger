@@ -1,10 +1,10 @@
-import { BorderRadius, Shadow, Spacing } from '@/constants/theme';
 import { getShadow } from '@/constants/shadowUtils';
-import React from 'react';
+import { BorderRadius, Shadow, Spacing } from '@/constants/theme';
+import { ReactNode } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 interface HighContrastCardProps {
-  children: React.ReactNode;
+  children: ReactNode;
   style?: StyleProp<ViewStyle>;
   padded?: boolean;
 }

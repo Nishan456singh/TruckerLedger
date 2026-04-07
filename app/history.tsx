@@ -26,6 +26,7 @@ import ScreenBackground from "@/components/ScreenBackground";
 import SearchBar from "@/components/SearchBar";
 
 import {
+  BorderRadius,
     Colors,
     FontWeight,
     Spacing
@@ -191,7 +192,7 @@ export default function HistoryScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe}  edges={["top", "left", "right", "bottom"]}>
         <View style={styles.container}>
           {/* HERO */}
           <Animated.View style={[styles.heroWrapper, heroStyle]}>
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
 
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", },
 
   container: {
     flex: 1,
@@ -302,6 +303,8 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
     justifyContent: "space-between",
     minHeight: 180,
+    borderTopRightRadius: BorderRadius.xl,
+    borderTopLeftRadius: BorderRadius.xl,
   },
 
   heroTop: {
@@ -356,11 +359,13 @@ const styles = StyleSheet.create({
   },
 
   headerContent: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
+    marginTop: Spacing.md,
   },
 
   filterWrapper: {
     marginTop: Spacing.md,
     marginBottom: Spacing.lg,
+    padding: Spacing.lg,
   },
 });

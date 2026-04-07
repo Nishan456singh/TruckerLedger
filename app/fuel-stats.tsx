@@ -10,10 +10,11 @@ import {
     Spacing,
     TypographyScale
 } from "@/constants/theme";
+import { formatCurrency } from "@/lib/formatUtils";
 import { getFuelStats } from "@/lib/fuelService";
-import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useMemo, useState } from "react";
+import { router } from "expo-router";
+import { useMemo, useState } from "react";
 import {
     ActivityIndicator,
     Alert,
@@ -26,15 +27,6 @@ import {
     View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 
 export default function FuelStatsScreen() {
   const now = useMemo(() => new Date(), []);

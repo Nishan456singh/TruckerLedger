@@ -6,7 +6,7 @@
 
 import { getShadow } from "@/constants/shadowUtils";
 import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from "@/constants/theme";
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface SectionProps {

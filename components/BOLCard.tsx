@@ -1,3 +1,4 @@
+import { getShadow } from '@/constants/shadowUtils';
 import {
     BorderRadius,
     Colors,
@@ -6,9 +7,7 @@ import {
     Shadow,
     Spacing,
 } from '@/constants/theme';
-import { getShadow } from '@/constants/shadowUtils';
 import type { BOLRecord } from '@/lib/types';
-import React from 'react';
 import {
     StyleSheet,
     Text,

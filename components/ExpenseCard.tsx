@@ -1,3 +1,4 @@
+import { getShadow } from '@/constants/shadowUtils';
 import {
     BorderRadius,
     CategoryMeta,
@@ -8,9 +9,7 @@ import {
     Spacing,
     type Category
 } from '@/constants/theme';
-import { getShadow } from '@/constants/shadowUtils';
 import type { Expense } from '@/lib/types';
-import React from 'react';
 import {
     StyleSheet,
     Text,

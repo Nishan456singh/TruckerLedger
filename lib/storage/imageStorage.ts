@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * TYPES
@@ -23,16 +24,24 @@ const APP_STORAGE_DIR = 'truckledger/';
  */
 
 /**
+ * Get the base directory for storage (with fallback)
+ */
+function getBaseDirectory(): string | null {
+  return FileSystem.documentDirectory || FileSystem.cacheDirectory || null;
+}
+
+/**
  * Ensure app storage directories exist
  */
 async function ensureAppDirectoryExists(): Promise<boolean> {
   try {
-    if (!FileSystem.documentDirectory) {
-      console.error('Document directory not available');
+    const baseDir = getBaseDirectory();
+    if (!baseDir) {
+      console.error('No storage directory available (documentDirectory and cacheDirectory both null)');
       return false;
     }
 
-    const appDir = `${FileSystem.documentDirectory}${APP_STORAGE_DIR}`;
+    const appDir = `${baseDir}${APP_STORAGE_DIR}`;
     const receiptDir = `${appDir}receipts`;
     const bolDir = `${appDir}bols`;
 
@@ -68,10 +77,11 @@ async function ensureAppDirectoryExists(): Promise<boolean> {
  * Get the full directory path for a folder
  */
 function getStorageDirectory(folder: ImageFolder): string | null {
-  if (!FileSystem.documentDirectory) {
+  const baseDir = getBaseDirectory();
+  if (!baseDir) {
     return null;
   }
-  return `${FileSystem.documentDirectory}${APP_STORAGE_DIR}${folder}`;
+  return `${baseDir}${APP_STORAGE_DIR}${folder}`;
 }
 
 /**
@@ -106,6 +116,29 @@ export async function saveImageLocally(
   folder: ImageFolder
 ): Promise<ImageSaveResult> {
   try {
+    // Check if FileSystem is available
+    const baseDir = getBaseDirectory();
+    if (!baseDir) {
+      // Fallback: store the URI reference in AsyncStorage if FileSystem not available
+      console.warn('[ImageStorage] FileSystem not available, storing URI reference in AsyncStorage');
+      const filename = generateFilename(folder);
+      const key = `image_${folder}_${filename}`;
+
+      try {
+        await AsyncStorage.setItem(key, uri);
+        return {
+          success: true,
+          path: `async-storage://${key}`,
+        };
+      } catch (storageErr) {
+        console.error('[ImageStorage] Failed to store in AsyncStorage:', storageErr);
+        return {
+          success: false,
+          error: 'No storage available (FileSystem and AsyncStorage failed)',
+        };
+      }
+    }
+
     // Ensure directories exist
     const dirExists = await ensureAppDirectoryExists();
     if (!dirExists) {
@@ -161,6 +194,19 @@ export async function deleteImage(uri: string): Promise<ImageSaveResult> {
         success: true, // Already deleted
         error: 'No image URI provided',
       };
+    }
+
+    // Handle AsyncStorage URIs
+    if (uri.startsWith('async-storage://')) {
+      const key = uri.replace('async-storage://', '');
+      try {
+        await AsyncStorage.removeItem(key);
+        console.log('[ImageStorage] AsyncStorage entry deleted:', key);
+        return { success: true };
+      } catch (err) {
+        console.error('[ImageStorage] Error deleting from AsyncStorage:', err);
+        return { success: false, error: 'Failed to delete from AsyncStorage' };
+      }
     }
 
     console.log('[ImageStorage] Checking if image exists:', uri);

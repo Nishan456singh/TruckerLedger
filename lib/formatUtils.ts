@@ -21,3 +21,10 @@ export function parseAmount(value: string): number {
   const parsed = Number(value.replace(/[^\d.-]/g, ''));
   return Number.isFinite(parsed) ? parsed : 0;
 }
+
+/**
+ * Get today's date in ISO format (YYYY-MM-DD)
+ */
+export function todayISO(): string {
+  return new Date().toISOString().split('T')[0];
+}

@@ -11,9 +11,10 @@ import {
     type Category
 } from "@/constants/theme";
 import { getCurrentMonthCategoryTotals } from "@/lib/expenseService";
-import { router, useFocusEffect } from "expo-router";
+import { formatCurrency } from "@/lib/formatUtils";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useMemo, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -33,15 +34,6 @@ const ORDERED_CATEGORIES: Category[] = [
   "toll",
   "other",
 ];
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 
 export default function MonthlySummaryScreen() {
   const [loading, setLoading] = useState(true);

@@ -2,36 +2,36 @@ import ExpenseCard from "@/components/ExpenseCard";
 import ScreenBackground from "@/components/ScreenBackground";
 import { getShadow } from "@/constants/shadowUtils";
 import {
-    BorderRadius,
-    Colors,
-    ColorUtilities,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
+  BorderRadius,
+  Colors,
+  ColorUtilities,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
 } from "@/constants/theme";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getAllExpenses } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
 import {
-    getMonthlyTripSnapshot,
-    getWeeklyTripSnapshot,
+  getMonthlyTripSnapshot,
+  getWeeklyTripSnapshot,
 } from "@/lib/tripService";
 import type { Expense } from "@/lib/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState } from "react";
 import {
-    ActionSheetIOS,
-    ActivityIndicator,
-    Alert,
-    Platform,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActionSheetIOS,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -350,6 +350,8 @@ const styles = StyleSheet.create({
 
   container: {
     flex: 1,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.xl,
   },
 
   centerContainer: {

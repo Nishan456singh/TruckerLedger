@@ -11,7 +11,7 @@ import {
     Shadow,
     Spacing,
 } from "@/constants/theme";
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import {
     StyleSheet,
     TouchableOpacity,

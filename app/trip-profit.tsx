@@ -4,17 +4,17 @@ import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
     Colors,
-    ColorUtilities,
     FontSize,
     FontWeight,
     Shadow,
     Spacing,
     TypographyScale
 } from "@/constants/theme";
+import { formatCurrency, parseAmount } from "@/lib/formatUtils";
 import { calculateTripProfit, createTrip } from "@/lib/tripService";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
     Alert,
     KeyboardAvoidingView,
@@ -31,21 +31,6 @@ import Animated, {
     FadeInUp,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-function parseAmount(value: string): number {
-  if (!value.trim()) return 0;
-  const parsed = Number(value.replace(/[^\d.-]/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 
 export default function TripProfitScreen() {
   const [income, setIncome] = useState("");

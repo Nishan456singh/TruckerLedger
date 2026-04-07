@@ -9,7 +9,6 @@ import {
     type Category,
 } from '@/constants/theme';
 import * as Haptics from 'expo-haptics';
-import React from 'react';
 import {
     ScrollView,
     StyleSheet,

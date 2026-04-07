@@ -1,5 +1,4 @@
 import { BorderRadius, Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
-import React from 'react';
 import {
     ActivityIndicator,
     StyleSheet,

@@ -17,13 +17,14 @@ import {
     getBOLsByLocation,
     searchBOLs,
 } from "@/lib/bolService";
+import { formatCurrency } from "@/lib/formatUtils";
 
 import type { BOLRecord } from "@/lib/types";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 
 import {
     ActivityIndicator,
@@ -36,15 +37,6 @@ import {
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
-
-function formatCurrency(value: number | null): string {
-  if (value === null || !Number.isFinite(value)) return "-";
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
 
 export default function BOLHistoryScreen() {
   const [loading, setLoading] = useState(true);

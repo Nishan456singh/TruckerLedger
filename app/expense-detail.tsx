@@ -21,6 +21,7 @@ import {
     getExpenseById,
     updateExpense,
 } from "@/lib/expenseService";
+import { formatCurrency, todayISO } from "@/lib/formatUtils";
 import type { Category, Expense } from "@/lib/types";
 
 import * as Haptics from "expo-haptics";
@@ -28,7 +29,7 @@ import * as ImagePicker from "expo-image-picker";
 
 import { router, useLocalSearchParams } from "expo-router";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
     Alert,
@@ -44,19 +45,6 @@ import {
 
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-/* HELPERS */
-
-function todayISO(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
-function formatCurrency(v: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(v);
-}
 
 /* SCREEN */
 
@@ -352,7 +340,10 @@ const styles = StyleSheet.create({
   hero: {
     paddingTop: Spacing.lg,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xl,
+    paddingBottom: Spacing.xxxxl,
+    marginBottom: -Spacing.sm,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
   },
 
   topBar: {

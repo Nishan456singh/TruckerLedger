@@ -11,10 +11,11 @@ import {
     TypographyScale,
 } from "@/constants/theme";
 import { getBOLById } from "@/lib/bolService";
+import { formatCurrency } from "@/lib/formatUtils";
 import type { BOLRecord } from "@/lib/types";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     ActivityIndicator,
     Image,
@@ -25,19 +26,6 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-function formatCurrency(value: number | null | undefined): string {
-  if (typeof value !== "number" || Number.isNaN(value)) {
-    return "—";
-  }
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 
 function formatDate(date?: string | null): string {
   if (!date) return "—";
@@ -251,6 +239,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.xxxl,
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxxl,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
   },
   topBar: {
     flexDirection: "row",

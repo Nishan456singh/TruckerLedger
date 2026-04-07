@@ -1,11 +1,11 @@
 import { Colors } from "@/constants/theme";
-import React from "react";
+import { ReactNode } from "react";
 import { ImageBackground, StyleSheet, View } from "react-native";
 
 const bgImage = require("@/assets/images/login.png");
 
 interface ScreenBackgroundProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 export default function ScreenBackground({ children }: ScreenBackgroundProps) {

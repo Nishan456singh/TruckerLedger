@@ -17,9 +17,10 @@ import {
     getMonthlyTotal,
     getReceiptCount,
 } from "@/lib/expenseService";
+import { formatCurrency } from "@/lib/formatUtils";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     ScrollView,
@@ -42,15 +43,6 @@ const CATEGORY_ORDER: Category[] = [
   "repair",
   "other",
 ];
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 function shiftMonth(date: Date, delta: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + delta, 1);

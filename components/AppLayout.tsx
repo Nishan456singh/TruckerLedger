@@ -213,6 +213,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xxxl,
     paddingBottom: Spacing.lg,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    overflow: "hidden",
   },
 
   heroDefault: {

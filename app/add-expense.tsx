@@ -5,47 +5,29 @@ import { getShadow } from "@/constants/shadowUtils";
 import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing, TypographyScale } from "@/constants/theme";
 
 import { addExpense, getDashboardStats } from "@/lib/expenseService";
+import { formatCurrency, parseAmount, todayISO } from "@/lib/formatUtils";
 import type { Category } from "@/lib/types";
 
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-/* ---------------- HELPERS ---------------- */
-
-function todayISO(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
-function parseAmount(value: string): number {
-  const cleaned = value.replace(/[^0-9.]/g, "");
-  const parsed = Number(cleaned);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
 
 /* ---------------- CONSTANTS ---------------- */
 
