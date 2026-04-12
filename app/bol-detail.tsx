@@ -6,7 +6,6 @@ import { formatCurrency } from "@/lib/formatUtils";
 import type { BOLRecord } from "@/lib/types";
 
 import { router, useLocalSearchParams } from "expo-router";
-import * as MediaLibrary from "expo-media-library";
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -60,7 +59,6 @@ export default function BOLDetailScreen() {
   const [error, setError] = useState("");
   const [imageViewerUri, setImageViewerUri] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   const loadBOL = useCallback(async () => {
     const id = Number(params.id);
@@ -96,37 +94,6 @@ export default function BOLDetailScreen() {
   useEffect(() => {
     loadBOL();
   }, [loadBOL]);
-
-  /* ---------- Save Image to Device ---------- */
-
-  const handleSaveImage = useCallback(async () => {
-    if (!bol?.image_uri) {
-      Alert.alert("No image", "This BOL doesn't have an image to save.");
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(
-          "Permission required",
-          "Allow access to your photo library to save images."
-        );
-        return;
-      }
-
-      await MediaLibrary.saveToLibraryAsync(bol.image_uri);
-      Alert.alert("Saved!", "BOL image saved to your device.");
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to save image";
-      Alert.alert("Error", message);
-    } finally {
-      setSaving(false);
-    }
-  }, [bol?.image_uri]);
 
   /* ---------------- LOADING ---------------- */
 
@@ -208,17 +175,6 @@ export default function BOLDetailScreen() {
                       resizeMode="cover"
                       onError={() => setImageError(true)}
                     />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.saveButton}
-                    onPress={handleSaveImage}
-                    disabled={saving}
-                  >
-                    <Text style={styles.saveButtonIcon}>💾</Text>
-                    <Text style={styles.saveButtonText}>
-                      {saving ? "Saving..." : "Save Image"}
-                    </Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -320,28 +276,6 @@ const styles = StyleSheet.create({
 
   imageText: {
     color: "rgba(255,255,255,0.6)",
-  },
-
-  saveButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    backgroundColor: "rgba(79, 140, 255, 0.15)",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(79, 140, 255, 0.2)",
-  },
-
-  saveButtonIcon: {
-    fontSize: 18,
-  },
-
-  saveButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#4F8CFF",
   },
 
   infoCard: {
