@@ -1,14 +1,12 @@
-
 import PrimaryButton from "@/components/PrimaryButton";
 import ScreenBackground from "@/components/ScreenBackground";
 import { getShadow } from "@/constants/shadowUtils";
 import {
     BorderRadius,
-    Colors,
     FontSize,
     FontWeight,
     Shadow,
-    Spacing,
+    Spacing
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -22,7 +20,7 @@ import {
 import { formatCurrency } from "@/lib/formatUtils";
 import { exportTrips, getTripCount } from "@/lib/tripService";
 
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
 import * as Haptics from "expo-haptics";
 import * as Sharing from "expo-sharing";
 
@@ -78,22 +76,35 @@ export default function ProfileScreen() {
     });
   }, []);
 
-  useFocusEffect(useCallback(() => {
-    loadStats().catch(console.error);
-  }, [loadStats]));
+  useFocusEffect(
+    useCallback(() => {
+      loadStats().catch(console.error);
+    }, [loadStats])
+  );
 
   /* ---------------- EXPORT ---------------- */
 
   async function shareCSV(name: string, csv: string) {
     try {
-      const cacheDir = (FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory || "";
+      const cacheDir =
+        (FileSystem as any).cacheDirectory ||
+        (FileSystem as any).documentDirectory;
+
+      if (!cacheDir) {
+        Alert.alert(
+          "Storage Not Available",
+          "Unable to access device storage for export. Please try again."
+        );
+        return;
+      }
+
       const fileUri = `${cacheDir}${name}_${Date.now()}.csv`;
 
       await FileSystem.writeAsStringAsync(fileUri, csv);
 
       const available = await Sharing.isAvailableAsync();
       if (!available) {
-        Alert.alert("Not Available", "Sharing not supported.");
+        Alert.alert("Not Available", "Sharing not supported on this device.");
         return;
       }
 
@@ -101,8 +112,10 @@ export default function ProfileScreen() {
         mimeType: "text/csv",
       });
     } catch (err) {
-      console.error("Export error:", err);
-      Alert.alert("Export Failed");
+      console.error("[Export Error]:", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to export data";
+      Alert.alert("Export Failed", message);
     }
   }
 
@@ -115,9 +128,10 @@ export default function ProfileScreen() {
       if (type === "bols") csv = await exportBOLs();
 
       await shareCSV(`truckledger_${type}`, csv);
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (err) {
-      console.error("Export export error:", err);
+      console.error(err);
     }
   }
 
@@ -141,14 +155,14 @@ export default function ProfileScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["left","right","bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top","left","right","bottom"]}>
         <LinearGradient
-          colors={[Colors.secondary, "#5A8FB5"]}
+          colors={["#0F1116", "#171A22", "#1F2430"]}
           style={styles.container}
         >
           {/* HEADER */}
           <View style={styles.header}>
-            <Text style={styles.greeting}>Profile</Text>
+            <Text style={styles.headerTitle}>Profile</Text>
 
             <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.close}>✕</Text>
@@ -156,55 +170,59 @@ export default function ProfileScreen() {
           </View>
 
           {/* USER */}
-          <View style={styles.heroContent}>
+          <View style={styles.hero}>
             {user.photo ? (
               <Image source={{ uri: user.photo }} style={styles.avatar} />
             ) : (
               <View style={styles.avatarFallback}>
                 <Text style={styles.avatarText}>
-                  {user.name[0]}
+                  {user.name?.[0] ?? "U"}
                 </Text>
               </View>
             )}
 
             <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.subtitle}>{provider} Account</Text>
+
+            <Text style={styles.provider}>
+              Connected via {provider}
+            </Text>
           </View>
 
-          {/* FLOATING CARD */}
+          {/* CONTENT */}
           <View style={styles.card}>
             <ScrollView contentContainerStyle={styles.content}>
               {/* STATS */}
               <Animated.View entering={FadeInDown}>
-                <Text style={styles.sectionTitle}>Stats</Text>
+                <Text style={styles.sectionTitle}>Overview</Text>
 
-                <View style={styles.block}>
-                  <Row label="Total Expenses" value={formatCurrency(stats.total)} />
-                  <Divider />
-                  <Row label="This Month" value={formatCurrency(stats.month)} />
-                  <Divider />
-                  <Row label="Receipts" value={String(stats.receipts)} />
-                  <Divider />
-                  <Row label="Trips" value={String(stats.trips)} />
+                <View style={styles.statsGrid}>
+                  <StatCard label="Total" value={formatCurrency(stats.total)} />
+                  <StatCard label="This Month" value={formatCurrency(stats.month)} />
+                  <StatCard label="Receipts" value={String(stats.receipts)} />
+                  <StatCard label="Trips" value={String(stats.trips)} />
                 </View>
               </Animated.View>
 
               {/* TOOLS */}
-              <Animated.View entering={FadeInDown.delay(100)}>
+              <Animated.View entering={FadeInDown.delay(120)}>
                 <Text style={styles.sectionTitle}>Tools</Text>
 
                 <View style={styles.grid}>
                   <Tool label="Expenses" icon="📋" onPress={() => handleExport("expenses")} />
                   <Tool label="Trips" icon="🚚" onPress={() => handleExport("trips")} />
                   <Tool label="BOLs" icon="📦" onPress={() => handleExport("bols")} />
-                  <Tool label="Reports" icon="📈" onPress={() => router.push("/monthly-report")} />
+                  <Tool label="Reports" icon="📊" onPress={() => router.push("/monthly-report")} />
                 </View>
               </Animated.View>
             </ScrollView>
 
             {/* FOOTER */}
             <View style={styles.footer}>
-              <PrimaryButton label="Sign Out" onPress={handleLogout} fullWidth />
+              <PrimaryButton
+                label="Sign Out"
+                onPress={handleLogout}
+                fullWidth
+              />
             </View>
           </View>
         </LinearGradient>
@@ -215,17 +233,13 @@ export default function ProfileScreen() {
 
 /* ---------------- COMPONENTS ---------------- */
 
-function Row({ label, value }: any) {
+function StatCard({ label, value }: any) {
   return (
-    <View style={styles.row}>
-      <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+    <View style={styles.statCard}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{value}</Text>
     </View>
   );
-}
-
-function Divider() {
-  return <View style={styles.divider} />;
 }
 
 function Tool({ label, icon, onPress }: any) {
@@ -240,134 +254,139 @@ function Tool({ label, icon, onPress }: any) {
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
 
-  container: { flex: 1 },
+safe:{ flex:1 },
 
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: Spacing.lg,
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
+container:{ flex:1 },
 
-  greeting: {
-    color: "#fff",
-    fontSize: 20,
-    fontWeight: FontWeight.bold,
-  },
+header:{
+paddingTop:Spacing.lg,
+paddingHorizontal:Spacing.lg,
+flexDirection:"row",
+justifyContent:"space-between",
+alignItems:"center"
+},
 
-  close: {
-    color: "#fff",
-    fontSize: 22,
-  },
+headerTitle:{
+color:"#fff",
+fontSize:20,
+fontWeight:FontWeight.bold
+},
 
-  heroContent: {
-    alignItems: "center",
-    paddingVertical: Spacing.xl,
-  },
+close:{
+color:"#aaa",
+fontSize:22
+},
 
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
+hero:{
+alignItems:"center",
+paddingVertical:Spacing.xl
+},
 
-  avatarFallback: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
+avatar:{
+width:90,
+height:90,
+borderRadius:45
+},
 
-  avatarText: {
-    color: "#fff",
-    fontSize: 28,
-    fontWeight: "bold",
-  },
+avatarFallback:{
+width:90,
+height:90,
+borderRadius:45,
+backgroundColor:"rgba(255,255,255,0.1)",
+alignItems:"center",
+justifyContent:"center"
+},
 
-  name: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold",
-    marginTop: 10,
-  },
+avatarText:{
+fontSize:32,
+color:"#fff",
+fontWeight:"bold"
+},
 
-  subtitle: {
-    color: "rgba(255,255,255,0.7)",
-    marginTop: Spacing.xs,
-  },
+name:{
+color:"#fff",
+fontSize:22,
+fontWeight:"700",
+marginTop:10
+},
 
-  card: {
-    flex: 1,
-    backgroundColor: Colors.card,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    marginTop: Spacing.xl,
-    ...getShadow(Shadow.large),
-  },
+provider:{
+color:"#aaa",
+marginTop:4
+},
 
-  content: {
-    padding: Spacing.lg,
-    gap: Spacing.xl,
-  },
+card:{
+flex:1,
+backgroundColor:"#14171F",
+borderTopLeftRadius:BorderRadius.xl,
+borderTopRightRadius:BorderRadius.xl,
+...getShadow(Shadow.large)
+},
 
-  sectionTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.bold,
-    marginBottom: Spacing.md,
-  },
+content:{
+padding:Spacing.lg,
+gap:Spacing.xl
+},
 
-  block: {
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.lg,
-    overflow: "hidden",
-  },
+sectionTitle:{
+fontSize:FontSize.subsection,
+fontWeight:FontWeight.bold,
+color:"#fff",
+marginBottom:Spacing.md
+},
 
-  row: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
+statsGrid:{
+flexDirection:"row",
+flexWrap:"wrap",
+gap:Spacing.md
+},
 
-  rowLabel: { color: Colors.textMuted, fontSize: 13 },
+statCard:{
+width:"48%",
+backgroundColor:"#1C202B",
+padding:Spacing.lg,
+borderRadius:BorderRadius.lg,
+},
 
-  rowValue: { fontWeight: "600", fontSize: 15, color: Colors.textPrimary },
+statLabel:{
+color:"#8C93A8",
+fontSize:12,
+marginBottom:4
+},
 
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: Spacing.lg,
-  },
+statValue:{
+color:"#fff",
+fontSize:18,
+fontWeight:"700"
+},
 
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.md,
-    justifyContent: "space-between",
-  },
+grid:{
+flexDirection:"row",
+flexWrap:"wrap",
+gap:Spacing.md
+},
 
-  tool: {
-    width: "48%",
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.lg,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+tool:{
+width:"48%",
+backgroundColor:"#1C202B",
+paddingVertical:Spacing.lg,
+borderRadius:BorderRadius.lg,
+alignItems:"center"
+},
 
-  toolIcon: { fontSize: 32, marginBottom: Spacing.sm },
+toolIcon:{
+fontSize:30,
+marginBottom:Spacing.sm
+},
 
-  toolText: { fontSize: 13, fontWeight: "600", color: Colors.textPrimary },
+toolText:{
+color:"#fff",
+fontWeight:"600"
+},
 
-  footer: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    paddingBottom: Spacing.xl,
-  },
+footer:{
+padding:Spacing.lg
+}
+
 });

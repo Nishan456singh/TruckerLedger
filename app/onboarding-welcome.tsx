@@ -1,9 +1,12 @@
 import { Colors, Spacing, TypographyScale } from "@/constants/theme";
 import { markOnboardingCompleted } from "@/lib/onboardingStorage";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
+
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
+
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -12,33 +15,44 @@ import Animated, {
   withRepeat,
   withTiming,
   withSpring,
+  cancelAnimation,
 } from "react-native-reanimated";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OnboardingWelcome() {
   const opacity = useSharedValue(1);
   const scale = useSharedValue(1);
+
   const mounted = useRef(true);
+  const navigationTriggered = useRef(false);
 
   useEffect(() => {
     mounted.current = true;
 
-    // ✨ Premium pulse animation (scale + opacity)
+    /* ---------- Premium Pulse Animation ---------- */
+
     opacity.value = withRepeat(
-      withTiming(0.6, { duration: 1200 }),
+      withTiming(0.65, { duration: 1200 }),
       -1,
       true
     );
 
     scale.value = withRepeat(
-      withSpring(1.05),
+      withSpring(1.06, {
+        damping: 10,
+        stiffness: 120,
+      }),
       -1,
       true
     );
 
-    // ⏱ Auto navigation
+    /* ---------- Auto Navigation ---------- */
+
     const timer = setTimeout(async () => {
-      if (!mounted.current) return;
+      if (!mounted.current || navigationTriggered.current) return;
+
+      navigationTriggered.current = true;
 
       try {
         await markOnboardingCompleted();
@@ -51,6 +65,9 @@ export default function OnboardingWelcome() {
     return () => {
       mounted.current = false;
       clearTimeout(timer);
+
+      cancelAnimation(opacity);
+      cancelAnimation(scale);
     };
   }, []);
 
@@ -61,21 +78,24 @@ export default function OnboardingWelcome() {
 
   return (
     <LinearGradient
-      colors={["#C3224E", "#A01B3A"]}
+      colors={[Colors.primary, "#8F1B3C"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
     >
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView
+        style={styles.safe}
+        edges={["top", "left", "right", "bottom"]}
+      >
         <View style={styles.centerContent}>
-          {/* 🚛 Logo / Icon */}
+          {/* Logo */}
           <Animated.View entering={FadeInUp.springify()}>
             <Text style={styles.logo}>🚛</Text>
           </Animated.View>
 
-          {/* Title */}
+          {/* Text */}
           <Animated.View
-            entering={FadeInDown.delay(100).springify()}
+            entering={FadeInDown.delay(120).springify()}
             style={styles.textContainer}
           >
             <Animated.View style={animatedStyle}>
@@ -91,7 +111,8 @@ export default function OnboardingWelcome() {
             </Text>
 
             <Text style={styles.tagline}>
-              Built for modern truckers who want clarity, control, and profit.
+              Built for modern truckers who want clarity,
+              control, and profit.
             </Text>
           </Animated.View>
         </View>
@@ -120,7 +141,7 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    fontSize: 64,
+    fontSize: 72,
   },
 
   textContainer: {
@@ -150,7 +171,7 @@ const styles = StyleSheet.create({
 
   tagline: {
     ...TypographyScale.body,
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(255,255,255,0.85)",
     textAlign: "center",
     marginTop: Spacing.md,
     lineHeight: 22,

@@ -1,39 +1,42 @@
 import ScreenBackground from "@/components/ScreenBackground";
 import { getShadow } from "@/constants/shadowUtils";
 import {
-    BorderRadius,
-    CategoryMeta,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
-    TypographyScale,
-    type Category,
+  BorderRadius,
+  CategoryMeta,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
+  type Category,
 } from "@/constants/theme";
+
 import {
-    getCategoryTotals,
-    getMonthlyExpenses,
-    getMonthlyTotal,
-    getReceiptCount,
+  getCategoryTotals,
+  getMonthlyExpenses,
+  getMonthlyTotal,
+  getReceiptCount,
 } from "@/lib/expenseService";
+
 import { formatCurrency } from "@/lib/formatUtils";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
+
 import { useCallback, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    type DimensionValue,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import Animated, {
-    FadeInDown,
-} from "react-native-reanimated";
+
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+/* ───────── CONSTANTS ───────── */
 
 const CATEGORY_ORDER: Category[] = [
   "fuel",
@@ -44,6 +47,8 @@ const CATEGORY_ORDER: Category[] = [
   "other",
 ];
 
+/* ───────── HELPERS ───────── */
+
 function shiftMonth(date: Date, delta: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + delta, 1);
 }
@@ -51,18 +56,20 @@ function shiftMonth(date: Date, delta: number): Date {
 function getDisplayDays(date: Date): number {
   const now = new Date();
   const isCurrentMonth =
-    date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth();
 
-  if (isCurrentMonth) return now.getDate();
-
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  return isCurrentMonth
+    ? now.getDate()
+    : new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 }
 
+/* ───────── SCREEN ───────── */
+
 export default function MonthlyReportScreen() {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
+  const [selectedMonth, setSelectedMonth] = useState(
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
 
   const [loading, setLoading] = useState(true);
   const [categoryTotals, setCategoryTotals] = useState<Record<Category, number>>({
@@ -73,6 +80,7 @@ export default function MonthlyReportScreen() {
     repair: 0,
     other: 0,
   });
+
   const [total, setTotal] = useState(0);
   const [tripsLogged, setTripsLogged] = useState(0);
   const [receiptsScanned, setReceiptsScanned] = useState(0);
@@ -87,39 +95,32 @@ export default function MonthlyReportScreen() {
   );
 
   const averagePerDay = useMemo(() => {
-    const days = Math.max(1, getDisplayDays(selectedMonth));
-    return total / days;
+    return total / Math.max(1, getDisplayDays(selectedMonth));
   }, [selectedMonth, total]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
 
-    try {
-      const month = selectedMonth.getMonth() + 1;
-      const year = selectedMonth.getFullYear();
+    const month = selectedMonth.getMonth() + 1;
+    const year = selectedMonth.getFullYear();
 
-      const [totalsByCategory, monthTotal, monthExpenses, monthReceiptCount] =
-        await Promise.all([
-          getCategoryTotals(month, year),
-          getMonthlyTotal(month, year),
-          getMonthlyExpenses(month, year),
-          getReceiptCount(month, year),
-        ]);
+    const [totalsByCategory, monthTotal, monthExpenses, receiptCount] =
+      await Promise.all([
+        getCategoryTotals(month, year),
+        getMonthlyTotal(month, year),
+        getMonthlyExpenses(month, year),
+        getReceiptCount(month, year),
+      ]);
 
-      setCategoryTotals(totalsByCategory);
-      setTotal(monthTotal);
-      setTripsLogged(monthExpenses.length);
-      setReceiptsScanned(monthReceiptCount);
-    } finally {
-      setLoading(false);
-    }
+    setCategoryTotals(totalsByCategory);
+    setTotal(monthTotal);
+    setTripsLogged(monthExpenses.length);
+    setReceiptsScanned(receiptCount);
+
+    setLoading(false);
   }, [selectedMonth]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadData();
-    }, [loadData])
-  );
+  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
 
   const now = new Date();
   const canGoNext =
@@ -127,135 +128,91 @@ export default function MonthlyReportScreen() {
     (selectedMonth.getFullYear() === now.getFullYear() &&
       selectedMonth.getMonth() < now.getMonth());
 
+  /* ───────── UI ───────── */
+
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top","left","right","bottom"]}>
+
         {loading ? (
-          <View style={styles.loadingWrap}>
-            <ActivityIndicator color={Colors.primary} />
-            <Text style={styles.loadingText}>Loading monthly report...</Text>
+          <View style={styles.center}>
+            <ActivityIndicator color="#fff" />
+            <Text style={styles.loading}>Loading report...</Text>
           </View>
         ) : (
           <View style={styles.container}>
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* HERO SECTION (50% - Blue/Analytics themed)                     */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
 
+            {/* HERO */}
             <LinearGradient
-              colors={[Colors.secondary, Colors.secondary]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroSection}
+              colors={["#0B0D12", "#1A1E28"]}
+              style={styles.hero}
             >
-              {/* Top Bar */}
-              <View style={styles.heroTopBar}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={styles.heroBackBtn}
-                >
-                  <Text style={styles.heroBackText}>✕</Text>
-                </TouchableOpacity>
-                <Text style={styles.heroTitle}>Monthly Report</Text>
-                <View style={styles.heroBackBtn} />
-              </View>
-
-              {/* Centered Month Display */}
-              <View style={styles.heroMonthCenter}>
-                <Text style={styles.heroMonthLabel}>📊</Text>
-                <Text style={styles.heroMonthTitle}>{monthLabel}</Text>
-                <Text style={styles.heroMonthSubtitle}>Expense Report</Text>
-              </View>
-
-              {/* Month Navigation */}
-              <View style={styles.monthNav}>
-                <TouchableOpacity
-                  style={styles.monthArrowBtn}
-                  onPress={() => setSelectedMonth((prev) => shiftMonth(prev, -1))}
-                >
-                  <Text style={styles.monthArrowText}>‹</Text>
+              <View style={styles.topBar}>
+                <TouchableOpacity onPress={() => router.back()}>
+                  <Text style={styles.close}>‹</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.monthArrowBtn, !canGoNext && styles.monthArrowDisabled]}
-                  onPress={() => canGoNext && setSelectedMonth((prev) => shiftMonth(prev, 1))}
-                  disabled={!canGoNext}
+                <Text style={styles.title}>Report</Text>
+
+                <View style={{ width: 24 }} />
+              </View>
+
+              <Text style={styles.month}>{monthLabel}</Text>
+              <Text style={styles.total}>{formatCurrency(total)}</Text>
+
+              {/* Month Nav */}
+              <View style={styles.nav}>
+                <TouchableOpacity onPress={() => setSelectedMonth(prev => shiftMonth(prev, -1))}>
+                  <Text style={styles.arrow}>‹</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity disabled={!canGoNext}
+                  onPress={() => canGoNext && setSelectedMonth(prev => shiftMonth(prev, 1))}
                 >
-                  <Text style={styles.monthArrowText}>›</Text>
+                  <Text style={[styles.arrow, !canGoNext && { opacity: 0.3 }]}>›</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
 
-            {/* ═══════════════════════════════════════════════════════════════ */}
-            {/* FLOATING CARD (50%+ - Content)                                */}
-            {/* ═══════════════════════════════════════════════════════════════ */}
+            {/* CARD */}
+            <View style={styles.card}>
+              <ScrollView contentContainerStyle={styles.content}>
 
-            <View style={styles.floatingCardContainer}>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.cardContent}
-              >
-                {/* Expense Breakdown */}
-                <Animated.View entering={FadeInDown}>
-                  <Text style={styles.cardSectionTitle}>Expense Breakdown</Text>
-                  <View style={styles.breakdownContent}>
-                    {CATEGORY_ORDER.map((category) => {
-                      const meta = CategoryMeta[category];
-                      const amount = categoryTotals[category] ?? 0;
-                      const widthPct: DimensionValue =
-                        total > 0 ? `${Math.max(6, (amount / total) * 100)}%` : "6%";
+                {/* BREAKDOWN */}
+                <Text style={styles.section}>Breakdown</Text>
 
-                      return (
-                        <View key={category} style={styles.rowBlock}>
-                          <View style={styles.rowHeader}>
-                            <View style={styles.rowLabelWrap}>
-                              <Text style={styles.rowIcon}>{meta.icon}</Text>
-                              <Text style={styles.rowLabel}>{meta.label}</Text>
-                            </View>
-                            <Text style={styles.rowAmount}>{formatCurrency(amount)}</Text>
-                          </View>
+                {CATEGORY_ORDER.map((c) => {
+                  const meta = CategoryMeta[c];
+                  const amount = categoryTotals[c];
+                  const widthPercent = total > 0 ? (amount / total) * 100 : 5;
 
-                          <View style={styles.barTrack}>
-                            <View
-                              style={[
-                                styles.barFill,
-                                { width: widthPct, backgroundColor: meta.color },
-                              ]}
-                            />
-                          </View>
-                        </View>
-                      );
-                    })}
+                  return (
+                    <View key={c} style={styles.row}>
+                      <View style={styles.rowTop}>
+                        <Text style={styles.rowLabel}>
+                          {meta.icon} {meta.label}
+                        </Text>
+                        <Text style={styles.rowValue}>
+                          {formatCurrency(amount)}
+                        </Text>
+                      </View>
 
-                    <View style={styles.totalDivider} />
-
-                    <View style={styles.totalRow}>
-                      <Text style={styles.totalLabel}>Total Expenses</Text>
-                      <Text style={styles.totalValue}>{formatCurrency(total)}</Text>
+                      <View style={styles.track}>
+                        <View style={[styles.fill, { width: `${widthPercent}%`, backgroundColor: meta.color }]} />
+                      </View>
                     </View>
-                  </View>
-                </Animated.View>
+                  );
+                })}
 
-                {/* Driver Stats */}
-                <Animated.View entering={FadeInDown.delay(50)} style={styles.statsSection}>
-                  <Text style={styles.cardSectionTitle}>📈 Driver Stats</Text>
+                {/* STATS */}
+                <Text style={styles.section}>Stats</Text>
 
-                  <View style={styles.statsGrid}>
-                    <View style={styles.statBlock}>
-                      <Text style={styles.statBlockLabel}>Trips Logged</Text>
-                      <Text style={styles.statBlockValue}>{tripsLogged}</Text>
-                    </View>
+                <View style={styles.stats}>
+                  <Stat label="Trips" value={tripsLogged} />
+                  <Stat label="Receipts" value={receiptsScanned} />
+                  <Stat label="Daily Avg" value={formatCurrency(averagePerDay)} />
+                </View>
 
-                    <View style={styles.statBlock}>
-                      <Text style={styles.statBlockLabel}>Receipts Scanned</Text>
-                      <Text style={styles.statBlockValue}>{receiptsScanned}</Text>
-                    </View>
-
-                    <View style={styles.statBlock}>
-                      <Text style={styles.statBlockLabel}>Daily Average</Text>
-                      <Text style={styles.statBlockValue}>{formatCurrency(averagePerDay)}</Text>
-                    </View>
-                  </View>
-                </Animated.View>
               </ScrollView>
             </View>
           </View>
@@ -265,248 +222,135 @@ export default function MonthlyReportScreen() {
   );
 }
 
+/* ───────── COMPONENTS ───────── */
+
+function Stat({ label, value }: any) {
+  return (
+    <View style={styles.stat}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+    </View>
+  );
+}
+
+/* ───────── STYLES ───────── */
+
 const styles = StyleSheet.create({
-  safe: {
+  safe: { flex: 1 },
+
+  container: { flex: 1 },
+
+  center: {
     flex: 1,
-    backgroundColor: "transparent",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
-  container: {
-    flex: 1,
-    position: "relative",
-  },
+  loading: { color: "#aaa", marginTop: 10 },
 
-  // ─── HERO SECTION ───────────────────────────────────────────
-
-  heroSection: {
-    paddingTop: Spacing.xxxl,
+  /* HERO */
+  hero: {
+    paddingTop: 40,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    justifyContent: "space-between",
+    paddingBottom: 40,
   },
 
-  heroTopBar: {
+  topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
   },
 
-  heroBackBtn: {
-    width: 40,
-    height: 40,
-    alignItems: "center",
-    justifyContent: "center",
+  close: { color: "#fff", fontSize: 28 },
+
+  title: { color: "#fff", fontWeight: "600" },
+
+  month: {
+    color: "#aaa",
+    marginTop: 20,
   },
 
-  heroBackText: {
-    fontSize: 24,
-    fontWeight: FontWeight.bold,
-    color: Colors.textInverse,
+  total: {
+    fontSize: 40,
+    color: "#fff",
+    fontWeight: "800",
+    marginTop: 10,
   },
 
-  heroTitle: {
-    ...TypographyScale.headline,
-    color: Colors.textInverse,
-  },
-
-  heroMonthCenter: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
-    paddingVertical: Spacing.lg,
-  },
-
-  heroMonthLabel: {
-    fontSize: FontSize.largeIcon,
-  },
-
-  heroMonthTitle: {
-    ...TypographyScale.display,
-    color: Colors.textInverse,
-    marginVertical: Spacing.xs,
-  },
-
-  heroMonthSubtitle: {
-    ...TypographyScale.body,
-    color: Colors.textInverse,
-    opacity: 0.85,
-  },
-
-  monthNav: {
+  nav: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.md,
-    paddingBottom: Spacing.lg,
+    gap: 20,
+    marginTop: 20,
   },
 
-  monthArrowBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.full,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: Colors.textInverse,
-    opacity: 0.2,
-    borderWidth: 1.5,
-    borderColor: Colors.textInverse,
+  arrow: {
+    fontSize: 26,
+    color: "#fff",
   },
 
-  monthArrowDisabled: {
-    opacity: 0.1,
-  },
-
-  monthArrowText: {
-    fontSize: 24,
-    lineHeight: 26,
-    color: Colors.textInverse,
-    fontWeight: FontWeight.bold,
-  },
-
-  // ─── FLOATING CARD ──────────────────────────────────────────
-
-  floatingCardContainer: {
+  /* CARD */
+  card: {
     flex: 1,
-    marginTop: -Spacing.xl,
-    marginHorizontal: Spacing.lg,
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.xl,
-    overflow: "hidden",
-    ...getShadow(Shadow.large),
-  },
-
-  cardContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxxxl,
-    gap: Spacing.lg,
-  },
-
-  cardSectionTitle: {
-    ...TypographyScale.title,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
-  },
-
-  // ─── BREAKDOWN ───────────────────────────────────────────────
-
-  breakdownContent: {
-    gap: Spacing.lg,
-  },
-
-  rowBlock: {
-    gap: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-
-  rowHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-
-  rowLabelWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.sm,
-  },
-
-  rowIcon: {
-    fontSize: 18,
-  },
-
-  rowLabel: {
-    ...TypographyScale.body,
-    color: Colors.textPrimary,
-  },
-
-  rowAmount: {
-    ...TypographyScale.body,
-    color: Colors.primary,
-  },
-
-  barTrack: {
-    height: 8,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
-    overflow: "hidden",
-  },
-
-  barFill: {
-    height: 8,
-    borderRadius: BorderRadius.full,
-  },
-
-  totalDivider: {
-    height: 1,
-    backgroundColor: Colors.borderLight,
-    marginVertical: Spacing.lg,
-  },
-
-  totalRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: Spacing.md,
-  },
-
-  totalLabel: {
-    ...TypographyScale.body,
-    color: Colors.textMuted,
-  },
-
-  totalValue: {
-    ...TypographyScale.display,
-    color: Colors.primary,
-  },
-
-  // ─── STATS ──────────────────────────────────────────────────
-
-  statsSection: {
-    gap: Spacing.md,
-  },
-
-  statsGrid: {
-    flexDirection: "row",
-    gap: Spacing.md,
-  },
-
-  statBlock: {
-    alignItems: "center",
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.lg,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
+    marginTop: -30,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...getShadow(Shadow.small),
-    minWidth: "32%",
+    borderColor: "rgba(255,255,255,0.08)",
   },
 
-  statBlockLabel: {
-    ...TypographyScale.small,
-    color: Colors.textMuted,
-    marginBottom: Spacing.sm,
+  content: {
+    gap: Spacing.lg,
   },
 
-  statBlockValue: {
-    ...TypographyScale.subtitle,
-    color: Colors.textPrimary,
+  section: {
+    color: "#fff",
+    fontWeight: "600",
   },
 
-  // ─── LOADING ─────────────────────────────────────────────────
+  row: { gap: 6 },
 
-  loadingWrap: {
+  rowTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  rowLabel: { color: "#aaa" },
+
+  rowValue: { color: "#fff" },
+
+  track: {
+    height: 6,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 10,
+  },
+
+  fill: {
+    height: 6,
+    borderRadius: 10,
+  },
+
+  stats: {
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  stat: {
     flex: 1,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    padding: 12,
+    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
   },
 
-  loadingText: {
-    ...TypographyScale.body,
-    color: Colors.textMuted,
+  statLabel: {
+    color: "#888",
+    fontSize: 12,
+  },
+
+  statValue: {
+    color: "#fff",
+    fontWeight: "700",
+    marginTop: 6,
   },
 });

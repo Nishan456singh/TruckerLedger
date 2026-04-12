@@ -2,100 +2,82 @@ import { Colors } from "@/constants/theme";
 import { AuthProvider, useAuth } from "@/lib/auth/AuthContext";
 import { initDatabase } from "@/lib/db";
 import { hasCompletedOnboarding } from "@/lib/onboardingStorage";
+
 import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+
 import { StatusBar } from "expo-status-bar";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Image, StyleSheet } from "react-native";
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import "react-native-reanimated";
 import Animated, { FadeOut } from "react-native-reanimated";
+
+import "react-native-reanimated";
 
 void SplashScreen.preventAutoHideAsync();
 
-export const unstable_settings = {
-  anchor: "(tabs)",
-};
+/* =========================================================
+ROUTE CONSTANTS
+========================================================= */
 
-const AUTH_ROUTES = new Set(["login", "oauth"]);
+const AUTH_ROUTES = ["login"];
 const ONBOARDING_ROUTE = "onboarding-welcome";
-const APP_ROUTES = new Set([
-  "(tabs)",
-  "add-expense",
-  "analytics",
-  "bol-detail",
-  "bol-history",
-  "cloud-settings",
-  "expense-detail",
-  "expense-history",
-  "fuel-stats",
-  "history",
-  "monthly-report",
-  "monthly-summary",
-  "profile",
-  "receipts",
-  "scan-bol",
-  "scan-receipt",
-  "trip-profit",
-]);
+
+/* =========================================================
+AUTH GATE
+========================================================= */
 
 function AuthGate({ dbReady }: { dbReady: boolean }) {
   const { user, authLoading } = useAuth();
   const segments = useSegments();
 
-  const [onboardingLoaded, setOnboardingLoaded] = useState(false);
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [completedOnboarding, setCompletedOnboarding] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  const currentRoute = segments[0];
 
-    async function checkOnboarding() {
+  /* ---------- Check onboarding ---------- */
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function check() {
       if (!user) {
-        if (!cancelled) {
-          setCompletedOnboarding(false);
-          setOnboardingLoaded(true);
-        }
+        setCompletedOnboarding(false);
+        setOnboardingChecked(true);
         return;
       }
 
       try {
         const completed = await hasCompletedOnboarding();
 
-        if (!cancelled) {
+        if (mounted) {
           setCompletedOnboarding(completed);
         }
       } catch (err) {
-        console.error("Error checking onboarding:", err);
-
-        if (!cancelled) {
-          setCompletedOnboarding(false);
-        }
+        console.error("Onboarding check failed:", err);
       } finally {
-        if (!cancelled) {
-          setOnboardingLoaded(true);
-        }
+        if (mounted) setOnboardingChecked(true);
       }
     }
 
-    setOnboardingLoaded(false);
-    void checkOnboarding();
+    check();
 
     return () => {
-      cancelled = true;
+      mounted = false;
     };
   }, [user]);
 
-  const currentSegment = useMemo(() => segments?.[0] ?? "", [segments]);
+  /* ---------- Navigation logic ---------- */
 
   useEffect(() => {
-    if (!dbReady || authLoading || !onboardingLoaded) {
-      return;
-    }
+    if (!dbReady || authLoading || !onboardingChecked) return;
 
-    const isAuthRoute = AUTH_ROUTES.has(currentSegment);
-    const isOnboardingRoute = currentSegment === ONBOARDING_ROUTE;
-    const isKnownAppRoute = APP_ROUTES.has(currentSegment);
-    const isRoot = !currentSegment;
+    const isAuthRoute = AUTH_ROUTES.includes(currentRoute);
+    const isOnboarding = currentRoute === ONBOARDING_ROUTE;
+
+    /* ---------- Not logged in ---------- */
 
     if (!user) {
       if (!isAuthRoute) {
@@ -104,29 +86,41 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
       return;
     }
 
+    /* ---------- Onboarding ---------- */
+
     if (!completedOnboarding) {
-      if (!isOnboardingRoute) {
+      if (!isOnboarding) {
         router.replace("/onboarding-welcome");
       }
       return;
     }
 
-    if (isAuthRoute || isOnboardingRoute) {
-      router.replace("/");
-      return;
-    }
+    /* ---------- Logged in ---------- */
 
-    if (!isRoot && !isKnownAppRoute) {
+    if (isAuthRoute || isOnboarding) {
       router.replace("/");
     }
-  }, [authLoading, completedOnboarding, currentSegment, dbReady, onboardingLoaded, user]);
+  }, [
+    authLoading,
+    completedOnboarding,
+    currentRoute,
+    dbReady,
+    onboardingChecked,
+    user,
+  ]);
 
   return null;
 }
 
+/* =========================================================
+APP LAYOUT
+========================================================= */
+
 function RootLayoutInner() {
   const [dbReady, setDbReady] = useState(false);
-  const [splashVisible, setSplashVisible] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+
+  /* ---------- Initialize DB ---------- */
 
   useEffect(() => {
     let mounted = true;
@@ -135,29 +129,23 @@ function RootLayoutInner() {
       try {
         await initDatabase();
       } catch (err) {
-        console.error("DB init failed:", err);
-      } finally {
-        try {
-          await SplashScreen.hideAsync();
-        } catch (hideErr) {
-          console.error("Failed to hide native splash screen:", hideErr);
-        }
-
-        if (!mounted) {
-          return;
-        }
-
-        setDbReady(true);
-
-        setTimeout(() => {
-          if (mounted) {
-            setSplashVisible(false);
-          }
-        }, 350);
+        console.error("Database init failed:", err);
       }
+
+      try {
+        await SplashScreen.hideAsync();
+      } catch {}
+
+      if (!mounted) return;
+
+      setDbReady(true);
+
+      setTimeout(() => {
+        if (mounted) setShowSplash(false);
+      }, 350);
     }
 
-    void setup();
+    setup();
 
     return () => {
       mounted = false;
@@ -174,22 +162,23 @@ function RootLayoutInner() {
         initialRouteName="login"
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
           animation: "slide_from_right",
+          contentStyle: { backgroundColor: Colors.background },
         }}
       >
+        {/* Main App */}
         <Stack.Screen name="(tabs)" />
 
-        <Stack.Screen
-          name="login"
-          options={{ animation: "fade" }}
-        />
+        {/* Auth */}
+        <Stack.Screen name="login" options={{ animation: "fade" }} />
 
+        {/* Onboarding */}
         <Stack.Screen
           name="onboarding-welcome"
           options={{ animation: "fade" }}
         />
 
+        {/* Modals */}
         <Stack.Screen
           name="add-expense"
           options={{
@@ -198,33 +187,33 @@ function RootLayoutInner() {
           }}
         />
 
-        <Stack.Screen name="analytics" />
-        <Stack.Screen name="bol-history" />
-        <Stack.Screen name="cloud-settings" />
-        <Stack.Screen name="expense-detail" />
-        <Stack.Screen name="expense-history" />
-        <Stack.Screen name="fuel-stats" />
+        {/* Screens */}
         <Stack.Screen name="history" />
-        <Stack.Screen name="monthly-report" />
-        <Stack.Screen name="monthly-summary" />
         <Stack.Screen name="profile" />
         <Stack.Screen name="receipts" />
-        <Stack.Screen name="scan-bol" />
         <Stack.Screen name="scan-receipt" />
+        <Stack.Screen name="scan-bol" />
+        <Stack.Screen name="expense-detail" />
+        <Stack.Screen name="bol-detail" />
+        <Stack.Screen name="analytics" />
+        <Stack.Screen name="monthly-summary" />
+        <Stack.Screen name="monthly-report" />
         <Stack.Screen name="trip-profit" />
+        <Stack.Screen name="fuel-stats" />
+        <Stack.Screen name="cloud-settings" />
 
-        <Stack.Screen
-          name="oauth/success"
-          options={{ animation: "none" }}
-        />
-        <Stack.Screen
-          name="oauth/failure"
-          options={{ animation: "none" }}
-        />
+        {/* OAuth */}
+        <Stack.Screen name="oauth/success" options={{ animation: "none" }} />
+        <Stack.Screen name="oauth/failure" options={{ animation: "none" }} />
       </Stack>
 
-      {splashVisible && (
-        <Animated.View style={styles.splashOverlay} exiting={FadeOut.duration(450)}>
+      {/* Custom Splash Overlay */}
+
+      {showSplash && (
+        <Animated.View
+          style={styles.splashOverlay}
+          exiting={FadeOut.duration(450)}
+        >
           <Image
             source={require("../assets/images/splash.png")}
             style={styles.splashImage}
@@ -236,6 +225,10 @@ function RootLayoutInner() {
   );
 }
 
+/* =========================================================
+ROOT EXPORT
+========================================================= */
+
 export default function RootLayout() {
   return (
     <AuthProvider>
@@ -244,18 +237,24 @@ export default function RootLayout() {
   );
 }
 
+/* =========================================================
+STYLES
+========================================================= */
+
 const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: Colors.background,
   },
+
   splashOverlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 999,
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
     backgroundColor: Colors.background,
   },
+
   splashImage: {
     width: 200,
     height: 200,

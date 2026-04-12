@@ -1,5 +1,5 @@
-import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system';
 
 /**
  * TYPES
@@ -119,24 +119,13 @@ export async function saveImageLocally(
     // Check if FileSystem is available
     const baseDir = getBaseDirectory();
     if (!baseDir) {
-      // Fallback: store the URI reference in AsyncStorage if FileSystem not available
-      console.warn('[ImageStorage] FileSystem not available, storing URI reference in AsyncStorage');
-      const filename = generateFilename(folder);
-      const key = `image_${folder}_${filename}`;
-
-      try {
-        await AsyncStorage.setItem(key, uri);
-        return {
-          success: true,
-          path: `async-storage://${key}`,
-        };
-      } catch (storageErr) {
-        console.error('[ImageStorage] Failed to store in AsyncStorage:', storageErr);
-        return {
-          success: false,
-          error: 'No storage available (FileSystem and AsyncStorage failed)',
-        };
-      }
+      // Fallback: just return the URI directly if FileSystem is unavailable
+      // (happens on web or when storage is restricted)
+      console.warn('[ImageStorage] FileSystem not available, using camera URI directly');
+      return {
+        success: true,
+        path: uri,
+      };
     }
 
     // Ensure directories exist
@@ -191,9 +180,15 @@ export async function deleteImage(uri: string): Promise<ImageSaveResult> {
   try {
     if (!uri || uri.length === 0) {
       return {
-        success: true, // Already deleted
+        success: true,
         error: 'No image URI provided',
       };
+    }
+
+    // Handle data URIs (safe to ignore, they're in-memory)
+    if (uri.startsWith('data:')) {
+      console.log('[ImageStorage] Data URI - no cleanup needed');
+      return { success: true };
     }
 
     // Handle AsyncStorage URIs

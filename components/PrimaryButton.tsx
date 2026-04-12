@@ -1,27 +1,36 @@
-import { getShadow } from '@/constants/shadowUtils';
-import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
-import * as Haptics from 'expo-haptics';
+import { getShadow } from "@/constants/shadowUtils";
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    TextStyle,
-    TouchableOpacity,
-    ViewStyle,
-} from 'react-native';
+  BorderRadius,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+} from "@/constants/theme";
+
+import * as Haptics from "expo-haptics";
+
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextStyle,
+  TouchableOpacity,
+  ViewStyle,
+} from "react-native";
+
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-} from 'react-native-reanimated';
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 interface PrimaryButtonProps {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'accent' | 'danger' | 'ghost' | 'card';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "primary" | "accent" | "danger" | "ghost" | "card";
+  size?: "sm" | "md" | "lg";
   loading?: boolean;
   disabled?: boolean;
   icon?: React.ReactNode;
@@ -33,8 +42,8 @@ interface PrimaryButtonProps {
 export default function PrimaryButton({
   label,
   onPress,
-  variant = 'primary',
-  size = 'md',
+  variant = "primary",
+  size = "md",
   loading = false,
   disabled = false,
   icon,
@@ -49,16 +58,18 @@ export default function PrimaryButton({
   }));
 
   function handlePressIn() {
-    scale.value = withSpring(0.96, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(0.95);
   }
 
   function handlePressOut() {
-    scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+    scale.value = withSpring(1);
   }
 
   async function handlePress() {
     if (disabled || loading) return;
+
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     onPress();
   }
 
@@ -89,14 +100,8 @@ export default function PrimaryButton({
     >
       {loading ? (
         <ActivityIndicator
-          color={
-            variant === 'ghost'
-              ? Colors.primary
-              : variant === 'primary' || variant === 'accent'
-                ? Colors.background
-                : Colors.textPrimary
-          }
           size="small"
+          color={variant === "ghost" ? "#6FA0C8" : "#FFFFFF"}
         />
       ) : (
         <>
@@ -110,48 +115,59 @@ export default function PrimaryButton({
 
 const styles = StyleSheet.create({
   base: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.sm,
     borderRadius: BorderRadius.lg,
   },
+
   fullWidth: {
-    width: '100%',
+    width: "100%",
   },
 
-  // Variants
+  /* ───────── BUTTON VARIANTS ───────── */
+
   primary: {
-    backgroundColor: Colors.primary,
+    backgroundColor: "#5A8FB5",
     ...getShadow(Shadow.button),
   },
+
   accent: {
-    backgroundColor: Colors.accent,
+    backgroundColor: "#6FA0C8",
     ...getShadow(Shadow.accent),
   },
+
   danger: {
-    backgroundColor: Colors.danger,
+    backgroundColor: "#E5484D",
   },
+
   ghost: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: Colors.border,
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
   },
+
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     ...getShadow(Shadow.card),
   },
 
-  // Sizes
+  /* ───────── SIZES ───────── */
+
   size_sm: {
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.md,
   },
+
   size_md: {
     paddingVertical: Spacing.md + 2,
     paddingHorizontal: Spacing.xl,
   },
+
   size_lg: {
     paddingVertical: Spacing.lg + 2,
     paddingHorizontal: Spacing.xl,
@@ -162,17 +178,42 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
 
+  /* ───────── LABELS ───────── */
+
   label: {
     fontWeight: FontWeight.semibold,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
-  labelSize_sm: { fontSize: FontSize.caption },
-  labelSize_md: { fontSize: FontSize.body },
-  labelSize_lg: { fontSize: FontSize.section - 2 },
 
-  labelColor_primary: { color: Colors.background },
-  labelColor_accent: { color: Colors.background },
-  labelColor_danger: { color: Colors.textPrimary },
-  labelColor_ghost: { color: Colors.textSecondary },
-  labelColor_card: { color: Colors.textPrimary },
+  labelSize_sm: {
+    fontSize: FontSize.caption,
+  },
+
+  labelSize_md: {
+    fontSize: FontSize.body,
+  },
+
+  labelSize_lg: {
+    fontSize: FontSize.section - 2,
+  },
+
+  labelColor_primary: {
+    color: "#FFFFFF",
+  },
+
+  labelColor_accent: {
+    color: "#FFFFFF",
+  },
+
+  labelColor_danger: {
+    color: "#FFFFFF",
+  },
+
+  labelColor_ghost: {
+    color: "#A9B4C2",
+  },
+
+  labelColor_card: {
+    color: "#E6EAF0",
+  },
 });

@@ -1,23 +1,18 @@
 import ImageViewerModal from "@/components/ImageViewerModal";
 import ScreenBackground from "@/components/ScreenBackground";
-import { getShadow } from "@/constants/shadowUtils";
-import {
-    BorderRadius,
-    Colors,
-    FontWeight,
-    Gradients,
-    Shadow,
-    Spacing,
-    TypographyScale,
-} from "@/constants/theme";
+
 import { getBOLById } from "@/lib/bolService";
 import { formatCurrency } from "@/lib/formatUtils";
 import type { BOLRecord } from "@/lib/types";
-import { LinearGradient } from "expo-linear-gradient";
+
 import { router, useLocalSearchParams } from "expo-router";
+import * as MediaLibrary from "expo-media-library";
+
 import { useCallback, useEffect, useState } from "react";
+
 import {
     ActivityIndicator,
+    Alert,
     Image,
     ScrollView,
     StyleSheet,
@@ -25,7 +20,11 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+
+import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+/* ---------------- DATE FORMAT ---------------- */
 
 function formatDate(date?: string | null): string {
   if (!date) return "—";
@@ -40,33 +39,33 @@ function formatDate(date?: string | null): string {
   });
 }
 
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+/* ---------------- DETAIL ROW ---------------- */
+
+function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.detailRow}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      <Text style={styles.detailValue}>{value || "—"}</Text>
+    <View style={styles.row}>
+      <Text style={styles.rowLabel}>{label}</Text>
+      <Text style={styles.rowValue}>{value || "—"}</Text>
     </View>
   );
 }
 
+/* ---------------- SCREEN ---------------- */
+
 export default function BOLDetailScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
+
   const [loading, setLoading] = useState(true);
   const [bol, setBol] = useState<BOLRecord | null>(null);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState("");
   const [imageViewerUri, setImageViewerUri] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const loadBOL = useCallback(async () => {
-    const rawId = params.id;
-    const id = Number(rawId);
+    const id = Number(params.id);
 
-    if (!rawId || Number.isNaN(id)) {
+    if (!params.id || Number.isNaN(id)) {
       setError("Invalid BOL ID.");
       setLoading(false);
       return;
@@ -74,7 +73,6 @@ export default function BOLDetailScreen() {
 
     try {
       setLoading(true);
-      setError("");
 
       const result = await getBOLById(id);
 
@@ -99,124 +97,160 @@ export default function BOLDetailScreen() {
     loadBOL();
   }, [loadBOL]);
 
+  /* ---------- Save Image to Device ---------- */
+
+  const handleSaveImage = useCallback(async () => {
+    if (!bol?.image_uri) {
+      Alert.alert("No image", "This BOL doesn't have an image to save.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission required",
+          "Allow access to your photo library to save images."
+        );
+        return;
+      }
+
+      await MediaLibrary.saveToLibraryAsync(bol.image_uri);
+      Alert.alert("Saved!", "BOL image saved to your device.");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to save image";
+      Alert.alert("Error", message);
+    } finally {
+      setSaving(false);
+    }
+  }, [bol?.image_uri]);
+
+  /* ---------------- LOADING ---------------- */
+
   if (loading) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
-          <View style={styles.centerWrap}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={styles.helperText}>Loading BOL...</Text>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#4F8CFF" />
+            <Text style={styles.loadingText}>Loading shipment...</Text>
           </View>
         </SafeAreaView>
       </ScreenBackground>
     );
   }
+
+  /* ---------------- ERROR ---------------- */
 
   if (error || !bol) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
-          <LinearGradient
-            colors={Gradients.bluePrimary}
-            style={styles.hero}
-          >
-            <View style={styles.topBar}>
-              <TouchableOpacity
-                onPress={() => router.back()}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.backBtnText}>‹</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroTitle}>BOL</Text>
-              <View style={styles.spacer} />
-            </View>
-          </LinearGradient>
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.center}>
+            <Text style={styles.errorIcon}>📄</Text>
+            <Text style={styles.errorTitle}>Unable to open BOL</Text>
+            <Text style={styles.errorText}>{error || "Not found."}</Text>
 
-          <View style={styles.card}>
-            <View style={styles.centerContent}>
-              <Text style={styles.emptyIcon}>📄</Text>
-              <Text style={styles.emptyTitle}>Unable to open BOL</Text>
-              <Text style={styles.emptySubtitle}>{error || "Not found."}</Text>
-            </View>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <Text style={styles.backButtonText}>Go Back</Text>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
       </ScreenBackground>
     );
   }
 
+  /* ---------------- UI ---------------- */
+
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
-        <View style={styles.container}>
-          {/* HERO */}
-          <LinearGradient
-            colors={Gradients.bluePrimary}
-            style={styles.hero}
-          >
-            <View style={styles.topBar}>
-              <TouchableOpacity
-                onPress={() => router.back()}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.backBtnText}>‹</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroTitle}>BOL</Text>
-              <View style={styles.spacer} />
-            </View>
-          </LinearGradient>
+      <LinearGradient
+        colors={["#05060A", "#0E1016", "#181A21"]}
+        style={styles.container}
+      >
+        <SafeAreaView style={styles.safe}>
+          {/* HEADER */}
 
-          {/* FLOATING CARD */}
-          <View style={styles.card}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
-            >
-              <View style={styles.imageCard}>
-                {bol.image_uri ? (
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.back}>‹</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.headerTitle}>Bill of Lading</Text>
+
+            <View style={{ width: 30 }} />
+          </View>
+
+          {/* CONTENT */}
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.content}
+          >
+            {/* IMAGE */}
+
+            <View style={styles.imageCard}>
+              {bol.image_uri && !imageError ? (
+                <>
                   <TouchableOpacity
-                    onPress={() => setImageViewerUri(bol.image_uri || null)}
                     activeOpacity={0.9}
+                    onPress={() => setImageViewerUri(bol.image_uri)}
                   >
                     <Image
                       source={{ uri: bol.image_uri }}
                       style={styles.image}
                       resizeMode="cover"
+                      onError={() => setImageError(true)}
                     />
                   </TouchableOpacity>
-                ) : (
-                  <View style={styles.imagePlaceholder}>
-                    <Text style={styles.imagePlaceholderIcon}>🧾</Text>
-                    <Text style={styles.imagePlaceholderText}>
-                      No BOL image available
+
+                  <TouchableOpacity
+                    style={styles.saveButton}
+                    onPress={handleSaveImage}
+                    disabled={saving}
+                  >
+                    <Text style={styles.saveButtonIcon}>💾</Text>
+                    <Text style={styles.saveButtonText}>
+                      {saving ? "Saving..." : "Save Image"}
                     </Text>
-                  </View>
-                )}
-              </View>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imageIcon}>🧾</Text>
+                  <Text style={styles.imageText}>
+                    {imageError ? "Image not found" : "No BOL image"}
+                  </Text>
+                </View>
+              )}
+            </View>
 
-              <View style={styles.infoCard}>
-                <Text style={styles.sectionTitle}>Shipment Info</Text>
+            {/* INFO */}
 
-                <DetailRow label="Broker" value={bol.broker ?? ""} />
-                <DetailRow
-                  label="Pickup"
-                  value={bol.pickup_location ?? ""}
-                />
-                <DetailRow
-                  label="Delivery"
-                  value={bol.delivery_location ?? ""}
-                />
-                <DetailRow
-                  label="Load Amount"
-                  value={formatCurrency(bol.load_amount)}
-                />
-                <DetailRow label="Date" value={formatDate(bol.date)} />
-              </View>
-            </ScrollView>
-          </View>
-        </View>
-      </SafeAreaView>
+            <View style={styles.infoCard}>
+              <Text style={styles.sectionTitle}>Shipment Details</Text>
 
-      {/* Fullscreen Image Viewer */}
+              <DetailRow label="Broker" value={bol.broker ?? ""} />
+              <DetailRow label="Pickup" value={bol.pickup_location ?? ""} />
+              <DetailRow label="Delivery" value={bol.delivery_location ?? ""} />
+              <DetailRow
+                label="Load Amount"
+                value={formatCurrency(bol.load_amount ?? 0)}
+              />
+              <DetailRow label="Date" value={formatDate(bol.date)} />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </LinearGradient>
+
+      {/* IMAGE VIEWER */}
+
       <ImageViewerModal
         visible={imageViewerUri !== null}
         uri={imageViewerUri}
@@ -227,152 +261,157 @@ export default function BOLDetailScreen() {
   );
 }
 
+/* ---------------- STYLES ---------------- */
+
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "transparent",
-  },
   container: {
     flex: 1,
   },
-  hero: {
-    paddingTop: Spacing.xxxl,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxxl,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-  },
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  backBtnText: {
-    fontSize: 28,
-    color: Colors.textInverse,
-    fontWeight: FontWeight.bold,
-    lineHeight: 30,
-  },
-  heroTitle: {
-    fontSize: TypographyScale.title.fontSize,
-    lineHeight: TypographyScale.title.lineHeight,
-    fontWeight: TypographyScale.title.fontWeight,
-    color: Colors.textInverse,
-  },
-  spacer: {
-    width: 28,
-  },
-  card: {
+
+  safe: {
     flex: 1,
-    marginTop: -Spacing.xl,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
-    ...getShadow(Shadow.large),
   },
-  scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxxxl,
-    gap: Spacing.lg,
+
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingTop: 20,
   },
+
+  back: {
+    fontSize: 32,
+    color: "#FFFFFF",
+  },
+
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  content: {
+    padding: 24,
+    gap: 20,
+  },
+
   imageCard: {
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.lg,
+    borderRadius: 18,
     overflow: "hidden",
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...getShadow(Shadow.small),
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
+
   image: {
     width: "100%",
     height: 280,
-    backgroundColor: Colors.surface,
   },
+
   imagePlaceholder: {
-    minHeight: 240,
+    height: 220,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.sm,
-    padding: Spacing.xl,
-    backgroundColor: Colors.surface,
   },
-  imagePlaceholderIcon: {
+
+  imageIcon: {
     fontSize: 42,
+    marginBottom: 8,
   },
-  imagePlaceholderText: {
-    fontSize: TypographyScale.body.fontSize,
-    lineHeight: TypographyScale.body.lineHeight,
-    fontWeight: TypographyScale.body.fontWeight,
-    color: Colors.textMuted,
-    textAlign: "center",
+
+  imageText: {
+    color: "rgba(255,255,255,0.6)",
   },
+
+  saveButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    backgroundColor: "rgba(79, 140, 255, 0.15)",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(79, 140, 255, 0.2)",
+  },
+
+  saveButtonIcon: {
+    fontSize: 18,
+  },
+
+  saveButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#4F8CFF",
+  },
+
   infoCard: {
-    backgroundColor: Colors.surfaceAlt,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...getShadow(Shadow.small),
+    backgroundColor: "rgba(255,255,255,0.05)",
+    padding: 20,
+    borderRadius: 18,
   },
+
   sectionTitle: {
-    fontSize: TypographyScale.subtitle.fontSize,
-    lineHeight: TypographyScale.subtitle.lineHeight,
-    fontWeight: TypographyScale.subtitle.fontWeight,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 12,
   },
-  detailRow: {
-    paddingVertical: Spacing.sm,
+
+  row: {
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: "rgba(255,255,255,0.06)",
   },
-  detailLabel: {
-    fontSize: TypographyScale.small.fontSize,
-    lineHeight: TypographyScale.small.lineHeight,
-    fontWeight: TypographyScale.small.fontWeight,
-    color: Colors.textMuted,
-    marginBottom: Spacing.xs,
+
+  rowLabel: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.45)",
+    marginBottom: 4,
   },
-  detailValue: {
-    fontSize: TypographyScale.body.fontSize,
-    lineHeight: TypographyScale.body.lineHeight,
-    fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+
+  rowValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
-  centerWrap: {
+
+  center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
   },
-  centerContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
+
+  loadingText: {
+    marginTop: 10,
+    color: "rgba(255,255,255,0.6)",
   },
-  helperText: {
-    fontSize: TypographyScale.body.fontSize,
-    lineHeight: TypographyScale.body.lineHeight,
-    color: Colors.textMuted,
-  },
-  emptyIcon: {
+
+  errorIcon: {
     fontSize: 48,
-    marginBottom: Spacing.sm,
+    marginBottom: 10,
   },
-  emptyTitle: {
-    fontSize: TypographyScale.subtitle.fontSize,
-    lineHeight: TypographyScale.subtitle.lineHeight,
-    fontWeight: TypographyScale.subtitle.fontWeight,
-    color: Colors.textPrimary,
+
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
-  emptySubtitle: {
-    fontSize: TypographyScale.body.fontSize,
-    lineHeight: TypographyScale.body.lineHeight,
-    color: Colors.textMuted,
-    textAlign: "center",
+
+  errorText: {
+    marginTop: 8,
+    color: "rgba(255,255,255,0.6)",
+  },
+
+  backButton: {
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: "#4F8CFF",
+    borderRadius: 10,
+  },
+
+  backButtonText: {
+    color: "#FFF",
+    fontWeight: "600",
   },
 });

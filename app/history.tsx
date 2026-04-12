@@ -1,40 +1,36 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
+
 import {
-    ActivityIndicator,
-    RefreshControl,
-    SectionList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  SectionList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import Animated, {
-    interpolate,
-    useAnimatedScrollHandler,
-    useAnimatedStyle,
-    useSharedValue,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
 } from "react-native-reanimated";
 
 import BOLCard from "@/components/BOLCard";
 import ExpenseCard from "@/components/ExpenseCard";
-import HistoryFilterPills, { type FilterType } from "@/components/HistoryFilterPills";
+import HistoryFilterPills, { FilterType } from "@/components/HistoryFilterPills";
 import ScreenBackground from "@/components/ScreenBackground";
 import SearchBar from "@/components/SearchBar";
-
-import {
-  BorderRadius,
-    Colors,
-    FontWeight,
-    Spacing
-} from "@/constants/theme";
 
 import { getBOLHistory } from "@/lib/bolService";
 import { getAllExpenses } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
+
 import type { BOLRecord, Expense } from "@/lib/types";
 
 /* ================= TYPES ================= */
@@ -106,6 +102,7 @@ export default function HistoryScreen() {
         getAllExpenses(),
         getBOLHistory(),
       ]);
+
       setExpenses(exp);
       setBols(bol);
     } catch (err) {
@@ -115,7 +112,11 @@ export default function HistoryScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { loadData(); }, [loadData]));
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -172,7 +173,7 @@ export default function HistoryScreen() {
   });
 
   const heroStyle = useAnimatedStyle(() => {
-    const height = interpolate(scrollY.value, [0, 150], [180, 100], "clamp");
+    const height = interpolate(scrollY.value, [0, 150], [200, 120], "clamp");
     return { height };
   });
 
@@ -182,7 +183,7 @@ export default function HistoryScreen() {
     return (
       <ScreenBackground>
         <SafeAreaView style={styles.center}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color="#6FA0C8" />
         </SafeAreaView>
       </ScreenBackground>
     );
@@ -192,12 +193,14 @@ export default function HistoryScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe}  edges={["top", "left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe}>
         <View style={styles.container}>
+
           {/* HERO */}
+
           <Animated.View style={[styles.heroWrapper, heroStyle]}>
             <LinearGradient
-              colors={[Colors.accent, "#A01B3A"]}
+              colors={["#05060A", "#0E1016", "#181A21"]}
               style={styles.hero}
             >
               <View style={styles.heroTop}>
@@ -206,29 +209,40 @@ export default function HistoryScreen() {
                 </TouchableOpacity>
 
                 <Text style={styles.heroTitle}>History</Text>
-                <View style={{ width: 40 }} />
+
+                <View style={{ width: 30 }} />
               </View>
 
               <Text style={styles.totalValue}>
                 {formatCurrency(totalAmount)}
               </Text>
+
+              <Text style={styles.totalLabel}>
+                Total records value
+              </Text>
             </LinearGradient>
           </Animated.View>
 
           {/* LIST */}
+
           <AnimatedSectionList
             sections={sections}
             keyExtractor={(item) => `${item.type}-${item.id}`}
             onScroll={scrollHandler}
             scrollEventThrottle={16}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor="#6FA0C8"
+              />
             }
             contentContainerStyle={styles.content}
             ListHeaderComponent={
               <View style={styles.headerContent}>
+
                 <SearchBar
-                  placeholder="Search..."
+                  placeholder="Search expenses or loads..."
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
@@ -239,6 +253,7 @@ export default function HistoryScreen() {
                     onFilterChange={setFilterType}
                   />
                 </View>
+
               </View>
             }
             renderSectionHeader={({ section }) => (
@@ -246,6 +261,7 @@ export default function HistoryScreen() {
                 <Text style={styles.sectionDate}>
                   {formatDateLabel(section.title)}
                 </Text>
+
                 <Text style={styles.sectionTotal}>
                   {formatCurrency(section.total)}
                 </Text>
@@ -280,31 +296,31 @@ export default function HistoryScreen() {
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
+
   safe: {
     flex: 1,
-    backgroundColor: "transparent",
   },
 
-  center: { flex: 1, justifyContent: "center", alignItems: "center", },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   container: {
     flex: 1,
-    position: "relative",
   },
 
   heroWrapper: {
-    width: "100%",
     zIndex: 10,
   },
 
   hero: {
-    paddingTop: Spacing.lg,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
-    justifyContent: "space-between",
-    minHeight: 180,
-    borderTopRightRadius: BorderRadius.xl,
-    borderTopLeftRadius: BorderRadius.xl,
+    paddingTop: 20,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
 
   heroTop: {
@@ -320,52 +336,55 @@ const styles = StyleSheet.create({
 
   heroTitle: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: FontWeight.bold,
+    fontSize: 20,
+    fontWeight: "700",
   },
 
   totalValue: {
-    color: "#fff",
-    fontSize: 36,
+    fontSize: 38,
     fontWeight: "800",
-    marginBottom: Spacing.sm,
+    color: "#fff",
+    marginTop: 16,
+  },
+
+  totalLabel: {
+    color: "#9CA3AF",
+    marginTop: 4,
   },
 
   content: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxxl,
-    gap: Spacing.md,
+    paddingHorizontal: 20,
+    paddingBottom: 60,
+  },
+
+  headerContent: {
+    marginTop: 20,
+    marginBottom: 10,
+  },
+
+  filterWrapper: {
+    marginTop: 16,
   },
 
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: Spacing.lg,
-    marginBottom: Spacing.sm,
+    marginTop: 26,
+    marginBottom: 8,
   },
 
   sectionDate: {
-    fontWeight: FontWeight.bold,
+    color: "#E5E7EB",
+    fontWeight: "700",
     fontSize: 16,
   },
 
   sectionTotal: {
-    color: Colors.accent,
-    fontWeight: FontWeight.bold,
+    color: "#6FA0C8",
+    fontWeight: "700",
   },
 
   item: {
-    marginBottom: Spacing.md,
-  },
-
-  headerContent: {
-    marginBottom: Spacing.md,
-    marginTop: Spacing.md,
-  },
-
-  filterWrapper: {
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
-    padding: Spacing.lg,
+    marginBottom: 14,
   },
 });

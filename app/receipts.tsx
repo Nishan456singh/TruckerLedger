@@ -1,13 +1,13 @@
 import ScreenBackground from "@/components/ScreenBackground";
 import { getShadow } from "@/constants/shadowUtils";
 import {
-    BorderRadius,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
-    TypographyScale,
+  BorderRadius,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
 } from "@/constants/theme";
 import { getAllExpenses } from "@/lib/expenseService";
 import type { Expense } from "@/lib/types";
@@ -15,14 +15,14 @@ import { router, useFocusEffect } from "expo-router";
 
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    Image,
-    Pressable,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  Image,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -43,10 +43,9 @@ const ReceiptTile = React.memo(({ expense }: { expense: Expense }) => {
         pressed && styles.tilePressedState,
       ]}
     >
-      <Image
-        source={{ uri: expense.receipt_uri! }}
-        style={styles.tileImage}
-      />
+      <Image source={{ uri: expense.receipt_uri! }} style={styles.tileImage} />
+
+      <View style={styles.tileOverlay} />
     </Pressable>
   );
 });
@@ -60,13 +59,11 @@ export default function ReceiptsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  /* ---------- FILTER RECEIPTS ---------- */
   const receipts = useMemo(
     () => expenses.filter((item) => item.receipt_uri),
     [expenses]
   );
 
-  /* ---------- LOAD ---------- */
   const loadReceipts = useCallback(async () => {
     try {
       setLoading(true);
@@ -91,33 +88,37 @@ export default function ReceiptsScreen() {
     setRefreshing(false);
   }, [loadReceipts]);
 
-  /* ---------------- RENDER ---------------- */
+  /* ---------------- LOADING ---------------- */
 
   if (loading) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+        <SafeAreaView style={styles.safe}>
           <View style={styles.center}>
             <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingText}>Loading receipts...</Text>
           </View>
         </SafeAreaView>
       </ScreenBackground>
     );
   }
 
+  /* ---------------- UI ---------------- */
+
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top","left","right","bottom"]}>
+        
         {/* HEADER */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backText}>‹</Text>
           </Pressable>
 
-          <View style={{ alignItems: "center" }}>
+          <View style={styles.headerTextWrap}>
             <Text style={styles.title}>Receipt Gallery</Text>
             <Text style={styles.subtitle}>
-              {receipts.length} receipts
+              {receipts.length} scanned receipts
             </Text>
           </View>
 
@@ -130,14 +131,14 @@ export default function ReceiptsScreen() {
             <Text style={styles.emptyIcon}>🧾</Text>
             <Text style={styles.emptyTitle}>No Receipts Yet</Text>
             <Text style={styles.emptyText}>
-              Scan receipts to build your gallery
+              Scan your first receipt to start tracking expenses
             </Text>
           </View>
         ) : (
           <FlatList
             data={receipts}
             keyExtractor={(item) => String(item.id)}
-            numColumns={3}
+            numColumns={2}
             renderItem={({ item }) => <ReceiptTile expense={item} />}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.grid}
@@ -149,12 +150,10 @@ export default function ReceiptsScreen() {
                 tintColor={Colors.primary}
               />
             }
-            // Performance optimizations
-            removeClippedSubviews={true}
-            initialNumToRender={9}
+            removeClippedSubviews
+            initialNumToRender={8}
             maxToRenderPerBatch={12}
             windowSize={10}
-            updateCellsBatchingPeriod={50}
           />
         )}
       </SafeAreaView>
@@ -167,8 +166,9 @@ export default function ReceiptsScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "transparent",
   },
+
+  /* HEADER */
 
   header: {
     flexDirection: "row",
@@ -179,54 +179,61 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
   },
 
+  headerTextWrap: {
+    alignItems: "center",
+  },
+
   backBtn: {
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    backgroundColor: "rgba(255,255,255,0.08)",
     ...getShadow(Shadow.small),
   },
 
   backText: {
     fontSize: 28,
-    color: Colors.textPrimary,
+    color: "#fff",
     fontWeight: FontWeight.bold,
   },
 
   title: {
-    ...TypographyScale.title,
-    color: Colors.textPrimary,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+    color: "#fff",
   },
 
   subtitle: {
-    ...TypographyScale.small,
-    color: Colors.textSecondary,
+    fontSize: 13,
+    color: "rgba(255,255,255,0.6)",
     marginTop: 2,
   },
 
+  /* GRID */
+
   grid: {
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
   },
 
   row: {
     justifyContent: "space-between",
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
 
   tile: {
-    width: "31%",
+    width: "48%",
     aspectRatio: 1,
-    borderRadius: BorderRadius.md,
+    borderRadius: BorderRadius.lg,
     overflow: "hidden",
-    backgroundColor: Colors.card,
+    backgroundColor: "#1B1F2A",
     ...getShadow(Shadow.card),
   },
 
   tilePressedState: {
-    opacity: 0.75,
+    transform: [{ scale: 0.96 }],
   },
 
   tileImage: {
@@ -234,16 +241,31 @@ const styles = StyleSheet.create({
     height: "100%",
   },
 
+  tileOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.08)",
+  },
+
+  /* LOADING */
+
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },
 
+  loadingText: {
+    marginTop: 12,
+    color: Colors.textSecondary,
+  },
+
+  /* EMPTY */
+
   emptyWrap: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingHorizontal: Spacing.lg,
     gap: Spacing.lg,
   },
 
@@ -253,12 +275,12 @@ const styles = StyleSheet.create({
 
   emptyTitle: {
     ...TypographyScale.subtitle,
-    color: Colors.textPrimary,
+    color: "#fff",
   },
 
   emptyText: {
     ...TypographyScale.small,
-    color: Colors.textSecondary,
+    color: "rgba(255,255,255,0.6)",
     textAlign: "center",
   },
 });

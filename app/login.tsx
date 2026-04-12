@@ -1,12 +1,11 @@
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 import {
-    BorderRadius,
-    Colors,
-    FontSize,
-    FontWeight,
-    Spacing,
-    TypographyScale,
+  BorderRadius,
+  Colors,
+  FontWeight,
+  Spacing,
+  TypographyScale,
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -16,18 +15,18 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import React, { useCallback, useEffect, useState } from "react";
 
 import {
-    ActivityIndicator,
-    Image,
-    Platform,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 
 import Animated, {
-    FadeIn,
-    FadeInDown,
-    FadeInUp,
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
 } from "react-native-reanimated";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -35,7 +34,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const logo = require("@/assets/images/icon.png");
 
-const FEATURE_PILLS = ["⛽ Fuel", "🛣️ Tolls", "🔧 Repairs", "📎 Receipts"];
 const ERROR_DISMISS_TIMEOUT = 5000;
 
 export default function LoginScreen() {
@@ -47,14 +45,12 @@ export default function LoginScreen() {
 
   const anyLoading = googleLoading || appleLoading;
 
-  // Auto-dismiss errors after 5 seconds
   useEffect(() => {
     if (!errorMsg) return;
     const timer = setTimeout(() => setErrorMsg(null), ERROR_DISMISS_TIMEOUT);
     return () => clearTimeout(timer);
   }, [errorMsg]);
 
-  // ─── Google Login ─────────────────────────────────────
   const handleGoogleSignIn = useCallback(async () => {
     if (anyLoading) return;
 
@@ -75,7 +71,6 @@ export default function LoginScreen() {
     }
   }, [signInGoogle, anyLoading]);
 
-  // ─── Apple Login ─────────────────────────────────────
   const handleAppleSignIn = useCallback(async () => {
     if (anyLoading) return;
 
@@ -98,209 +93,275 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient
-      colors={["#6FA0C8", "#5A8FB5"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      colors={["#05060A", "#0E1016", "#181A21"]}
       style={styles.container}
     >
-      <SafeAreaView style={styles.safe} edges={["bottom"]}>
-        <View style={{ flex: 1 }} />
+      <SafeAreaView style={styles.safe}>
 
-        {/* Branding */}
-        <Animated.View
-          entering={FadeInDown.delay(100).springify()}
-          style={styles.brandSection}
-        >
-          <View style={styles.logoRing}>
-            <Image source={logo} style={styles.logoImage} />
-          </View>
-
-          <Text style={styles.tagline}>Track every mile & expense</Text>
-        </Animated.View>
-
-        {/* Feature Pills */}
-        <Animated.View
-          entering={FadeInDown.delay(260).springify()}
-          style={styles.pillRow}
-        >
-          {FEATURE_PILLS.map((label) => (
-            <View key={label} style={styles.pill}>
-              <Text style={styles.pillText}>{label}</Text>
-            </View>
-          ))}
-        </Animated.View>
-
-        <View style={{ flex: 1.2 }} />
-
-        {/* CTA Card */}
-        <Animated.View
-          entering={FadeInUp.delay(360).springify()}
-          style={styles.ctaCard}
-        >
-          {errorMsg && (
-            <Animated.View
-              entering={FadeIn.duration(250)}
-              style={styles.errorBanner}
-            >
-              <Text style={styles.errorText}>{errorMsg}</Text>
-            </Animated.View>
-          )}
-
-          {Platform.OS === "ios" && (
-            <View style={{ height: 50 }}>
-              {appleLoading ? (
-                <View style={styles.appleLoading}>
-                  <ActivityIndicator color={Colors.primary} />
-                </View>
-              ) : (
-                <AppleAuthentication.AppleAuthenticationButton
-                  buttonType={
-                    AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
-                  }
-                  buttonStyle={
-                    AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-                  }
-                  cornerRadius={BorderRadius.md}
-                  style={{ width: "100%", height: 50 }}
-                  onPress={handleAppleSignIn}
-                />
-              )}
-            </View>
-          )}
-
-          <GoogleSignInButton
-            onPress={handleGoogleSignIn}
-            loading={googleLoading}
-            disabled={anyLoading}
+        {/* Background glow */}
+        <View pointerEvents="none" style={styles.bgWrap}>
+          <LinearGradient
+            colors={["rgba(255,255,255,0.15)", "transparent"]}
+            style={styles.glowTop}
           />
 
-          <Text style={styles.legal}>
-            By continuing you agree to our{" "}
-            <Text style={styles.legalLink}>Terms</Text>
-            {" & "}
-            <Text style={styles.legalLink}>Privacy Policy</Text>
-          </Text>
-        </Animated.View>
+          <LinearGradient
+            colors={["rgba(255,255,255,0.10)", "transparent"]}
+            style={styles.glowBottom}
+          />
 
-        <View style={styles.safeBottom} />
+          <View style={styles.ringOne}/>
+          <View style={styles.ringTwo}/>
+        </View>
+
+        <View style={styles.content}>
+
+          {/* Logo */}
+          <Animated.View
+            entering={FadeInDown.delay(150).springify()}
+            style={styles.brandSection}
+          >
+            <View style={styles.logoShell}>
+              <Image source={logo} style={styles.logoImage}/>
+            </View>
+
+            {/* <Text style={styles.appTitle}>
+              TruckerLedger
+            </Text> */}
+
+            <Text style={styles.subtitle}>
+              Simple expense tracking for professional drivers
+            </Text>
+
+          </Animated.View>
+
+          {/* Sign in card */}
+          <Animated.View
+            entering={FadeInUp.delay(300).springify()}
+            style={styles.cardOuter}
+          >
+            <LinearGradient
+              colors={[
+                "rgba(255,255,255,0.15)",
+                "rgba(255,255,255,0.05)",
+              ]}
+              style={styles.cardBorder}
+            >
+              <View style={styles.card}>
+
+                <Text style={styles.signTitle}>
+                  Sign in to continue
+                </Text>
+
+                {errorMsg && (
+                  <Animated.View
+                    entering={FadeIn.duration(250)}
+                    style={styles.errorBanner}
+                  >
+                    <Text style={styles.errorText}>{errorMsg}</Text>
+                  </Animated.View>
+                )}
+
+                {Platform.OS === "ios" && (
+                  <View style={{ height: 52 }}>
+                    {appleLoading ? (
+                      <View style={styles.appleLoading}>
+                        <ActivityIndicator color="#fff"/>
+                      </View>
+                    ) : (
+                      <AppleAuthentication.AppleAuthenticationButton
+                        buttonType={
+                          AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
+                        }
+                        buttonStyle={
+                          AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                        }
+                        cornerRadius={14}
+                        style={styles.appleButton}
+                        onPress={handleAppleSignIn}
+                      />
+                    )}
+                  </View>
+                )}
+
+                <GoogleSignInButton
+                  onPress={handleGoogleSignIn}
+                  loading={googleLoading}
+                  disabled={anyLoading}
+                />
+
+                <Text style={styles.legal}>
+                  By continuing you agree to our{" "}
+                  <Text style={styles.link}>Terms</Text>{" "}
+                  and{" "}
+                  <Text style={styles.link}>Privacy Policy</Text>
+                </Text>
+
+              </View>
+            </LinearGradient>
+          </Animated.View>
+
+        </View>
       </SafeAreaView>
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
   },
 
   safe: {
     flex: 1,
-    paddingHorizontal: Spacing.xl,
   },
 
-  brandSection: {
-    alignItems: "center",
-    gap: Spacing.lg,
+  bgWrap:{
+    ...StyleSheet.absoluteFillObject,
   },
 
-  logoRing: {
-    padding: 3,
-    borderRadius: BorderRadius.xxl + 4,
-    borderWidth: 1.5,
-    borderColor: "rgba(255, 255, 255, 0.3)",
+  glowTop:{
+    position:"absolute",
+    width:400,
+    height:400,
+    borderRadius:200,
+    top:-80,
+    right:-80,
   },
 
-  logoImage: {
-    width: 240,
-    height: 240,
-    borderRadius: BorderRadius.xxl,
+  glowBottom:{
+    position:"absolute",
+    width:380,
+    height:380,
+    borderRadius:200,
+    bottom:-80,
+    left:-80,
   },
 
-  tagline: {
-    ...TypographyScale.subtitle,
-    color: Colors.textInverse,
-    letterSpacing: 0.5,
-    textAlign: "center",
-    marginTop: Spacing.md,
+  ringOne:{
+    position:"absolute",
+    width:600,
+    height:600,
+    borderRadius:300,
+    borderWidth:1,
+    borderColor:"rgba(255,255,255,0.05)",
+    top:80,
+    left:-200
   },
 
-  pillRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: Spacing.sm,
-    marginTop: Spacing.xl,
+  ringTwo:{
+    position:"absolute",
+    width:760,
+    height:760,
+    borderRadius:380,
+    borderWidth:1,
+    borderColor:"rgba(255,255,255,0.03)",
+    top:-140,
+    right:-300
   },
 
-  pill: {
-    paddingVertical: Spacing.xs + 2,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.full,
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
+  content:{
+    flex:1,
+    justifyContent:"center",
+    paddingHorizontal:Spacing.xl
   },
 
-  pillText: {
-    fontSize: FontSize.caption,
-    color: Colors.textInverse,
-    fontWeight: FontWeight.medium,
+  brandSection:{
+    alignItems:"center",
+    marginBottom:Spacing.xxxl
   },
 
-  ctaCard: {
-    gap: Spacing.md,
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.md,
-    marginTop: Spacing.lg,
-    backgroundColor: "#FFFFFF",
-    borderRadius: BorderRadius.xl,
-    borderWidth: 0,
-    ...{
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 12,
-      elevation: 8,
-    },
+  logoShell:{
+    width:170,
+    height:170,
+    borderRadius:85,
+    justifyContent:"center",
+    alignItems:"center",
+    backgroundColor:"rgba(255,255,255,0.08)"
   },
 
-  errorBanner: {
-    backgroundColor: Colors.danger + "22",
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.danger + "55",
-    padding: Spacing.sm,
-    alignItems: "center",
+  logoImage:{
+    width:340,
+    height:340,
+    borderRadius:70
   },
 
-  errorText: {
+  appTitle:{
+    marginTop:Spacing.lg,
+    marginBottom:Spacing.xxxxl,
+    fontSize:34,
+    fontWeight:"800",
+    color:"#FFFFFF"
+  },
+
+  subtitle:{
+    marginTop:Spacing.xxl,
     ...TypographyScale.small,
-    color: Colors.danger,
-    textAlign: "center",
+    color:"rgba(255,255,255,0.6)",
+    textAlign:"center"
   },
 
-  appleLoading: {
-    height: 50,
-    borderRadius: BorderRadius.md,
-    backgroundColor: "#000",
-    alignItems: "center",
-    justifyContent: "center",
+  cardOuter:{
+    width:"100%",
+    marginTop:Spacing.xxxl,
   },
 
-  legal: {
-    ...TypographyScale.caption,
-    color: "#666666",
-    textAlign: "center",
-    lineHeight: 18,
+  cardBorder:{
+    borderRadius:26,
+    padding:1
   },
 
-  legalLink: {
-    color: Colors.primary,
-    fontWeight: FontWeight.semibold,
+  card:{
+    backgroundColor:"rgba(15,16,20,0.85)",
+    borderRadius:25,
+    paddingVertical:Spacing.xl,
+    paddingHorizontal:Spacing.lg,
+    gap:Spacing.md
   },
 
-  safeBottom: {
-    height: Spacing.md,
+  signTitle:{
+    textAlign:"center",
+    fontSize:20,
+    fontWeight:"700",
+    color:"#fff"
   },
+
+  appleLoading:{
+    height:52,
+    justifyContent:"center",
+    alignItems:"center",
+    borderRadius:14,
+    backgroundColor:"#111"
+  },
+
+  appleButton:{
+    width:"100%",
+    height:42
+  },
+
+  errorBanner:{
+    backgroundColor:"rgba(239,68,68,0.15)",
+    borderRadius:12,
+    borderWidth:1,
+    borderColor:"rgba(239,68,68,0.3)",
+    padding:Spacing.sm
+  },
+
+  errorText:{
+    color:"#FCA5A5",
+    textAlign:"center"
+  },
+
+  legal:{
+    textAlign:"center",
+    marginTop:Spacing.sm,
+    color:"rgba(255,255,255,0.45)"
+  },
+
+  link:{
+    color:"#fff",
+    fontWeight:"600"
+  }
+
 });

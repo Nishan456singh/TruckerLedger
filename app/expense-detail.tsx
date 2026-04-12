@@ -6,20 +6,20 @@ import ScreenBackground from "@/components/ScreenBackground";
 
 import { getShadow } from "@/constants/shadowUtils";
 import {
-    BorderRadius,
-    CategoryMeta,
-    Colors,
-    FontSize,
-    FontWeight,
-    Shadow,
-    Spacing,
-    TypographyScale,
+  BorderRadius,
+  CategoryMeta,
+  Colors,
+  FontSize,
+  FontWeight,
+  Shadow,
+  Spacing,
+  TypographyScale,
 } from "@/constants/theme";
 
 import {
-    deleteExpense,
-    getExpenseById,
-    updateExpense,
+  deleteExpense,
+  getExpenseById,
+  updateExpense,
 } from "@/lib/expenseService";
 import { formatCurrency, todayISO } from "@/lib/formatUtils";
 import type { Category, Expense } from "@/lib/types";
@@ -28,25 +28,24 @@ import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 
 import { router, useLocalSearchParams } from "expo-router";
-
 import { useEffect, useRef, useState } from "react";
 
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-/* SCREEN */
+/* ================= SCREEN ================= */
 
 export default function ExpenseDetailScreen() {
   const params = useLocalSearchParams<{ id?: string; fromScan?: string }>();
@@ -70,12 +69,6 @@ export default function ExpenseDetailScreen() {
   useEffect(() => {
     if (params.id) loadExpense(Number(params.id));
   }, [params.id]);
-
-  useEffect(() => {
-    if (editing) {
-      setTimeout(() => amountRef.current?.focus(), 200);
-    }
-  }, [editing]);
 
   async function loadExpense(id: number) {
     const data = await getExpenseById(id);
@@ -139,7 +132,7 @@ export default function ExpenseDetailScreen() {
 
   async function handlePickImage() {
     const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"], // ✅ FIXED (no deprecated API)
+      mediaTypes: ["images"],
       quality: 0.8,
     });
 
@@ -152,7 +145,7 @@ export default function ExpenseDetailScreen() {
     return (
       <ScreenBackground>
         <SafeAreaView style={styles.center}>
-          <Text style={styles.loadingText}>Loading…</Text>
+          <Text style={styles.loading}>Loading…</Text>
         </SafeAreaView>
       </ScreenBackground>
     );
@@ -165,23 +158,24 @@ export default function ExpenseDetailScreen() {
   if (!editing) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+        <SafeAreaView style={styles.safe} edges={["top","left","right","bottom"]}>
           <View style={styles.container}>
+
             {/* HERO */}
             <LinearGradient
-              colors={[meta.color, meta.color + "CC"]}
+              colors={["#0D0F14", "#1B1F2A"]}
               style={styles.hero}
             >
               <View style={styles.topBar}>
-                <Text style={styles.close} onPress={() => router.back()}>
-                  ✕
-                </Text>
+                <TouchableOpacity onPress={() => router.back()}>
+                  <Text style={styles.close}>‹</Text>
+                </TouchableOpacity>
 
                 <Text style={styles.title}>Expense</Text>
 
-                <Text style={styles.edit} onPress={() => setEditing(true)}>
-                  Edit
-                </Text>
+                <TouchableOpacity onPress={() => setEditing(true)}>
+                  <Text style={styles.edit}>Edit</Text>
+                </TouchableOpacity>
               </View>
 
               <Text style={styles.amount}>
@@ -193,7 +187,7 @@ export default function ExpenseDetailScreen() {
               </Text>
             </LinearGradient>
 
-            {/* CARD */}
+            {/* GLASS CARD */}
             <View style={styles.card}>
               <ScrollView contentContainerStyle={styles.content}>
                 <Text style={styles.section}>Details</Text>
@@ -207,9 +201,7 @@ export default function ExpenseDetailScreen() {
                 {receiptUri && (
                   <>
                     <Text style={styles.section}>Receipt</Text>
-                    <TouchableOpacity
-                      onPress={() => setViewerUri(receiptUri)}
-                    >
+                    <TouchableOpacity onPress={() => setViewerUri(receiptUri)}>
                       <ReceiptPreview uri={receiptUri} />
                     </TouchableOpacity>
                   </>
@@ -218,7 +210,7 @@ export default function ExpenseDetailScreen() {
 
               <PrimaryButton
                 label="Delete Expense"
-                variant="accent"
+                variant="danger"
                 onPress={handleDelete}
                 loading={deleting}
               />
@@ -239,14 +231,15 @@ export default function ExpenseDetailScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+      <SafeAreaView style={styles.safe} edges={["top","left","right","bottom"]}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={{ flex: 1 }}
         >
           <View style={styles.container}>
+
             <LinearGradient
-              colors={[meta.color, meta.color + "CC"]}
+              colors={["#0D0F14", "#1B1F2A"]}
               style={styles.hero}
             >
               <Text style={styles.close} onPress={() => setEditing(false)}>
@@ -258,9 +251,10 @@ export default function ExpenseDetailScreen() {
 
             <View style={styles.card}>
               <ScrollView contentContainerStyle={styles.content}>
-                {/* AMOUNT */}
+
                 <View style={styles.amountWrap}>
                   <Text style={styles.dollar}>$</Text>
+
                   <TextInput
                     ref={amountRef}
                     value={amount}
@@ -270,40 +264,33 @@ export default function ExpenseDetailScreen() {
                   />
                 </View>
 
-                {/* CATEGORY */}
                 <CategorySelector
                   selected={category}
                   onChange={setCategory}
                 />
 
-                {/* DATE */}
-                <TextInput
-                  value={date}
-                  onChangeText={setDate}
-                  style={styles.input}
-                />
+                <TextInput value={date} onChangeText={setDate} style={styles.input} />
 
-                {/* NOTE */}
                 <TextInput
                   value={note}
                   onChangeText={setNote}
-                  style={[styles.input, { height: 80 }]}
+                  style={[styles.input, { height: 90 }]}
                   multiline
                 />
 
-                {/* SAVE */}
                 <PrimaryButton
                   label="Save Changes"
                   onPress={handleSave}
                   loading={saving}
                 />
 
-                {/* ATTACH */}
                 <TouchableOpacity onPress={handlePickImage}>
                   <Text style={styles.link}>Attach Receipt</Text>
                 </TouchableOpacity>
+
               </ScrollView>
             </View>
+
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -311,7 +298,7 @@ export default function ExpenseDetailScreen() {
   );
 }
 
-/* COMPONENTS */
+/* ================= COMPONENTS ================= */
 
 function Row({ label, value }: any) {
   return (
@@ -324,41 +311,41 @@ function Row({ label, value }: any) {
 
 const Divider = () => <View style={styles.divider} />;
 
-/* STYLES */
+/* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
   safe: { flex: 1 },
+
   container: { flex: 1 },
 
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  loadingText: {
-    ...TypographyScale.body,
+  loading: {
     color: Colors.textMuted,
+    fontSize: 16,
   },
 
+  /* HERO */
+
   hero: {
-    paddingTop: Spacing.lg,
+    paddingTop: Spacing.xl,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxxl,
-    marginBottom: -Spacing.sm,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
+    paddingBottom: Spacing.xxxl,
   },
 
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
   },
 
   close: {
     color: "#fff",
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 26,
   },
 
   edit: {
-    color: "#fff",
+    color: "#ccc",
     fontWeight: "600",
   },
 
@@ -366,104 +353,102 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: FontSize.section,
     fontWeight: "700",
-    marginTop: Spacing.sm,
   },
 
   amount: {
-    fontSize: 42,
+    fontSize: 44,
     color: "#fff",
     fontWeight: "800",
     marginTop: Spacing.lg,
   },
 
   category: {
-    color: "#fff",
+    color: "#aaa",
     marginTop: Spacing.sm,
-    fontSize: FontSize.body,
   },
+
+  /* CARD */
 
   card: {
     flex: 1,
     marginTop: -Spacing.xl,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     ...getShadow(Shadow.large),
   },
 
   content: {
     gap: Spacing.lg,
-    paddingBottom: Spacing.lg,
   },
 
   section: {
-    ...TypographyScale.subtitle,
-    color: Colors.textPrimary,
+    color: "#fff",
+    fontWeight: "600",
   },
 
   block: {
-    backgroundColor: Colors.surface,
+    backgroundColor: "rgba(255,255,255,0.05)",
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    ...getShadow(Shadow.small),
   },
 
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
   },
 
   label: {
-    color: Colors.textMuted,
+    color: "#888",
   },
 
   value: {
-    color: Colors.textPrimary,
+    color: "#fff",
     fontWeight: "600",
-    maxWidth: "55%",
-    textAlign: "right",
   },
 
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
+    backgroundColor: "rgba(255,255,255,0.08)",
     marginVertical: Spacing.sm,
   },
+
+  /* INPUT */
 
   amountWrap: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.lg,
-    ...getShadow(Shadow.small),
-    marginBottom: Spacing.md,
   },
 
   dollar: {
     fontSize: 28,
-    color: Colors.textMuted,
+    color: "#aaa",
   },
 
   inputBig: {
     flex: 1,
-    fontSize: 40,
+    fontSize: 42,
     fontWeight: "800",
-    color: Colors.textPrimary,
+    color: "#fff",
     paddingVertical: Spacing.lg,
   },
 
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: "rgba(255,255,255,0.05)",
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
+    color: "#fff",
   },
 
   link: {
     textAlign: "center",
-    color: Colors.primary,
+    color: "#9CA3AF",
     marginTop: Spacing.lg,
     fontWeight: FontWeight.semibold,
   },

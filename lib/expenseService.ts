@@ -2,6 +2,7 @@ import { Platform } from "react-native";
 import { getDatabase } from "./db";
 import { deleteImage } from "./storage/imageStorage";
 import type { Category, DashboardStats, Expense, ExpenseInput } from "./types";
+import { getBOLsByDateRange } from "./bolService";
 
 const WEB = Platform.OS === "web";
 const WEB_ERR =
@@ -487,4 +488,41 @@ export async function exportExpenses(): Promise<string> {
   );
 
   return [header, ...rows].join("\n");
+}
+
+// ─── Monthly Profit Calculation ─────────────────────
+
+export interface MonthlyProfit {
+  bolIncome: number;
+  expenses: number;
+  profit: number;
+}
+
+export async function getMonthlyProfit(): Promise<MonthlyProfit> {
+  if (WEB) return { bolIncome: 0, expenses: 0, profit: 0 };
+
+  // Get current month date range
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const startDate = monthStart.toISOString().split("T")[0];
+  const endDate = monthEnd.toISOString().split("T")[0];
+
+  // Get BOLs for the month and sum load amounts
+  const bols = await getBOLsByDateRange(startDate, endDate);
+  const bolIncome = bols.reduce((sum, bol) => sum + (bol.load_amount ?? 0), 0);
+
+  // Get expenses for the month
+  const expenses = await getExpensesByDateRange(startDate, endDate);
+  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
+
+  // Calculate profit
+  const profit = bolIncome - totalExpenses;
+
+  return {
+    bolIncome,
+    expenses: totalExpenses,
+    profit,
+  };
 }

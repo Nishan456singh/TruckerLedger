@@ -4,22 +4,26 @@ import { getShadow } from "@/constants/shadowUtils";
 import {
   BorderRadius,
   Colors,
-  ColorUtilities,
   FontSize,
   FontWeight,
   Shadow,
   Spacing,
 } from "@/constants/theme";
+
 import { useAuth } from "@/lib/auth/AuthContext";
-import { getAllExpenses } from "@/lib/expenseService";
+import { getAllExpenses, getMonthlyProfit } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
 import {
   getMonthlyTripSnapshot,
   getWeeklyTripSnapshot,
 } from "@/lib/tripService";
+
 import type { Expense } from "@/lib/types";
+import type { MonthlyProfit } from "@/lib/expenseService";
+
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
+
 import React, { useCallback, useState } from "react";
 import {
   ActionSheetIOS,
@@ -33,6 +37,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function DashboardScreen() {
@@ -40,18 +46,20 @@ export default function DashboardScreen() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+
   const [weekly, setWeekly] = useState({
     income: 0,
     fuel: 0,
     otherExpenses: 0,
     profit: 0,
   });
-  const [monthly, setMonthly] = useState({
-    income: 0,
-    fuel: 0,
-    otherExpenses: 0,
+
+  const [monthly, setMonthly] = useState<MonthlyProfit>({
+    bolIncome: 0,
+    expenses: 0,
     profit: 0,
   });
+
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
   const name = user?.name?.split(" ")[0] ?? "Driver";
@@ -60,7 +68,7 @@ export default function DashboardScreen() {
     try {
       const [w, m, e] = await Promise.all([
         getWeeklyTripSnapshot(),
-        getMonthlyTripSnapshot(),
+        getMonthlyProfit(),
         getAllExpenses(),
       ]);
 
@@ -68,7 +76,7 @@ export default function DashboardScreen() {
       setMonthly(m);
       setExpenses(e.slice(0, 4));
     } catch (err) {
-      console.error("Failed to load dashboard data:", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -101,13 +109,9 @@ export default function DashboardScreen() {
         text: "✏️ Manual Entry",
         onPress: () => router.push("/add-expense"),
       },
-      {
-        text: "Cancel",
-        onPress: () => {},
-      },
+      { text: "Cancel", onPress: () => {} },
     ];
 
-    // Show action sheet using Alert
     const buttons = options.map((option) => ({
       text: option.text,
       onPress: option.onPress,
@@ -118,7 +122,6 @@ export default function DashboardScreen() {
         {
           options: options.map((o) => o.text),
           cancelButtonIndex: options.length - 1,
-          title: "How would you like to add an expense?",
         },
         (index) => {
           if (index >= 0 && index < options.length - 1) {
@@ -127,22 +130,17 @@ export default function DashboardScreen() {
         }
       );
     } else {
-      // For Android, use Alert
-      Alert.alert("Add Expense", "How would you like to add an expense?", buttons);
+      Alert.alert("Add Expense", "Choose method", buttons);
     }
   }
 
   if (loading) {
     return (
       <ScreenBackground>
-        <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
+        <SafeAreaView style={styles.safe}>
           <View style={styles.centerContainer}>
-            <ActivityIndicator
-              size="large"
-              color={Colors.accent}
-              style={{ marginBottom: Spacing.lg }}
-            />
-            <Text style={styles.loadingText}>Loading your dashboard...</Text>
+            <ActivityIndicator size="large" color="#fff" />
+            <Text style={styles.loadingText}>Loading dashboard...</Text>
           </View>
         </SafeAreaView>
       </ScreenBackground>
@@ -151,479 +149,293 @@ export default function DashboardScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
-        <LinearGradient
-          colors={["#C3224E", "#8E1B3B"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.container}
-        >
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* HEADER - Premium greeting & profile */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
+      <LinearGradient
+        colors={["#05060A", "#0E1016", "#181A21"]}
+        style={styles.container}
+      >
+        <SafeAreaView style={styles.safe}>
+          {/* HEADER */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.greetingSmall}>Good to see you</Text>
+              <Text style={styles.greetingSmall}>Welcome back</Text>
               <Text style={styles.greetingMain}>{name}</Text>
             </View>
 
             <TouchableOpacity
               style={styles.profileButton}
               onPress={() => router.push("/profile")}
-              activeOpacity={0.75}
             >
               <Text style={styles.profileInitial}>{name[0]}</Text>
             </TouchableOpacity>
           </View>
 
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* HERO SECTION - Weekly profit display */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          <View style={styles.heroContent}>
+          {/* HERO PROFIT */}
+          <Animated.View entering={FadeInDown.delay(120)} style={styles.hero}>
             <Text style={styles.heroLabel}>Weekly Profit</Text>
 
             <Text style={styles.heroValue}>
               {formatCurrency(weekly.profit)}
             </Text>
 
-            {weekly.profit > 0 ? (
-              <Text style={styles.heroHint}>📈 On track this week</Text>
-            ) : (
-              <Text style={styles.heroHintNeutral}>Keep going strong</Text>
-            )}
-          </View>
+            <Text style={styles.heroHint}>
+              {weekly.profit > 0
+                ? "📈 You're profitable this week"
+                : "Keep pushing — next load matters"}
+            </Text>
+          </Animated.View>
 
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          {/* FLOATING CARD - White card with all content */}
-          {/* ═══════════════════════════════════════════════════════════════ */}
-          <View style={styles.floatingCard}>
+          {/* MAIN CONTENT */}
+          <View style={styles.card}>
             <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
                   onRefresh={handleRefresh}
-                  tintColor={Colors.accent}
                 />
               }
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
             >
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              {/* QUICK ACTION BUTTONS - Premium layout */}
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              <View style={styles.actionsSection}>
-                <View style={styles.actionGrid}>
-                  {/* Add Button */}
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={handleAddExpense}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={styles.actionIcon}>➕</Text>
-                    <Text style={styles.actionLabel}>Add Expense</Text>
-                    <Text style={styles.actionSubtext}>Scan or enter</Text>
-                  </TouchableOpacity>
+              {/* ACTION BUTTONS */}
 
-                  {/* History Button */}
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => router.push("/history")}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={styles.actionIcon}>📋</Text>
-                    <Text style={styles.actionLabel}>History</Text>
-                    <Text style={styles.actionSubtext}>All records</Text>
-                  </TouchableOpacity>
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={handleAddExpense}
+                >
+                  <Text style={styles.actionIcon}>➕</Text>
+                  <Text style={styles.actionLabel}>Add Expense</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => router.push("/history")}
+                >
+                  <Text style={styles.actionIcon}>📋</Text>
+                  <Text style={styles.actionLabel}>History</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* MONTHLY SUMMARY */}
+
+              <Text style={styles.sectionTitle}>Monthly Summary</Text>
+
+              <View style={styles.summaryCard}>
+                <Row
+                  label="BOL Income"
+                  value={formatCurrency(monthly.bolIncome)}
+                  color="#3EE58A"
+                />
+
+                <Divider />
+
+                <Row
+                  label="Expenses"
+                  value={formatCurrency(monthly.expenses)}
+                  color="#FF5A5A"
+                />
+
+                <Divider />
+
+                <Row
+                  label="Net Profit"
+                  value={formatCurrency(monthly.profit)}
+                  color={monthly.profit >= 0 ? "#3EE58A" : "#FF5A5A"}
+                  bold
+                />
+              </View>
+
+              {/* RECENT EXPENSES */}
+
+              <Text style={styles.sectionTitle}>Recent Expenses</Text>
+
+              {expenses.length === 0 ? (
+                <Text style={styles.emptyText}>
+                  No expenses recorded yet.
+                </Text>
+              ) : (
+                <View style={styles.expenseList}>
+                  {expenses.map((expense) => (
+                    <ExpenseCard key={expense.id} expense={expense} />
+                  ))}
                 </View>
-              </View>
-
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              {/* MONTHLY SUMMARY - Premium card design */}
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Monthly Summary</Text>
-
-                <View style={styles.summaryCard}>
-                  {/* Income Row */}
-                  <View style={styles.summaryRow}>
-                    <View style={styles.summaryLabel}>
-                      <Text style={styles.summaryIcon}>💰</Text>
-                      <View>
-                        <Text style={styles.summaryRowLabel}>Income</Text>
-                        <Text style={styles.summaryRowHint}>
-                          Total load payments
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.summaryRowValue}>
-                      {formatCurrency(monthly.income)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.divider} />
-
-                  {/* Expenses Row */}
-                  <View style={styles.summaryRow}>
-                    <View style={styles.summaryLabel}>
-                      <Text style={styles.summaryIcon}>💳</Text>
-                      <View>
-                        <Text style={styles.summaryRowLabel}>Expenses</Text>
-                        <Text style={styles.summaryRowHint}>
-                          Fuel + all costs
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={styles.summaryRowValue}>
-                      {formatCurrency(monthly.fuel + monthly.otherExpenses)}
-                    </Text>
-                  </View>
-
-                  <View style={styles.divider} />
-
-                  {/* Net Profit Row - Highlighted */}
-                  <View style={[styles.summaryRow, styles.summaryRowHighlight]}>
-                    <View style={styles.summaryLabel}>
-                      <Text style={styles.summaryIcon}>📊</Text>
-                      <View>
-                        <Text style={styles.summaryRowLabel}>Net Profit</Text>
-                        <Text style={styles.summaryRowHint}>This month</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.summaryRowValueHighlight}>
-                      {formatCurrency(
-                        monthly.income - (monthly.fuel + monthly.otherExpenses)
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              {/* RECENT EXPENSES SECTION - Premium list */}
-              {/* ═══════════════════════════════════════════════════════════════ */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Recent Expenses</Text>
-
-                {expenses.length === 0 ? (
-                  <View style={styles.emptyState}>
-                    <Text style={styles.emptyIcon}>📭</Text>
-                    <Text style={styles.emptyTitle}>No expenses yet</Text>
-                    <Text style={styles.emptyDesc}>
-                      Add your first receipt to get started
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.expensesList}>
-                    {expenses.map((expense, index) => (
-                      <View key={expense.id}>
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() =>
-                            router.push({
-                              pathname: "/expense-detail",
-                              params: { id: expense.id },
-                            })
-                          }
-                        >
-                          <ExpenseCard expense={expense} />
-                        </TouchableOpacity>
-                        {index < expenses.length - 1 && (
-                          <View style={styles.expensesDivider} />
-                        )}
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
+              )}
             </ScrollView>
           </View>
-        </LinearGradient>
-      </SafeAreaView>
+        </SafeAreaView>
+      </LinearGradient>
     </ScreenBackground>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-  },
+function Row({ label, value, color, bold }: any) {
+  return (
+    <View style={styles.row}>
+      <Text style={[styles.rowLabel, bold && styles.rowLabelBold]}>
+        {label}
+      </Text>
+      <Text style={[styles.rowValue, { color: color || "#fff" }, bold && styles.rowValueBold]}>
+        {value}
+      </Text>
+    </View>
+  );
+}
 
-  container: {
-    flex: 1,
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
-  },
+function Divider() {
+  return <View style={styles.divider} />;
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1 },
+
+  container: { flex: 1 },
 
   centerContainer: {
     flex: 1,
-    justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: Spacing.lg,
+    justifyContent: "center",
+    gap: 10,
   },
 
   loadingText: {
-    fontSize: FontSize.body,
-    color: Colors.textMuted,
-    fontWeight: FontWeight.medium,
+    color: "#fff",
+    fontSize: 16,
   },
-
-  // ─── HEADER ────────────────────────────────────────────────────────
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
   },
 
   greetingSmall: {
-    fontSize: FontSize.caption,
-    color: "rgba(255,255,255,0.7)",
-    fontWeight: FontWeight.medium,
-    marginBottom: Spacing.xs,
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 14,
   },
 
   greetingMain: {
-    fontSize: 24,
     color: "#fff",
-    fontWeight: FontWeight.extrabold,
+    fontSize: 26,
+    fontWeight: "800",
   },
 
   profileButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(255,255,255,0.12)",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.15)",
   },
 
   profileInitial: {
     color: "#fff",
-    fontWeight: FontWeight.bold,
-    fontSize: FontSize.section,
+    fontWeight: "700",
   },
 
-  // ─── HERO SECTION ──────────────────────────────────────────────────
-
-  heroContent: {
+  hero: {
     alignItems: "center",
-    paddingVertical: Spacing.xl,
+    marginTop: Spacing.xl,
   },
 
   heroLabel: {
-    fontSize: FontSize.body,
-    color: "rgba(255,255,255,0.75)",
-    fontWeight: FontWeight.medium,
-    marginBottom: Spacing.sm,
+    color: "rgba(255,255,255,0.6)",
   },
 
   heroValue: {
-    fontSize: 44,
+    fontSize: 42,
     color: "#fff",
-    fontWeight: FontWeight.extrabold,
-    marginBottom: Spacing.md,
+    fontWeight: "800",
   },
 
   heroHint: {
-    fontSize: FontSize.caption,
-    color: "#22C55E",
-    fontWeight: FontWeight.semibold,
-  },
-
-  heroHintNeutral: {
-    fontSize: FontSize.caption,
     color: "rgba(255,255,255,0.6)",
-    fontWeight: FontWeight.medium,
+    marginTop: 6,
   },
 
-  // ─── FLOATING CARD ────────────────────────────────────────────────
-
-  floatingCard: {
+  card: {
     flex: 1,
-    backgroundColor: Colors.card,
+    marginTop: Spacing.xl,
+    backgroundColor: "rgba(20,22,28,0.95)",
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    marginTop: Spacing.xl,
-    overflow: "hidden",
-    ...getShadow(Shadow.large),
   },
 
   scrollContent: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxxxl,
-  },
-
-  // ─── ACTIONS SECTION ────────────────────────────────────────────
-
-  actionsSection: {
-    marginBottom: Spacing.xl,
-  },
-
-  actionGrid: {
-    flexDirection: "row",
+    padding: Spacing.lg,
     gap: Spacing.lg,
+  },
+
+  actions: {
+    flexDirection: "row",
+    gap: Spacing.md,
   },
 
   actionButton: {
     flex: 1,
+    padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
-    backgroundColor: Colors.surfaceAlt,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
+    backgroundColor: "rgba(255,255,255,0.05)",
     alignItems: "center",
-    justifyContent: "center",
-    gap: Spacing.sm,
-    ...getShadow(Shadow.card),
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
   },
 
   actionIcon: {
-    fontSize: 28,
-    marginBottom: Spacing.xs,
+    fontSize: 26,
   },
 
   actionLabel: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    textAlign: "center",
-  },
-
-  actionSubtext: {
-    fontSize: FontSize.small,
-    color: Colors.textMuted,
-    textAlign: "center",
-  },
-
-  // ─── SECTIONS ──────────────────────────────────────────────────
-
-  section: {
-    marginBottom: Spacing.xl,
+    marginTop: 4,
+    color: "#fff",
   },
 
   sectionTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    marginBottom: Spacing.md,
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#fff",
   },
-
-  // ─── MONTHLY SUMMARY ────────────────────────────────────────────
 
   summaryCard: {
-    backgroundColor: Colors.surfaceAlt,
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    ...getShadow(Shadow.small),
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    padding: Spacing.md,
   },
 
-  summaryRow: {
+  row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: Spacing.md,
+    paddingVertical: 10,
   },
 
-  summaryLabel: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: Spacing.md,
-    flex: 1,
+  rowLabel: {
+    color: "rgba(255,255,255,0.6)",
   },
 
-  summaryIcon: {
-    fontSize: 24,
+  rowLabelBold: {
+    color: "#fff",
+    fontWeight: "800" as const,
   },
 
-  summaryRowLabel: {
-    fontSize: FontSize.body,
-    fontWeight: FontWeight.semibold,
-    color: Colors.textPrimary,
+  rowValue: {
+    color: "#f8f1f1",
+    fontWeight: "700",
   },
 
-  summaryRowHint: {
-    fontSize: FontSize.caption,
-    color: Colors.textMuted,
-    marginTop: Spacing.xs,
-  },
-
-  summaryRowValue: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-    textAlign: "right",
-  },
-
-  summaryRowHighlight: {
-    paddingHorizontal: Spacing.md,
-    marginHorizontal: -Spacing.md,
-    marginVertical: Spacing.xs,
-    paddingVertical: Spacing.lg,
-    backgroundColor: ColorUtilities.accentLight10,
-    borderRadius: BorderRadius.md,
-  },
-
-  summaryRowValueHighlight: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.extrabold,
-    color: Colors.accent,
-    textAlign: "right",
+  rowValueBold: {
+    fontWeight: "900" as const,
+    fontSize: 18,
   },
 
   divider: {
     height: 1,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
 
-  // ─── EXPENSES LIST ─────────────────────────────────────────────
-
-  expensesList: {
-    borderRadius: BorderRadius.lg,
-    overflow: "hidden",
-    backgroundColor: Colors.card,
-    ...getShadow(Shadow.card),
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+  expenseList: {
+    gap: 12,
   },
 
-  expensesDivider: {
-    height: 1,
-    backgroundColor: Colors.border,
-  },
-
-  // ─── EMPTY STATE ────────────────────────────────────────────────
-
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.xxl,
-    gap: Spacing.md,
-  },
-
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.sm,
-  },
-
-  emptyTitle: {
-    fontSize: FontSize.subsection,
-    fontWeight: FontWeight.bold,
-    color: Colors.textPrimary,
-  },
-
-  emptyDesc: {
-    fontSize: FontSize.body,
-    color: Colors.textMuted,
-    textAlign: "center",
-    paddingHorizontal: Spacing.lg,
+  emptyText: {
+    color: "rgba(255,255,255,0.6)",
   },
 });

@@ -1,8 +1,7 @@
 import PremiumButton from "@/components/PremiumButton";
 import ScreenBackground from "@/components/ScreenBackground";
 
-import { getShadow } from "@/constants/shadowUtils";
-import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing, TypographyScale } from "@/constants/theme";
+import { BorderRadius, FontSize, FontWeight, Spacing } from "@/constants/theme";
 
 import { addExpense, getDashboardStats } from "@/lib/expenseService";
 import { formatCurrency, parseAmount, todayISO } from "@/lib/formatUtils";
@@ -14,15 +13,15 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -73,9 +72,7 @@ export default function AddExpenseScreen() {
       try {
         const stats = await getDashboardStats();
         setTodayTotal(stats.todayTotal);
-      } catch (e) {
-        console.error(e);
-      }
+      } catch {}
     })();
   }, []);
 
@@ -107,7 +104,7 @@ export default function AddExpenseScreen() {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       router.back();
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Failed to save expense");
     } finally {
       setSaving(false);
@@ -119,56 +116,61 @@ export default function AddExpenseScreen() {
 
   return (
     <ScreenBackground>
-      <SafeAreaView style={styles.safe} edges={["top", "left", "right", "bottom"]}>
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.container}>
+      <LinearGradient
+        colors={["#05060A", "#0E1016", "#181A21"]}
+        style={styles.container}
+      >
+        <SafeAreaView style={styles.safe}>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
             {/* HERO */}
-            <LinearGradient
-              colors={[Colors.primary, "#E8B107"]}
-              style={styles.heroSection}
-            >
-              <View style={styles.heroTopBar}>
+
+            <View style={styles.heroSection}>
+              <View style={styles.topBar}>
                 <TouchableOpacity onPress={() => router.back()}>
-                  <Text style={styles.heroBackText}>✕</Text>
+                  <Text style={styles.close}>✕</Text>
                 </TouchableOpacity>
 
-                <Text style={styles.heroTitle}>Add Expense</Text>
-                <View style={{ width: 40 }} />
+                <Text style={styles.title}>Add Expense</Text>
+
+                <View style={{ width: 30 }} />
               </View>
 
-              <View style={styles.heroAmountCenter}>
-                <Text style={styles.heroAmountLabel}>Amount</Text>
+              <View style={styles.amountCenter}>
+                <Text style={styles.amountLabel}>Expense Amount</Text>
 
-                <View style={styles.heroAmountDisplay}>
-                  <Text style={styles.heroAmountCurrency}>$</Text>
+                <View style={styles.amountDisplay}>
+                  <Text style={styles.currency}>$</Text>
 
                   <TextInput
                     ref={amountRef}
-                    style={styles.heroAmountInput}
+                    style={styles.amountInput}
                     value={amount}
                     onChangeText={setAmount}
                     keyboardType="decimal-pad"
                     placeholder="0"
+                    placeholderTextColor="rgba(255,255,255,0.3)"
                   />
                 </View>
 
                 {parsedAmount > 0 && (
-                  <Text style={styles.heroProjectedTotal}>
-                    Today: {formatCurrency(projectedTotal)}
+                  <Text style={styles.projected}>
+                    Today total: {formatCurrency(projectedTotal)}
                   </Text>
                 )}
               </View>
-            </LinearGradient>
+            </View>
 
             {/* CARD */}
+
             <View style={styles.card}>
               <ScrollView contentContainerStyle={styles.content}>
                 {/* QUICK */}
+
                 <Animated.View entering={FadeInDown}>
-                  <Text style={styles.sectionTitle}>Quick Amounts</Text>
+                  <Text style={styles.sectionTitle}>Quick Amount</Text>
 
                   <View style={styles.quickGrid}>
                     {QUICK_AMOUNTS.map((qa) => (
@@ -184,7 +186,8 @@ export default function AddExpenseScreen() {
                 </Animated.View>
 
                 {/* CATEGORY */}
-                <Animated.View entering={FadeInDown.delay(50)}>
+
+                <Animated.View entering={FadeInDown.delay(80)}>
                   <Text style={styles.sectionTitle}>Category</Text>
 
                   <View style={styles.categoryGrid}>
@@ -193,28 +196,23 @@ export default function AddExpenseScreen() {
                         key={cat}
                         style={[
                           styles.categoryBtn,
-                          category === cat && styles.categoryBtnActive,
+                          category === cat && styles.categoryActive,
                         ]}
                         onPress={() => setCategory(cat)}
                       >
                         <Text style={styles.categoryIcon}>
                           {CATEGORY_EMOJIS[cat]}
                         </Text>
-                        <Text
-                          style={[
-                            styles.categoryText,
-                            category === cat && styles.categoryTextActive,
-                          ]}
-                        >
-                          {cat}
-                        </Text>
+
+                        <Text style={styles.categoryText}>{cat}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 </Animated.View>
 
-                {/* INPUTS */}
-                <Animated.View entering={FadeInDown.delay(100)}>
+                {/* DETAILS */}
+
+                <Animated.View entering={FadeInDown.delay(140)}>
                   <Text style={styles.sectionTitle}>Details</Text>
 
                   <TextInput
@@ -227,13 +225,15 @@ export default function AddExpenseScreen() {
                     style={[styles.input, styles.notes]}
                     value={note}
                     onChangeText={setNote}
+                    placeholder="Add a note..."
+                    placeholderTextColor="rgba(255,255,255,0.4)"
                     multiline
-                    placeholder="Note"
                   />
                 </Animated.View>
               </ScrollView>
 
               {/* FOOTER */}
+
               <Animated.View entering={FadeInUp} style={styles.footer}>
                 <PremiumButton
                   label="Save Expense"
@@ -247,9 +247,9 @@ export default function AddExpenseScreen() {
                 </TouchableOpacity>
               </Animated.View>
             </View>
-          </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </LinearGradient>
     </ScreenBackground>
   );
 }
@@ -257,77 +257,86 @@ export default function AddExpenseScreen() {
 /* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
+  container: {
+    flex: 1,
+  },
 
-  container: { flex: 1 },
+  safe: {
+    flex: 1,
+  },
 
   heroSection: {
+    paddingTop: 40,
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.lg,
   },
 
-  heroTopBar: {
+  topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-  },
-
-  heroBackText: {
-    fontSize: 24,
-  },
-
-  heroTitle: {
-    ...TypographyScale.title,
-  },
-
-  heroAmountCenter: {
-    flex: 1,
     alignItems: "center",
-    justifyContent: "center",
   },
 
-  heroAmountDisplay: {
+  close: {
+    fontSize: 24,
+    color: "#fff",
+  },
+
+  title: {
+    fontSize: 20,
+    color: "#fff",
+    fontWeight: "700",
+  },
+
+  amountCenter: {
+    alignItems: "center",
+    marginTop: 40,
+  },
+
+  amountLabel: {
+    color: "rgba(255,255,255,0.6)",
+    marginBottom: 12,
+  },
+
+  amountDisplay: {
     flexDirection: "row",
     alignItems: "center",
   },
 
-  heroAmountLabel: {
-    ...TypographyScale.body,
-    marginBottom: Spacing.sm,
+  currency: {
+    fontSize: 42,
+    color: "#fff",
+    marginRight: 4,
   },
 
-  heroAmountCurrency: {
-    ...TypographyScale.display,
+  amountInput: {
+    fontSize: 42,
+    fontWeight: "700",
+    color: "#fff",
   },
 
-  heroAmountInput: {
-    ...TypographyScale.display,
-  },
-
-  heroProjectedTotal: {
-    marginTop: Spacing.sm,
+  projected: {
+    marginTop: 10,
+    color: "rgba(255,255,255,0.6)",
   },
 
   card: {
     flex: 1,
-    marginTop: -Spacing.xl,
-    backgroundColor: Colors.card,
+    marginTop: 40,
+    backgroundColor: "rgba(20,22,28,0.95)",
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
-    overflow: "hidden",
-    ...getShadow(Shadow.large),
   },
 
   content: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xxxxl,
+    padding: Spacing.lg,
     gap: Spacing.lg,
   },
 
   sectionTitle: {
-    ...TypographyScale.subtitle,
-    marginBottom: Spacing.md,
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 10,
   },
 
   quickGrid: {
@@ -337,17 +346,16 @@ const styles = StyleSheet.create({
 
   quickBtn: {
     flex: 1,
-    padding: Spacing.md,
-    alignItems: "center",
-    backgroundColor: Colors.surfaceAlt,
+    padding: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...getShadow(Shadow.small),
+    alignItems: "center",
   },
 
   quickText: {
-    ...TypographyScale.body,
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 
   categoryGrid: {
@@ -357,56 +365,45 @@ const styles = StyleSheet.create({
   },
 
   categoryBtn: {
-    flex: 1,
-    minWidth: "30%",
-    padding: Spacing.md,
-    alignItems: "center",
-    backgroundColor: Colors.surfaceAlt,
+    width: "30%",
+    padding: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    ...getShadow(Shadow.small),
+    alignItems: "center",
   },
 
-  categoryBtnActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+  categoryActive: {
+    backgroundColor: "#3B82F6",
   },
 
   categoryIcon: {
-    fontSize: FontSize.body,
+    fontSize: 22,
   },
 
   categoryText: {
-    ...TypographyScale.small,
-  },
-
-  categoryTextActive: {
-    color: Colors.textInverse,
-    fontWeight: FontWeight.bold,
+    color: "#fff",
+    marginTop: 6,
   },
 
   input: {
-    backgroundColor: Colors.surface,
-    padding: Spacing.md,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    padding: 14,
     borderRadius: BorderRadius.md,
-    marginBottom: Spacing.md,
+    color: "#fff",
+    marginBottom: 10,
   },
 
   notes: {
-    height: 100,
+    height: 90,
   },
 
   footer: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    padding: Spacing.lg,
   },
 
   cancel: {
     textAlign: "center",
-    marginTop: Spacing.md,
-    color: Colors.textMuted,
+    marginTop: 12,
+    color: "rgba(255,255,255,0.5)",
   },
 });

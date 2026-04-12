@@ -10,8 +10,9 @@ import {
     TypographyScale,
     type Category
 } from "@/constants/theme";
-import { getCurrentMonthCategoryTotals } from "@/lib/expenseService";
+import { getCurrentMonthCategoryTotals, getMonthlyProfit } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
+import type { MonthlyProfit } from "@/lib/expenseService";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
@@ -45,6 +46,11 @@ export default function MonthlySummaryScreen() {
     toll: 0,
     other: 0,
   });
+  const [profit, setProfit] = useState<MonthlyProfit>({
+    bolIncome: 0,
+    expenses: 0,
+    profit: 0,
+  });
 
   const totalMonth = useMemo(
     () => Object.values(totals).reduce((sum, amount) => sum + amount, 0),
@@ -64,8 +70,12 @@ export default function MonthlySummaryScreen() {
     setLoading(true);
 
     try {
-      const nextTotals = await getCurrentMonthCategoryTotals();
+      const [nextTotals, profitData] = await Promise.all([
+        getCurrentMonthCategoryTotals(),
+        getMonthlyProfit(),
+      ]);
       setTotals(nextTotals);
+      setProfit(profitData);
     } finally {
       setLoading(false);
     }
@@ -109,10 +119,44 @@ export default function MonthlySummaryScreen() {
               contentContainerStyle={styles.content}
               showsVerticalScrollIndicator={false}
             >
-              <View style={styles.totalCard}>
-                <Text style={styles.totalLabel}>Total This Month</Text>
-                <Text style={styles.totalValue}>{formatCurrency(totalMonth)}</Text>
-              </View>
+              {/* PROFIT SECTION */}
+              <Animated.View entering={FadeInDown.springify()} style={styles.profitSection}>
+                <View style={styles.profitCard}>
+                  <View style={styles.profitRow}>
+                    <Text style={styles.profitLabel}>BOL Income</Text>
+                    <Text style={[styles.profitValue, { color: "#3EE58A" }]}>
+                      {formatCurrency(profit.bolIncome)}
+                    </Text>
+                  </View>
+
+                  <View style={[styles.profitRow, styles.profitRowBorder]}>
+                    <Text style={styles.profitLabel}>Expenses</Text>
+                    <Text style={[styles.profitValue, { color: "#FF5A5A" }]}>
+                      -{formatCurrency(profit.expenses)}
+                    </Text>
+                  </View>
+
+                  <View style={styles.profitRow}>
+                    <Text style={styles.profitLabelBold}>Net Profit</Text>
+                    <Text
+                      style={[
+                        styles.profitValueBold,
+                        { color: profit.profit >= 0 ? "#3EE58A" : "#FF5A5A" },
+                      ]}
+                    >
+                      {formatCurrency(profit.profit)}
+                    </Text>
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* EXPENSES BREAKDOWN */}
+              <Animated.View entering={FadeInDown.delay(80).springify()}>
+                <View style={styles.totalCard}>
+                  <Text style={styles.totalLabel}>Expenses Breakdown</Text>
+                  <Text style={styles.totalValue}>{formatCurrency(totalMonth)}</Text>
+                </View>
+              </Animated.View>
 
               {ORDERED_CATEGORIES.map((category, index) => {
                 const meta = CategoryMeta[category];
@@ -255,5 +299,46 @@ const styles = StyleSheet.create({
   rowValue: {
     ...TypographyScale.subtitle,
     fontWeight: FontWeight.bold,
+  },
+  profitSection: {
+    marginBottom: Spacing.sm,
+  },
+  profitCard: {
+    backgroundColor: "rgba(79, 140, 255, 0.08)",
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: "rgba(79, 140, 255, 0.2)",
+    padding: Spacing.lg,
+    ...getShadow(Shadow.small),
+  },
+  profitRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: Spacing.md,
+  },
+  profitRowBorder: {
+    borderTopWidth: 1,
+    borderTopColor: "rgba(79, 140, 255, 0.1)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(79, 140, 255, 0.1)",
+  },
+  profitLabel: {
+    ...TypographyScale.body,
+    color: Colors.textSecondary,
+    fontWeight: FontWeight.semibold,
+  },
+  profitLabelBold: {
+    ...TypographyScale.body,
+    color: Colors.textPrimary,
+    fontWeight: FontWeight.bold,
+  },
+  profitValue: {
+    ...TypographyScale.subtitle,
+    fontWeight: FontWeight.bold,
+  },
+  profitValueBold: {
+    fontSize: 20,
+    fontWeight: "800" as const,
   },
 });
