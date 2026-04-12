@@ -9,24 +9,30 @@ This Privacy Policy explains how TruckerLedger ("we", "us", or "our") handles in
 We collect and process the following categories of information depending on how you use the App:
 
 ### A. Account and Sign-In Data
+
 - Name and email address from your sign-in provider (Google or Apple) when you choose to sign in.
 - Basic account identifiers needed to authenticate your session.
 
 ### B. Data You Enter in the App
+
 - Expense records (for example: amount, category, note, date).
 - Trip records (for example: income, fuel and other costs, profit, date, notes).
 - BOL records (for example: pickup and delivery locations, load amount, date, broker details).
 
 ### C. Receipt and BOL Images
+
 - Images you capture or select for receipts and BOLs.
 - OCR-extracted text from those images.
 
 ### D. Device and Local Storage Data
+
 - App data stored locally on your device (for example, SQLite/AsyncStorage data used by app features).
 - Backup status metadata (for example, last backup time and backup size) when cloud backup is used.
 
 ### E. Permissions
+
 Depending on platform and feature use, the App may request:
+
 - Camera access (to scan receipts and documents).
 - Photo library access (to attach images from your device).
 - Photo library add/save access (where supported).
@@ -34,6 +40,7 @@ Depending on platform and feature use, the App may request:
 ## 2. How We Use Information
 
 We use your information to:
+
 - Provide core features like logging expenses, tracking trips, and storing BOL details.
 - Scan and parse receipt/BOL text using OCR and related parsing flows.
 - Authenticate users and maintain account sessions.
@@ -67,6 +74,7 @@ These providers process data according to their own privacy terms and security p
 We do not sell your personal information.
 
 We share data only as needed to operate App features, including:
+
 - Authentication providers you choose (Google/Apple).
 - Cloud infrastructure and backend processing providers (such as Appwrite and AI API processing when used).
 
@@ -77,6 +85,7 @@ We take reasonable administrative and technical measures to protect information.
 ## 8. Your Choices and Controls
 
 You can:
+
 - Decline optional permissions (some features may not work).
 - Choose whether to use cloud-backed account features.
 - Remove app data from your device by deleting records or uninstalling the App.
@@ -99,6 +108,6 @@ We may update this Privacy Policy from time to time. We will update the effectiv
 
 If you have questions, requests, or concerns about this Privacy Policy or your data, contact us at:
 
-- GitHub issues: https://github.com/Nishan456singh/TruckerLedger/issues
+- GitHub issues: [https://github.com/Nishan456singh/TruckerLedger/issues](https://github.com/Nishan456singh/TruckerLedger/issues)
 
 If you prefer to provide a support email, replace the contact method above with your official privacy contact address.
