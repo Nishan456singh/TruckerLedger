@@ -1,113 +1,162 @@
 # Privacy Policy for TruckerLedger
 
-Effective date: April 11, 2026
+Effective Date: April 11, 2026
+Last Updated: April 11, 2026
 
-This Privacy Policy explains how TruckerLedger ("we", "us", or "our") handles information when you use the TruckerLedger mobile application (the "App").
+This Privacy Policy describes how TruckerLedger for iOS ("TruckerLedger," "we," "us," or "our") collects, uses, stores, and protects information when you use the TruckerLedger mobile application (the "App").
 
-## 1. Information We Collect
+TruckerLedger is developed and operated by Nishan Singh.
 
-We collect and process the following categories of information depending on how you use the App:
+By using the App, you acknowledge that you have read and understood this Privacy Policy.
 
-### A. Account and Sign-In Data
+## 1. Information Collection
 
-- Name and email address from your sign-in provider (Google or Apple) when you choose to sign in.
-- Basic account identifiers needed to authenticate your session.
+TruckerLedger is designed to minimize data collection and primarily stores user data locally on your device.
 
-### B. Data You Enter in the App
+### 1.1 Information You Provide in the App
 
-- Expense records (for example: amount, category, note, date).
-- Trip records (for example: income, fuel and other costs, profit, date, notes).
-- BOL records (for example: pickup and delivery locations, load amount, date, broker details).
+When using TruckerLedger, you may create and store:
 
-### C. Receipt and BOL Images
+- Expense records (for example, amount, category, date, merchant, and notes).
+- Receipt images and related extracted text.
+- Trip details (for example, revenue, costs, fuel entries, and profit calculations).
+- Notes and related bookkeeping content.
 
-- Images you capture or select for receipts and BOLs.
-- OCR-extracted text from those images.
+### 1.2 Authentication Information (Optional)
 
-### D. Device and Local Storage Data
+If you choose to sign in, the App may receive limited account information from:
 
-- App data stored locally on your device (for example, SQLite/AsyncStorage data used by app features).
-- Backup status metadata (for example, last backup time and backup size) when cloud backup is used.
+- Google Sign-In
+- Apple Sign-In
 
-### E. Permissions
+This may include your name, email address, and a unique account identifier provided by Google or Apple for authentication purposes.
 
-Depending on platform and feature use, the App may request:
+### 1.3 Device Permissions
+
+To provide key features, the App may request:
 
 - Camera access (to scan receipts and documents).
-- Photo library access (to attach images from your device).
-- Photo library add/save access (where supported).
+- Photo Library access (to select and upload receipt images).
 
-## 2. How We Use Information
+You may deny these permissions at any time through iOS settings, but certain features may not function correctly.
 
-We use your information to:
+### 1.4 Information We Do Not Collect
 
-- Provide core features like logging expenses, tracking trips, and storing BOL details.
-- Scan and parse receipt/BOL text using OCR and related parsing flows.
-- Authenticate users and maintain account sessions.
-- Provide optional cloud backup and restore functionality.
-- Improve reliability, security, and performance of the App.
+- We do not collect or sell personal data for advertising.
+- We do not use third-party analytics tools at this time.
+- We do not intentionally collect sensitive personal data beyond what you choose to enter for bookkeeping use.
 
-## 3. Cloud Services and Third Parties
+## 2. How Information Is Used
 
-The App uses the following third-party services:
+We use information only to provide and improve core App functionality, including:
 
-- Appwrite (authentication, optional cloud backup/storage, backend functions).
-- Google Sign-In and Apple Sign-In (when you choose those login methods).
-- OpenAI API (used by the receipt-ai function for parsing tasks where configured by the app backend).
+- Storing and organizing expense and trip records.
+- Processing receipt scans and related bookkeeping entries.
+- Calculating trip profitability and summaries.
+- Enabling optional secure authentication with Google or Apple.
+- Maintaining app stability, security, and performance.
 
-These providers process data according to their own privacy terms and security practices.
+We do not use your data for behavioral advertising or data brokerage.
 
-## 4. OCR and AI Processing
+## 3. Data Storage and Security
 
-- OCR may run on-device (for supported builds/features).
-- If backend AI parsing is enabled/configured, text content from receipts or BOL-related workflows may be sent to backend services and external AI APIs to return structured fields.
-- You control what images/text are captured or submitted through your use of the App.
+### 3.1 Local Storage Model
 
-## 5. Data Storage and Retention
+TruckerLedger stores operational data locally on your iOS device using SQLite.
 
-- Local data is stored on your device unless you use cloud backup features.
-- If cloud backup is enabled, backup payloads may be stored in your Appwrite project associated with your authenticated account.
-- Data retention depends on your usage and deletions. Local data can be removed by deleting records and/or uninstalling the App. Cloud backups remain until removed from backend storage.
+### 3.2 External Storage
 
-## 6. Data Sharing
+No sensitive personal data is stored on external servers by default.
 
-We do not sell your personal information.
+If you use optional sign-in features, authentication is handled through Google and Apple OAuth systems. TruckerLedger does not store your Google or Apple password.
 
-We share data only as needed to operate App features, including:
+### 3.3 Security Measures
 
-- Authentication providers you choose (Google/Apple).
-- Cloud infrastructure and backend processing providers (such as Appwrite and AI API processing when used).
+We implement reasonable administrative and technical safeguards appropriate to the nature of the data and App architecture. However, no storage or transmission method is completely secure, and absolute security cannot be guaranteed.
 
-## 7. Security
+## 4. Third-Party Services (Google and Apple Sign-In)
 
-We take reasonable administrative and technical measures to protect information. No method of transmission or storage is 100% secure, so absolute security cannot be guaranteed.
+TruckerLedger may integrate with the following third-party authentication providers:
 
-## 8. Your Choices and Controls
+- Google Sign-In
+- Apple Sign-In
 
-You can:
+These providers process authentication data under their own terms and privacy policies. We encourage you to review:
 
-- Decline optional permissions (some features may not work).
-- Choose whether to use cloud-backed account features.
-- Remove app data from your device by deleting records or uninstalling the App.
+- Google Privacy Policy: <https://policies.google.com/privacy>
+- Apple Privacy Policy: <https://www.apple.com/legal/privacy/>
 
-For account or cloud-data deletion requests, contact us using the method below.
+We do not sell or share your App data with third parties for marketing purposes.
 
-## 9. Children's Privacy
+## 5. Data Sharing and Sale Statement
 
-The App is not directed to children under 13, and we do not knowingly collect personal information from children under 13.
+- We do not sell personal information.
+- We do not share personal information with third parties for cross-context behavioral advertising.
+- We only use third-party services where necessary to provide optional authentication functionality.
 
-## 10. International Users
+## 6. User Rights and Choices
 
-Your data may be processed in regions where our service providers operate. By using the App, you understand that data handling may occur outside your home jurisdiction.
+Depending on your jurisdiction, including under GDPR and CCPA/CPRA, you may have rights regarding your personal information.
 
-## 11. Changes to This Policy
+### 6.1 General Rights (GDPR-Friendly)
 
-We may update this Privacy Policy from time to time. We will update the effective date above when changes are made.
+Where applicable, you may have the right to:
 
-## 12. Contact
+- Request access to personal information we process.
+- Request correction of inaccurate personal information.
+- Request deletion of personal information.
+- Object to or request restriction of certain processing.
+- Request data portability where legally applicable.
 
-If you have questions, requests, or concerns about this Privacy Policy or your data, contact us at:
+### 6.2 California Rights (CCPA/CPRA-Friendly)
 
-- GitHub issues: [https://github.com/Nishan456singh/TruckerLedger/issues](https://github.com/Nishan456singh/TruckerLedger/issues)
+California residents may have the right to:
 
-If you prefer to provide a support email, replace the contact method above with your official privacy contact address.
+- Know what personal information is collected and how it is used.
+- Request deletion of personal information.
+- Request correction of inaccurate personal information.
+- Receive equal service and pricing without discrimination for exercising privacy rights.
+
+Because TruckerLedger primarily stores data locally, many requests can be fulfilled directly by you through device controls.
+
+### 6.3 How to Delete Data
+
+- You can delete App data by uninstalling TruckerLedger from your device.
+- If optional authentication is used, you may also contact us to request assistance with any related account-linked data handling.
+
+## 7. Analytics and Future Changes to Processing
+
+TruckerLedger does not currently use third-party analytics SDKs.
+
+If analytics or additional processors are added in the future, we will:
+
+- Update this Privacy Policy before or at launch of the new processing activity.
+- Describe what data is collected, why it is collected, and with whom it is shared.
+- Implement applicable consent and compliance requirements.
+
+## 8. Children's Privacy (13+)
+
+TruckerLedger is intended for users age 13 and older and is not directed to children under 13.
+
+We do not knowingly collect personal information from children under 13. If you believe a child under 13 has provided personal information, contact us so we can review and take appropriate action.
+
+## 9. International Users
+
+If you use TruckerLedger outside your home country, you understand that information may be processed according to this Privacy Policy and applicable laws in relevant jurisdictions.
+
+## 10. Changes to This Privacy Policy
+
+We may update this Privacy Policy from time to time to reflect legal, technical, or business changes.
+
+When we make material updates, we will revise the "Last Updated" date above. Continued use of the App after updates constitutes acceptance of the revised policy to the extent permitted by law.
+
+## 11. Apple App Store Compliance Statement
+
+This Privacy Policy is intended to support compliance with applicable Apple App Store Review Guidelines and related legal requirements for transparency, user notice, and data handling disclosures.
+
+## 12. Contact Information
+
+If you have questions, requests, or privacy-related concerns, contact:
+
+Nishan Singh  
+Email: [nishan456singh@gmail.com](mailto:nishan456singh@gmail.com)
