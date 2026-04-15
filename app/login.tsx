@@ -1,16 +1,14 @@
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 import {
-  BorderRadius,
-  Colors,
-  FontWeight,
   Spacing,
-  TypographyScale,
+  TypographyScale
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
 
 import * as AppleAuthentication from "expo-apple-authentication";
+import * as Linking from "expo-linking";
 
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -36,6 +34,10 @@ const logo = require("@/assets/images/icon.png");
 
 const ERROR_DISMISS_TIMEOUT = 5000;
 
+// Legal document URLs
+const TERMS_URL = "https://nishan456singh.github.io/TruckerLedger/TERMS.html";
+const PRIVACY_URL = "https://nishan456singh.github.io/TruckerLedger/PRIVACY_POLICY.html";
+
 export default function LoginScreen() {
   const { signInGoogle, signInApple } = useAuth();
 
@@ -50,6 +52,19 @@ export default function LoginScreen() {
     const timer = setTimeout(() => setErrorMsg(null), ERROR_DISMISS_TIMEOUT);
     return () => clearTimeout(timer);
   }, [errorMsg]);
+
+  const handleOpenLink = useCallback(async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        setErrorMsg("Unable to open link.");
+      }
+    } catch (err) {
+      setErrorMsg("Failed to open link.");
+    }
+  }, []);
 
   const handleGoogleSignIn = useCallback(async () => {
     if (anyLoading) return;
@@ -192,9 +207,19 @@ export default function LoginScreen() {
 
                 <Text style={styles.legal}>
                   By continuing you agree to our{" "}
-                  <Text style={styles.link}>Terms</Text>{" "}
-                  and{" "}
-                  <Text style={styles.link}>Privacy Policy</Text>
+                  <Text
+                    style={styles.link}
+                    onPress={() => handleOpenLink(TERMS_URL)}
+                  >
+                    Terms
+                  </Text>
+                  {" "}and{" "}
+                  <Text
+                    style={styles.link}
+                    onPress={() => handleOpenLink(PRIVACY_URL)}
+                  >
+                    Privacy Policy
+                  </Text>
                 </Text>
 
               </View>
