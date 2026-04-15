@@ -34,7 +34,7 @@ const logo = require("@/assets/images/icon.png");
 
 const ERROR_DISMISS_TIMEOUT = 5000;
 
-// Legal document URLs
+// Legal document URLs - served from GitHub Pages docs/ folder
 const TERMS_URL = "https://nishan456singh.github.io/TruckerLedger/TERMS.html";
 const PRIVACY_URL = "https://nishan456singh.github.io/TruckerLedger/PRIVACY_POLICY.html";
 
