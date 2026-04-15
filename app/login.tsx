@@ -34,9 +34,9 @@ const logo = require("@/assets/images/icon.png");
 
 const ERROR_DISMISS_TIMEOUT = 5000;
 
-// Legal document URLs - served from GitHub Pages docs/ folder
-const TERMS_URL = "https://nishan456singh.github.io/TruckerLedger/TERMS.html";
-const PRIVACY_URL = "https://nishan456singh.github.io/TruckerLedger/PRIVACY_POLICY.html";
+// Legal document URLs - served from raw GitHub
+const TERMS_URL = "https://raw.githubusercontent.com/Nishan456singh/TruckerLedger/main/docs/TERMS.html";
+const PRIVACY_URL = "https://raw.githubusercontent.com/Nishan456singh/TruckerLedger/main/docs/PRIVACY_POLICY.html";
 
 export default function LoginScreen() {
   const { signInGoogle, signInApple } = useAuth();
