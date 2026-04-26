@@ -1,6 +1,6 @@
+import CategorySelector from "@/components/CategorySelector";
 import PrimaryButton from "@/components/PrimaryButton";
 import ScreenBackground from "@/components/ScreenBackground";
-import CategorySelector from "@/components/CategorySelector";
 
 import { addExpense } from "@/lib/expenseService";
 import { extractReceiptText } from "@/lib/receipt/ocrService";
@@ -56,37 +56,8 @@ export default function ScanReceiptScreen() {
 
   const [isCapturing, setIsCapturing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isOCRing, setIsOCRing] = useState(false);
+  const [, setIsOCRing] = useState(false);
   const [ocrStatus, setOcrStatus] = useState("");
-
-  /* ---------------- CAPTURE ---------------- */
-
-  const handleCapture = useCallback(async () => {
-    if (!cameraRef.current || isCapturing) return;
-
-    try {
-      setIsCapturing(true);
-
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.8,
-      });
-
-      const result = await saveImageLocally(photo.uri, "receipts");
-
-      if (!result.success || !result.path) {
-        Alert.alert("Error", "Failed to save receipt image");
-        return;
-      }
-
-      setImageUri(result.path);
-
-      performOCR(result.path);
-    } catch (e) {
-      Alert.alert("Error", "Failed to capture receipt");
-    } finally {
-      setIsCapturing(false);
-    }
-  }, [isCapturing]);
 
   /* ---------------- OCR ---------------- */
 
@@ -117,6 +88,35 @@ export default function ScanReceiptScreen() {
       setIsOCRing(false);
     }
   }, []);
+
+  /* ---------------- CAPTURE ---------------- */
+
+  const handleCapture = useCallback(async () => {
+    if (!cameraRef.current || isCapturing) return;
+
+    try {
+      setIsCapturing(true);
+
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.8,
+      });
+
+      const result = await saveImageLocally(photo.uri, "receipts");
+
+      if (!result.success || !result.path) {
+        Alert.alert("Error", "Failed to save receipt image");
+        return;
+      }
+
+      setImageUri(result.path);
+
+      performOCR(result.path);
+    } catch {
+      Alert.alert("Error", "Failed to capture receipt");
+    } finally {
+      setIsCapturing(false);
+    }
+  }, [isCapturing, performOCR]);
 
   /* ---------------- SAVE ---------------- */
 

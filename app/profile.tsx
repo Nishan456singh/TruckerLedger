@@ -214,6 +214,23 @@ export default function ProfileScreen() {
                   <Tool label="Reports" icon="📊" onPress={() => router.push("/monthly-report")} />
                 </View>
               </Animated.View>
+
+              <Animated.View entering={FadeInDown.delay(180)}>
+                <Text style={styles.sectionTitle}>Legal</Text>
+
+                <View style={styles.grid}>
+                  <Tool
+                    label="Terms"
+                    icon="📄"
+                    onPress={() => router.push("/legal/terms")}
+                  />
+                  <Tool
+                    label="Privacy"
+                    icon="🔒"
+                    onPress={() => router.push("/legal/privacy")}
+                  />
+                </View>
+              </Animated.View>
             </ScrollView>
 
             {/* FOOTER */}
@@ -233,7 +250,18 @@ export default function ProfileScreen() {
 
 /* ---------------- COMPONENTS ---------------- */
 
-function StatCard({ label, value }: any) {
+type StatCardProps = {
+  label: string;
+  value: string;
+};
+
+type ToolProps = {
+  label: string;
+  icon: string;
+  onPress: () => void;
+};
+
+function StatCard({ label, value }: StatCardProps) {
   return (
     <View style={styles.statCard}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -242,7 +270,7 @@ function StatCard({ label, value }: any) {
   );
 }
 
-function Tool({ label, icon, onPress }: any) {
+function Tool({ label, icon, onPress }: ToolProps) {
   return (
     <TouchableOpacity style={styles.tool} onPress={onPress}>
       <Text style={styles.toolIcon}>{icon}</Text>

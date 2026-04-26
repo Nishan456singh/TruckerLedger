@@ -1,5 +1,5 @@
-import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
 import { getShadow } from '@/constants/shadowUtils';
+import { BorderRadius, Colors, FontSize, FontWeight, Shadow, Spacing } from '@/constants/theme';
 import { SCALE_VALUES, SPRING_CONFIGS } from '@/lib/animationUtils';
 import { pressHaptic } from '@/lib/hapticUtils';
 import React, { useCallback, useMemo } from 'react';
@@ -17,8 +17,6 @@ import Animated, {
     withSpring,
     withTiming,
 } from 'react-native-reanimated';
-
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'outline' | 'danger';
 type ButtonSize = 'small' | 'medium' | 'large';
@@ -114,7 +112,7 @@ export default function PremiumButton({
       fullWidth && { width: '100%' },
       disabled && styles.disabled,
     ];
-  }, [variant, size, disabled, fullWidth, sizeStyle, variantStyle]);
+  }, [variant, disabled, fullWidth, sizeStyle, variantStyle]);
 
   const shadowStyle = useMemo(() => {
     if (disabled || variant === 'outline') return {};

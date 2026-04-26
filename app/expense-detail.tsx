@@ -6,20 +6,19 @@ import ScreenBackground from "@/components/ScreenBackground";
 
 import { getShadow } from "@/constants/shadowUtils";
 import {
-  BorderRadius,
-  CategoryMeta,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-  TypographyScale,
+    BorderRadius,
+    CategoryMeta,
+    Colors,
+    FontSize,
+    FontWeight,
+    Shadow,
+    Spacing,
 } from "@/constants/theme";
 
 import {
-  deleteExpense,
-  getExpenseById,
-  updateExpense,
+    deleteExpense,
+    getExpenseById,
+    updateExpense,
 } from "@/lib/expenseService";
 import { formatCurrency, todayISO } from "@/lib/formatUtils";
 import type { Category, Expense } from "@/lib/types";
@@ -31,15 +30,15 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";

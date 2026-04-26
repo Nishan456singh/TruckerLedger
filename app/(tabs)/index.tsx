@@ -1,41 +1,35 @@
 import ExpenseCard from "@/components/ExpenseCard";
 import ScreenBackground from "@/components/ScreenBackground";
-import { getShadow } from "@/constants/shadowUtils";
 import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
+    BorderRadius,
+    Spacing,
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
 import { getAllExpenses, getMonthlyProfit } from "@/lib/expenseService";
 import { formatCurrency } from "@/lib/formatUtils";
 import {
-  getMonthlyTripSnapshot,
-  getWeeklyTripSnapshot,
+    getWeeklyTripSnapshot,
 } from "@/lib/tripService";
 
-import type { Expense } from "@/lib/types";
 import type { MonthlyProfit } from "@/lib/expenseService";
+import type { Expense } from "@/lib/types";
 
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 
 import React, { useCallback, useState } from "react";
 import {
-  ActionSheetIOS,
-  ActivityIndicator,
-  Alert,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActionSheetIOS,
+    ActivityIndicator,
+    Alert,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import Animated, { FadeInDown } from "react-native-reanimated";

@@ -11,7 +11,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
     ActivityIndicator,
-    Alert,
     Image,
     ScrollView,
     StyleSheet,

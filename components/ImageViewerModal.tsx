@@ -1,6 +1,6 @@
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import { Image } from 'expo-image';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
     Dimensions,
@@ -12,8 +12,6 @@ import {
 } from 'react-native';
 import Animated, {
     useAnimatedStyle,
-    useSharedValue,
-    withSpring
 } from 'react-native-reanimated';
 
 interface ImageViewerModalProps {

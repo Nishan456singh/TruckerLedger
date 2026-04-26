@@ -13,15 +13,15 @@ import { router } from "expo-router";
 import React, { useCallback, useRef, useState } from "react";
 
 import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    KeyboardAvoidingView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -49,7 +49,7 @@ export default function ScanBOLScreen() {
 
   const [isCapturing, setIsCapturing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isOCRing, setIsOCRing] = useState(false);
+  const [, setIsOCRing] = useState(false);
 
   const [ocrStatus, setOcrStatus] = useState("");
 

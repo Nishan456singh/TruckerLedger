@@ -8,14 +8,14 @@ import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import Animated, {
-  FadeInDown,
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  withSpring,
-  cancelAnimation,
+    cancelAnimation,
+    FadeInDown,
+    FadeInUp,
+    useAnimatedStyle,
+    useSharedValue,
+    withRepeat,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -69,7 +69,7 @@ export default function OnboardingWelcome() {
       cancelAnimation(opacity);
       cancelAnimation(scale);
     };
-  }, []);
+  }, [opacity, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,

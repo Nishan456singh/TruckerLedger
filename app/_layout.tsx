@@ -13,8 +13,6 @@ import { Image, StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, { FadeOut } from "react-native-reanimated";
 
-import "react-native-reanimated";
-
 void SplashScreen.preventAutoHideAsync();
 
 /* =========================================================
@@ -22,6 +20,7 @@ ROUTE CONSTANTS
 ========================================================= */
 
 const AUTH_ROUTES = ["login"];
+const PUBLIC_ROUTES = ["login", "legal"];
 const ONBOARDING_ROUTE = "onboarding-welcome";
 
 /* =========================================================
@@ -75,12 +74,13 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
     if (!dbReady || authLoading || !onboardingChecked) return;
 
     const isAuthRoute = AUTH_ROUTES.includes(currentRoute);
+    const isPublicRoute = PUBLIC_ROUTES.includes(currentRoute);
     const isOnboarding = currentRoute === ONBOARDING_ROUTE;
 
     /* ---------- Not logged in ---------- */
 
     if (!user) {
-      if (!isAuthRoute) {
+      if (!isPublicRoute) {
         router.replace("/login");
       }
       return;
@@ -171,6 +171,7 @@ function RootLayoutInner() {
 
         {/* Auth */}
         <Stack.Screen name="login" options={{ animation: "fade" }} />
+        <Stack.Screen name="legal/[type]" options={{ animation: "slide_from_right" }} />
 
         {/* Onboarding */}
         <Stack.Screen

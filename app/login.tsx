@@ -1,30 +1,30 @@
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 import {
-  Spacing,
-  TypographyScale
+    Spacing,
+    TypographyScale
 } from "@/constants/theme";
 
 import { useAuth } from "@/lib/auth/AuthContext";
+import { router } from "expo-router";
 
 import * as AppleAuthentication from "expo-apple-authentication";
-import * as Linking from "expo-linking";
 
 import React, { useCallback, useEffect, useState } from "react";
 
 import {
-  ActivityIndicator,
-  Image,
-  Platform,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Image,
+    Platform,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
 
 import Animated, {
-  FadeIn,
-  FadeInDown,
-  FadeInUp,
+    FadeIn,
+    FadeInDown,
+    FadeInUp,
 } from "react-native-reanimated";
 
 import { LinearGradient } from "expo-linear-gradient";
@@ -33,10 +33,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const logo = require("@/assets/images/icon.png");
 
 const ERROR_DISMISS_TIMEOUT = 5000;
-
-// Legal document URLs - served from raw GitHub
-const TERMS_URL = "https://raw.githubusercontent.com/Nishan456singh/TruckerLedger/main/docs/TERMS.html";
-const PRIVACY_URL = "https://raw.githubusercontent.com/Nishan456singh/TruckerLedger/main/docs/PRIVACY_POLICY.html";
 
 export default function LoginScreen() {
   const { signInGoogle, signInApple } = useAuth();
@@ -52,19 +48,6 @@ export default function LoginScreen() {
     const timer = setTimeout(() => setErrorMsg(null), ERROR_DISMISS_TIMEOUT);
     return () => clearTimeout(timer);
   }, [errorMsg]);
-
-  const handleOpenLink = useCallback(async (url: string) => {
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        setErrorMsg("Unable to open link.");
-      }
-    } catch (err) {
-      setErrorMsg("Failed to open link.");
-    }
-  }, []);
 
   const handleGoogleSignIn = useCallback(async () => {
     if (anyLoading) return;
@@ -209,14 +192,14 @@ export default function LoginScreen() {
                   By continuing you agree to our{" "}
                   <Text
                     style={styles.link}
-                    onPress={() => handleOpenLink(TERMS_URL)}
+                    onPress={() => router.push("/legal/terms")}
                   >
                     Terms
                   </Text>
                   {" "}and{" "}
                   <Text
                     style={styles.link}
-                    onPress={() => handleOpenLink(PRIVACY_URL)}
+                    onPress={() => router.push("/legal/privacy")}
                   >
                     Privacy Policy
                   </Text>

@@ -1,22 +1,15 @@
 import ScreenBackground from "@/components/ScreenBackground";
-import { getShadow } from "@/constants/shadowUtils";
 import {
-  BorderRadius,
-  CategoryMeta,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-  TypographyScale,
-  type Category,
+    CategoryMeta,
+    Spacing,
+    type Category,
 } from "@/constants/theme";
 
 import {
-  getCategoryTotals,
-  getMonthlyExpenses,
-  getMonthlyTotal,
-  getReceiptCount,
+    getCategoryTotals,
+    getMonthlyExpenses,
+    getMonthlyTotal,
+    getReceiptCount,
 } from "@/lib/expenseService";
 
 import { formatCurrency } from "@/lib/formatUtils";
@@ -25,15 +18,14 @@ import { router, useFocusEffect } from "expo-router";
 
 import { useCallback, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
-import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 /* ───────── CONSTANTS ───────── */

@@ -1,15 +1,5 @@
 import PremiumButton from "@/components/PremiumButton";
 import ScreenBackground from "@/components/ScreenBackground";
-import { getShadow } from "@/constants/shadowUtils";
-import {
-  BorderRadius,
-  Colors,
-  FontSize,
-  FontWeight,
-  Shadow,
-  Spacing,
-  TypographyScale,
-} from "@/constants/theme";
 
 import { formatCurrency, parseAmount } from "@/lib/formatUtils";
 import { calculateTripProfit, createTrip } from "@/lib/tripService";
@@ -20,15 +10,15 @@ import { router } from "expo-router";
 import { useMemo, useState } from "react";
 
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";

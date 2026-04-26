@@ -1,7 +1,7 @@
 import PremiumButton from "@/components/PremiumButton";
 import ScreenBackground from "@/components/ScreenBackground";
 
-import { BorderRadius, FontSize, FontWeight, Spacing } from "@/constants/theme";
+import { BorderRadius, Spacing } from "@/constants/theme";
 
 import { addExpense, getDashboardStats } from "@/lib/expenseService";
 import { formatCurrency, parseAmount, todayISO } from "@/lib/formatUtils";
@@ -13,15 +13,15 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from "react-native";
 
 import { LinearGradient } from "expo-linear-gradient";
