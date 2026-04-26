@@ -3,7 +3,7 @@ import { getLegalDocMeta, isLegalDocType } from "@/lib/legal";
 import * as Linking from "expo-linking";
 import { router, useLocalSearchParams } from "expo-router";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
 import {
     ActivityIndicator,
@@ -20,6 +20,7 @@ export default function LegalDocumentScreen() {
   const { type } = useLocalSearchParams<{ type: string }>();
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [useLocalFallback, setUseLocalFallback] = useState(false);
 
   const docMeta = useMemo(() => {
     if (!type || !isLegalDocType(type)) return null;
@@ -28,10 +29,24 @@ export default function LegalDocumentScreen() {
 
   const handleOpenInBrowser = async () => {
     if (!docMeta) return;
-
-    const targetUrl = loadError ? docMeta.fallbackUrl : docMeta.url;
-    await Linking.openURL(targetUrl);
+    await Linking.openURL(docMeta.url);
   };
+
+  const handleHttpError = useCallback(
+    (syntheticEvent: { nativeEvent: { statusCode: number } }) => {
+      const { statusCode } = syntheticEvent.nativeEvent;
+      if (statusCode >= 400 && docMeta?.localHtml) {
+        // silently fall back to bundled local HTML
+        setUseLocalFallback(true);
+        setIsLoading(false);
+        setLoadError(false);
+      } else if (statusCode >= 400) {
+        setLoadError(true);
+        setIsLoading(false);
+      }
+    },
+    [docMeta]
+  );
 
   if (!docMeta) {
     return (
@@ -69,7 +84,11 @@ export default function LegalDocumentScreen() {
 
       <View style={styles.webContainer}>
         <WebView
-          source={{ uri: docMeta.url }}
+          source={
+            useLocalFallback && docMeta.localHtml
+              ? { html: docMeta.localHtml }
+              : { uri: docMeta.url }
+          }
           onLoadStart={() => {
             setLoadError(false);
             setIsLoading(true);
@@ -79,6 +98,7 @@ export default function LegalDocumentScreen() {
             setLoadError(true);
             setIsLoading(false);
           }}
+          onHttpError={handleHttpError}
           startInLoadingState
           renderLoading={() => (
             <View style={styles.centerState}>
