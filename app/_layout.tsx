@@ -48,14 +48,26 @@ function AuthGate({ dbReady }: { dbReady: boolean }) {
         return;
       }
 
+      // Set a 5-second timeout for onboarding check
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Onboarding check timeout")), 5000)
+      );
+
       try {
-        const completed = await hasCompletedOnboarding();
+        const completed = await Promise.race([
+          hasCompletedOnboarding(),
+          timeoutPromise,
+        ]);
 
         if (mounted) {
-          setCompletedOnboarding(completed);
+          setCompletedOnboarding(completed as boolean);
         }
       } catch (err) {
         console.error("Onboarding check failed:", err);
+        // Assume not completed if check times out or fails
+        if (mounted) {
+          setCompletedOnboarding(false);
+        }
       } finally {
         if (mounted) setOnboardingChecked(true);
       }
@@ -126,10 +138,17 @@ function RootLayoutInner() {
     let mounted = true;
 
     async function setup() {
+      // Set a 10-second timeout for critical startup tasks
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Startup timeout")), 10000)
+      );
+
       try {
-        await initDatabase();
+        // Initialize database with timeout
+        await Promise.race([initDatabase(), timeoutPromise]);
       } catch (err) {
         console.error("Database init failed:", err);
+        // Continue anyway — don't let DB init block the app
       }
 
       try {

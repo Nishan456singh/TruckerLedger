@@ -87,19 +87,33 @@ export async function signInWithApple(): Promise<void> {
   await performOAuth(OAuthProvider.Apple);
 }
 
+// ─── Timeout helper ───────────────────────────────
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error("Operation timed out")), ms)
+    ),
+  ]);
+}
+
 // ─── Fetch current user ───────────────────────────
 
 export async function getCurrentUser(): Promise<UserProfile | null> {
   try {
-    const user = await account.get();
+    // Get user with 5-second timeout to avoid splash screen freeze
+    const user = await withTimeout(account.get(), 5000);
 
     let photo: string | null =
       (user.prefs as Record<string, string>)?.photoUrl ?? null;
 
     let provider: UserProfile["provider"] = "apple";
 
+    // Skip profile enrichment on app startup to avoid delays
+    // Just identify provider quickly
     try {
-      const { identities } = (await account.listIdentities()) as {
+      const { identities } = (await withTimeout(account.listIdentities(), 3000)) as {
         identities: Array<{
           provider: string;
           providerAccessToken?: string;
@@ -110,41 +124,15 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
         (identity) => identity.provider === "google"
       );
 
-      const appleIdentity = identities.find(
-        (identity) => identity.provider === "apple"
-      );
-
       if (googleIdentity) {
         provider = "google";
-
-        if (googleIdentity.providerAccessToken) {
-          const res = await fetch(
-            "https://www.googleapis.com/oauth2/v3/userinfo",
-            {
-              headers: {
-                Authorization: `Bearer ${googleIdentity.providerAccessToken}`,
-              },
-            }
-          );
-
-          if (res.ok) {
-            const data = await res.json();
-
-            if (data.picture) {
-              photo = data.picture;
-
-              await account.updatePrefs({
-                ...user.prefs,
-                photoUrl: photo,
-              });
-            }
-          }
-        }
-      } else if (appleIdentity) {
+        // Don't fetch Google profile picture on app startup to avoid delays
+        // It will be fetched on-demand or refreshed later
+      } else if (identities.some((identity) => identity.provider === "apple")) {
         provider = "apple";
       }
     } catch {
-      // Ignore identity/profile enrichment errors
+      // Ignore identity errors — user is still authenticated
     }
 
     return {
@@ -154,7 +142,8 @@ export async function getCurrentUser(): Promise<UserProfile | null> {
       photo,
       provider,
     };
-  } catch {
+  } catch (error) {
+    console.error("getCurrentUser error:", error);
     return null;
   }
 }

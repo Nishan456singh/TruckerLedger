@@ -241,7 +241,8 @@ export async function getWeeklyTripSnapshot(): Promise<{
     profit: number;
   };
 
-  const row = await db.getFirstAsync<Row>(
+  // Get trip data for the week
+  const tripRow = await db.getFirstAsync<Row>(
     `SELECT
       COALESCE(SUM(income),0) AS income,
       COALESCE(SUM(fuel),0) AS fuel,
@@ -252,11 +253,41 @@ export async function getWeeklyTripSnapshot(): Promise<{
     [fromDate, toDate]
   );
 
+  // Get BOL income for the week
+  type BOLRow = { bol_income: number };
+  const bolRow = await db.getFirstAsync<BOLRow>(
+    `SELECT COALESCE(SUM(load_amount),0) AS bol_income
+    FROM bols
+    WHERE date >= ? AND date <= ?`,
+    [fromDate, toDate]
+  );
+
+  // Get receipt expenses for the week
+  type ExpenseRow = { receipt_expenses: number };
+  const expenseRow = await db.getFirstAsync<ExpenseRow>(
+    `SELECT COALESCE(SUM(amount),0) AS receipt_expenses
+    FROM expenses
+    WHERE date >= ? AND date <= ?`,
+    [fromDate, toDate]
+  );
+
+  // Calculate totals
+  const tripIncome = tripRow?.income ?? 0;
+  const bolIncome = bolRow?.bol_income ?? 0;
+  const totalIncome = tripIncome + bolIncome;
+
+  const tripFuel = tripRow?.fuel ?? 0;
+  const tripOtherExpenses = tripRow?.other_expenses ?? 0;
+  const receiptExpenses = expenseRow?.receipt_expenses ?? 0;
+  const totalExpenses = tripFuel + tripOtherExpenses + receiptExpenses;
+
+  const profit = totalIncome - totalExpenses;
+
   return {
-    income: row?.income ?? 0,
-    fuel: row?.fuel ?? 0,
-    otherExpenses: row?.other_expenses ?? 0,
-    profit: row?.profit ?? 0,
+    income: Number(totalIncome.toFixed(2)),
+    fuel: Number(tripFuel.toFixed(2)),
+    otherExpenses: Number((tripOtherExpenses + receiptExpenses).toFixed(2)),
+    profit: Number(profit.toFixed(2)),
   };
 }
 
